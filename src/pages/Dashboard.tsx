@@ -1,7 +1,31 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, Users, TrendingUp, TrendingDown, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
   const metrics = [
     {
       title: "Monthly Recurring Revenue",
@@ -37,10 +61,22 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-8">
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">
-            Welcome back! Here's an overview of your subscription business.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+              <p className="mt-2 text-muted-foreground">
+                Welcome back! Here's an overview of your subscription business.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={signOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
 

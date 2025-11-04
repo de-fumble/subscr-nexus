@@ -73,7 +73,7 @@ const Index = () => {
               powerful analytics—all powered by Paystack.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/dashboard">
+              <Link to="/auth">
                 <Button
                   size="lg"
                   className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-6 text-lg font-semibold"
@@ -144,7 +144,7 @@ const Index = () => {
             Join institutions and businesses managing subscriptions with Recurra
           </p>
           <div className="mt-10">
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button
                 size="lg"
                 className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-6 text-lg font-semibold"

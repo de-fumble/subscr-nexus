@@ -35,10 +35,10 @@ const Navbar = () => {
           >
             About
           </Link>
-          <Link to="/dashboard">
+          <Link to="/auth">
             <Button variant="ghost">Sign In</Button>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/auth">
             <Button className="bg-accent hover:bg-accent/90">Get Started</Button>
           </Link>
         </div>
@@ -81,12 +81,12 @@ const Navbar = () => {
               About
             </Link>
             <div className="flex flex-col gap-2 pt-4">
-              <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+              <Link to="/auth" onClick={() => setIsOpen(false)}>
                 <Button variant="ghost" className="w-full">
                   Sign In
                 </Button>
               </Link>
-              <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+              <Link to="/auth" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-accent hover:bg-accent/90">
                   Get Started
                 </Button>
