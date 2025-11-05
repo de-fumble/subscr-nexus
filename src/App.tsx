@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import CreatePlan from "./pages/CreatePlan";
 import Plans from "./pages/Plans";
+import Subscribe from "./pages/Subscribe";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/subscribe/:planId" element={<Subscribe />} />
           <Route
             path="/dashboard"
             element={
