@@ -1,0 +1,146 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  try {
+    const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY')
+    
+    if (!paystackSecretKey) {
+      console.error('PAYSTACK_SECRET_KEY not found in environment')
+      return new Response(
+        JSON.stringify({ error: 'Paystack API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      console.error('User authentication error:', userError)
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { name, price, interval, description, currency = 'NGN' } = await req.json()
+
+    if (!name || !price || !interval) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: name, price, interval' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Get organization
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (orgError || !org) {
+      console.error('Organization not found:', orgError)
+      return new Response(
+        JSON.stringify({ error: 'Organization not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Creating plan on Paystack:', { name, price, interval, currency })
+
+    // Create plan on Paystack
+    const paystackResponse = await fetch('https://api.paystack.co/plan', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${paystackSecretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        amount: price * 100, // Paystack expects amount in kobo
+        interval,
+        currency,
+        description,
+      }),
+    })
+
+    const paystackData = await paystackResponse.json()
+
+    if (!paystackResponse.ok) {
+      console.error('Paystack error:', paystackData)
+      return new Response(
+        JSON.stringify({ error: paystackData.message || 'Failed to create plan on Paystack' }),
+        { status: paystackResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Paystack plan created:', paystackData.data)
+
+    // Save plan to database
+    const { data: plan, error: planError } = await supabase
+      .from('subscription_plans')
+      .insert({
+        org_id: org.id,
+        paystack_plan_code: paystackData.data.plan_code,
+        name,
+        description,
+        price,
+        interval,
+        currency,
+      })
+      .select()
+      .single()
+
+    if (planError) {
+      console.error('Database error:', planError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to save plan to database' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Plan saved to database:', plan)
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        plan,
+        paystack_data: paystackData.data
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})
