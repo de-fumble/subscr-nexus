@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, ExternalLink, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 interface Plan {
@@ -54,6 +54,7 @@ const Plans = () => {
           subscribers(count)
         `)
         .eq("org_id", org.id)
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -80,6 +81,23 @@ const Plans = () => {
     const link = `${window.location.origin}/subscribe/${planId}`;
     navigator.clipboard.writeText(link);
     toast.success("Subscription link copied to clipboard!");
+  };
+
+  const handleArchivePlan = async (planId: string) => {
+    try {
+      const { error } = await supabase
+        .from("subscription_plans")
+        .update({ is_active: false })
+        .eq("id", planId);
+
+      if (error) throw error;
+
+      toast.success("Plan archived successfully");
+      fetchPlans();
+    } catch (error) {
+      console.error("Error archiving plan:", error);
+      toast.error("Failed to archive plan");
+    }
   };
 
   return (
@@ -196,6 +214,14 @@ const Plans = () => {
                   >
                     <ExternalLink className="h-4 w-4" />
                     Copy Subscription Link
+                  </Button>
+                  <Button
+                    onClick={() => handleArchivePlan(plan.id)}
+                    variant="destructive"
+                    className="w-full gap-2"
+                  >
+                    <Archive className="h-4 w-4" />
+                    Archive Plan
                   </Button>
                 </div>
               </Card>
