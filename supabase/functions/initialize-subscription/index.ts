@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const { data: plan } = await supabase
       .from("subscription_plans")
-      .select("org_id")
+      .select("org_id, price, currency")
       .eq("id", plan_id)
       .single();
 
@@ -49,6 +49,15 @@ serve(async (req) => {
       );
     }
 
+    // Validate and compute amount in kobo from plan price (stored in Naira)
+    const amountKobo = Math.round(Number(plan.price) * 100);
+    if (!amountKobo || amountKobo <= 0) {
+      return new Response(
+        JSON.stringify({ error: "Invalid plan amount configured" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Initialize transaction on Paystack
     const paystackResponse = await fetch(
       "https://api.paystack.co/transaction/initialize",
@@ -60,6 +69,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           email,
+          amount: amountKobo,
           plan: plan_code,
           callback_url: `${req.headers.get("origin")}/subscription-callback`,
           metadata: {

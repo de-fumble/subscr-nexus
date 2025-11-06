@@ -53,8 +53,6 @@ const Plans = () => {
           *,
           subscribers(count)
         `)
-        .eq("org_id", org.id)
-        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -92,7 +90,7 @@ const Plans = () => {
 
       if (error) throw error;
 
-      toast.success("Plan archived successfully");
+      toast.success("Plan deleted successfully");
       fetchPlans();
     } catch (error) {
       console.error("Error archiving plan:", error);
@@ -182,7 +180,7 @@ const Plans = () => {
                       ? "bg-accent/10 text-accent"
                       : "bg-muted text-muted-foreground"
                   }`}>
-                    {plan.is_active ? "Active" : "Inactive"}
+                    {plan.is_active ? "Active" : "Deleted"}
                   </div>
                 </div>
 
@@ -211,6 +209,8 @@ const Plans = () => {
                     onClick={() => copySubscriptionLink(plan.id)}
                     variant="outline"
                     className="w-full gap-2"
+                    disabled={!plan.is_active}
+                    title={plan.is_active ? "Copy subscription link" : "This plan is deleted"}
                   >
                     <ExternalLink className="h-4 w-4" />
                     Copy Subscription Link
@@ -221,7 +221,7 @@ const Plans = () => {
                     className="w-full gap-2"
                   >
                     <Archive className="h-4 w-4" />
-                    Archive Plan
+                    Delete Plan
                   </Button>
                 </div>
               </Card>
