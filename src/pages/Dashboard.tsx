@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, TrendingDown, Plus, LogOut } from "lucide-react";
+import { DollarSign, Users, TrendingUp, Plus, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Organization {
   id: string;
@@ -27,10 +28,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalRevenue: 0,
-    mrr: 0,
+    recurringRevenue: 0,
     activeSubscribers: 0,
-    churnRate: 2.4,
+    totalLifetimeRevenue: 0,
   });
+  const [chartData, setChartData] = useState<Array<{ month: string; revenue: number }>>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -78,24 +80,24 @@ const Dashboard = () => {
           subscriber_count: plan.subscribers?.[0]?.count || 0,
         }));
         setPlans(plansWithCounts);
+      }
 
-        // Calculate stats
-        const totalSubscribers = plansWithCounts.reduce(
-          (sum, plan) => sum + (plan.subscriber_count || 0),
-          0
-        );
+      // Fetch real-time analytics from Paystack
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
+        "fetch-paystack-analytics"
+      );
 
-        const monthlyRevenue = plansWithCounts.reduce((sum, plan) => {
-          const planRevenue = plan.subscriber_count * plan.price;
-          return sum + planRevenue;
-        }, 0);
-
+      if (analyticsError) {
+        console.error("Error fetching analytics:", analyticsError);
+        toast.error("Failed to load analytics data");
+      } else if (analyticsData) {
         setStats({
-          totalRevenue: monthlyRevenue * 3, // Simulated total revenue
-          mrr: monthlyRevenue,
-          activeSubscribers: totalSubscribers,
-          churnRate: 2.4, // This would be calculated from historical data
+          totalRevenue: analyticsData.totalRevenue || 0,
+          recurringRevenue: analyticsData.recurringRevenue || 0,
+          activeSubscribers: analyticsData.activeSubscribers || 0,
+          totalLifetimeRevenue: analyticsData.totalLifetimeRevenue || 0,
         });
+        setChartData(analyticsData.chartData || []);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -112,32 +114,28 @@ const Dashboard = () => {
 
   const metrics = [
     {
-      title: "Monthly Recurring Revenue",
-      value: `₦${stats.mrr.toLocaleString()}`,
-      change: "+12.5%",
-      trend: "up",
+      title: "Recurring Revenue",
+      value: `₦${stats.recurringRevenue.toLocaleString()}`,
       icon: DollarSign,
+      showChart: false,
     },
     {
       title: "Active Subscribers",
       value: stats.activeSubscribers.toString(),
-      change: "+8.2%",
-      trend: "up",
       icon: Users,
+      showChart: false,
     },
     {
       title: "Total Revenue",
       value: `₦${stats.totalRevenue.toLocaleString()}`,
-      change: "+15.3%",
-      trend: "up",
       icon: TrendingUp,
+      showChart: true,
     },
     {
-      title: "Churn Rate",
-      value: `${stats.churnRate}%`,
-      change: "-0.8%",
-      trend: "down",
-      icon: TrendingDown,
+      title: "Total Lifetime Revenue",
+      value: `₦${stats.totalLifetimeRevenue.toLocaleString()}`,
+      icon: TrendingUp,
+      showChart: false,
     },
   ];
 
@@ -198,23 +196,12 @@ const Dashboard = () => {
                 className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-primary/10 p-3">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="rounded-lg bg-primary/10 p-3">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
-                  <span
-                    className={`text-sm font-medium ${
-                      metric.trend === "up"
-                        ? "text-accent"
-                        : "text-destructive"
-                    }`}
-                  >
-                    {metric.change}
-                  </span>
                 </div>
-                <div className="mt-4">
+                <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
                     {metric.title}
                   </h3>
@@ -222,6 +209,21 @@ const Dashboard = () => {
                     {metric.value}
                   </p>
                 </div>
+                {metric.showChart && chartData.length > 0 && (
+                  <div className="mt-4 h-20">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <Line
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </Card>
             );
           })}
