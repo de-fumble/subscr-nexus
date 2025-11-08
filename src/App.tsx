@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import CreatePlan from "./pages/CreatePlan";
 import Plans from "./pages/Plans";
 import Subscribe from "./pages/Subscribe";
+import SubscriptionCallback from "./pages/SubscriptionCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/subscribe/:planId" element={<Subscribe />} />
+          <Route path="/subscription-callback" element={<SubscriptionCallback />} />
           <Route
             path="/dashboard"
             element={
