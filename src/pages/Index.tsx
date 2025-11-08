@@ -10,6 +10,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import logoImage from "@/assets/logo.png";
 
 const Index = () => {
   const features = [
@@ -160,11 +161,11 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent">
-                <span className="text-sm font-bold text-primary-foreground">
-                  R
-                </span>
-              </div>
+              <img 
+                src={logoImage} 
+                alt="Recurra Logo" 
+                className="h-8 w-8 object-contain"
+              />
               <span className="text-lg font-bold text-foreground">Recurra</span>
             </div>
             <p className="text-sm text-muted-foreground">
