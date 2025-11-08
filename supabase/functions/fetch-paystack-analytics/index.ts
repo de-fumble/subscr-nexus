@@ -57,6 +57,15 @@ serve(async (req) => {
       );
     }
 
+    // Get organization's subscription plan codes
+    const { data: orgPlans } = await supabase
+      .from("subscription_plans")
+      .select("paystack_plan_code")
+      .eq("org_id", org.id)
+      .eq("is_active", true);
+
+    const orgPlanCodes = new Set(orgPlans?.map(p => p.paystack_plan_code) || []);
+
     // Fetch transactions from Paystack
     const transactionsResponse = await fetch(
       "https://api.paystack.co/transaction?perPage=100&status=success",
@@ -90,26 +99,37 @@ serve(async (req) => {
       );
     }
 
-    // Calculate analytics
+    // Calculate analytics - filter by organization's plans only
     const transactions = transactionsData.data || [];
     const subscriptions = subscriptionsData.data || [];
 
-    const totalRevenue = transactions.reduce(
+    // Filter subscriptions to only include organization's plans
+    const orgSubscriptions = subscriptions.filter(
+      (sub: any) => sub.plan && orgPlanCodes.has(sub.plan.plan_code)
+    );
+
+    // Filter transactions to only include those from organization's subscriptions
+    const orgSubscriptionCodes = new Set(orgSubscriptions.map((sub: any) => sub.subscription_code));
+    const orgTransactions = transactions.filter(
+      (txn: any) => txn.metadata?.subscription_code && orgSubscriptionCodes.has(txn.metadata.subscription_code)
+    );
+
+    const totalRevenue = orgTransactions.reduce(
       (sum: number, txn: any) => sum + (txn.amount / 100),
       0
     );
 
-    const activeSubscriptions = subscriptions.filter(
+    const activeSubscriptions = orgSubscriptions.filter(
       (sub: any) => sub.status === "active"
     ).length;
 
-    const recurringRevenue = subscriptions
+    const recurringRevenue = orgSubscriptions
       .filter((sub: any) => sub.status === "active")
       .reduce((sum: number, sub: any) => sum + (sub.amount / 100), 0);
 
-    // Calculate revenue by month for charts
+    // Calculate revenue by month for charts - only org transactions
     const revenueByMonth: { [key: string]: number } = {};
-    transactions.forEach((txn: any) => {
+    orgTransactions.forEach((txn: any) => {
       const date = new Date(txn.paid_at || txn.created_at);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       revenueByMonth[monthKey] = (revenueByMonth[monthKey] || 0) + (txn.amount / 100);
