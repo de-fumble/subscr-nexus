@@ -68,13 +68,27 @@ export function SubscriberManagementDialog({
   const fetchSubscribers = async () => {
     setLoading(true);
     try {
+      // First fetch plan IDs for this org
+      const { data: plans, error: plansError } = await supabase
+        .from("subscription_plans")
+        .select("id, name")
+        .eq("org_id", orgId);
+
+      if (plansError) throw plansError;
+
+      if (!plans || plans.length === 0) {
+        setSubscribers([]);
+        return;
+      }
+
+      const planIds = plans.map(p => p.id);
+      const planMap = new Map(plans.map(p => [p.id, p.name]));
+
+      // Then fetch subscribers for those plans
       const { data, error } = await supabase
         .from("subscribers")
-        .select(`
-          *,
-          subscription_plans!inner(name, org_id)
-        `)
-        .eq("subscription_plans.org_id", orgId)
+        .select("*")
+        .in("plan_id", planIds)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -87,7 +101,7 @@ export function SubscriberManagementDialog({
         status: sub.status,
         paystack_subscription_code: sub.paystack_subscription_code,
         paystack_customer_code: sub.paystack_customer_code,
-        plan_name: sub.subscription_plans.name,
+        plan_name: planMap.get(sub.plan_id) || "Unknown",
         created_at: sub.created_at,
       }));
 
