@@ -26,6 +26,7 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return new Response(
@@ -34,23 +35,14 @@ serve(async (req) => {
       );
     }
 
-    const { subscriptionCode, subscriberId } = await req.json();
-
-    if (!subscriptionCode) {
-      return new Response(
-        JSON.stringify({ error: "Missing subscriptionCode" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get organization
-    const { data: org } = await supabase
+    // Get organization and Paystack key
+    const { data: org, error: orgError } = await supabase
       .from("organizations")
-      .select("paystack_secret_key")
+      .select("id, paystack_secret_key")
       .eq("user_id", user.id)
       .single();
 
-    if (!org) {
+    if (orgError || !org) {
       return new Response(
         JSON.stringify({ error: "Organization not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -65,54 +57,73 @@ serve(async (req) => {
       );
     }
 
-    // Cancel subscription on Paystack
-    const cancelResponse = await fetch(
-      `https://api.paystack.co/subscription/disable`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${paystackSecretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: subscriptionCode,
-          token: "email",
-        }),
-      }
-    );
+    // Get organization's subscription plan codes and names
+    const { data: plans, error: plansError } = await supabase
+      .from("subscription_plans")
+      .select("name, paystack_plan_code")
+      .eq("org_id", org.id)
+      .eq("is_active", true);
 
-    const cancelData = await cancelResponse.json();
-
-    if (!cancelData.status) {
-      console.error("Paystack cancellation failed:", cancelData);
+    if (plansError) {
       return new Response(
-        JSON.stringify({ error: "Failed to cancel subscription on Paystack" }),
+        JSON.stringify({ error: "Failed to fetch plans" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Update subscriber status in database if we have a local record id
-    if (subscriberId) {
-      const { error: updateError } = await supabase
-        .from("subscribers")
-        .update({ status: "cancelled" })
-        .eq("id", subscriberId);
+    const planCodes = new Set((plans || []).map((p: any) => p.paystack_plan_code).filter(Boolean));
+    const planNameByCode = new Map((plans || []).map((p: any) => [p.paystack_plan_code, p.name]));
 
-      if (updateError) {
-        console.error("Database update failed:", updateError);
-        return new Response(
-          JSON.stringify({ error: "Failed to update subscriber status" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    // Fetch subscriptions from Paystack (first page; can be extended to paginate if needed)
+    const subscriptionsResponse = await fetch(
+      "https://api.paystack.co/subscription?perPage=100",
+      {
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          "Content-Type": "application/json",
+        },
       }
+    );
+
+    const subscriptionsData = await subscriptionsResponse.json();
+
+    if (!subscriptionsData.status) {
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch subscriptions from Paystack" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    const subscriptions = (subscriptionsData.data || []).filter((sub: any) =>
+      sub?.plan && planCodes.has(sub.plan.plan_code)
+    );
+
+    // Map to UI-friendly payload
+    const subscribers = subscriptions.map((sub: any) => {
+      const customer = sub.customer || {};
+      const plan = sub.plan || {};
+      const fullName = [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "N/A";
+
+      return {
+        // Use subscription_code as a stable id for UI purposes
+        id: sub.subscription_code,
+        email: customer.email || "",
+        customer_name: fullName,
+        amount: typeof sub.amount === "number" ? sub.amount : (plan.amount ?? 0),
+        status: sub.status || "",
+        paystack_subscription_code: sub.subscription_code,
+        paystack_customer_code: customer.customer_code || "",
+        plan_name: planNameByCode.get(plan.plan_code) || plan.name || "Unknown",
+        created_at: sub.createdAt || sub.created_at || new Date().toISOString(),
+      };
+    });
+
     return new Response(
-      JSON.stringify({ success: true, message: "Subscription cancelled successfully" }),
+      JSON.stringify({ subscribers }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error cancelling subscription:", error);
+    console.error("Error listing subscribers:", error);
     const errorMessage = error instanceof Error ? error.message : "An error occurred";
     return new Response(
       JSON.stringify({ error: errorMessage }),

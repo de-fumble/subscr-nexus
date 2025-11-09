@@ -68,40 +68,23 @@ export function SubscriberManagementDialog({
   const fetchSubscribers = async () => {
     setLoading(true);
     try {
-      // First fetch plan IDs for this org
-      const { data: plans, error: plansError } = await supabase
-        .from("subscription_plans")
-        .select("id, name")
-        .eq("org_id", orgId);
-
-      if (plansError) throw plansError;
-
-      if (!plans || plans.length === 0) {
-        setSubscribers([]);
-        return;
-      }
-
-      const planIds = plans.map(p => p.id);
-      const planMap = new Map(plans.map(p => [p.id, p.name]));
-
-      // Then fetch subscribers for those plans
-      const { data, error } = await supabase
-        .from("subscribers")
-        .select("*")
-        .in("plan_id", planIds)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.functions.invoke("list-subscribers", {
+        body: { orgId },
+      });
 
       if (error) throw error;
 
-      const formattedData = data.map((sub: any) => ({
-        id: sub.id,
+      const list = (data as any)?.subscribers || [];
+
+      const formattedData = list.map((sub: any) => ({
+        id: sub.id || sub.paystack_subscription_code,
         email: sub.email,
         customer_name: sub.customer_name || "N/A",
         amount: sub.amount,
         status: sub.status,
         paystack_subscription_code: sub.paystack_subscription_code,
         paystack_customer_code: sub.paystack_customer_code,
-        plan_name: planMap.get(sub.plan_id) || "Unknown",
+        plan_name: sub.plan_name || "Unknown",
         created_at: sub.created_at,
       }));
 
@@ -115,12 +98,11 @@ export function SubscriberManagementDialog({
   };
 
   const handleRemoveSubscriber = async (subscriber: Subscriber) => {
-    setRemovingId(subscriber.id);
+    setRemovingId(subscriber.paystack_subscription_code);
     try {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
         body: {
           subscriptionCode: subscriber.paystack_subscription_code,
-          subscriberId: subscriber.id,
         },
       });
 
