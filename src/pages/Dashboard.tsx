@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { DollarSign, Users, TrendingUp, Plus, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
+import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
 
 interface Organization {
   id: string;
@@ -33,6 +35,7 @@ const Dashboard = () => {
     totalLifetimeRevenue: 0,
   });
   const [chartData, setChartData] = useState<Array<{ month: string; revenue: number }>>([]);
+  const [showSubscriberDialog, setShowSubscriberDialog] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -62,23 +65,31 @@ const Dashboard = () => {
 
       setOrganization(orgData);
 
-      // Fetch plans with subscriber counts
+      // Fetch plans with subscriber counts using aggregation
       const { data: plansData, error: plansError } = await supabase
         .from("subscription_plans")
-        .select(`
-          *,
-          subscribers(count)
-        `)
+        .select("*")
         .eq("org_id", orgData.id)
         .eq("is_active", true);
 
       if (plansError) {
         console.error("Error fetching plans:", plansError);
       } else {
-        const plansWithCounts = plansData.map(plan => ({
-          ...plan,
-          subscriber_count: plan.subscribers?.[0]?.count || 0,
-        }));
+        // Fetch subscriber counts separately for each plan
+        const plansWithCounts = await Promise.all(
+          plansData.map(async (plan) => {
+            const { count } = await supabase
+              .from("subscribers")
+              .select("*", { count: "exact", head: true })
+              .eq("plan_id", plan.id)
+              .eq("status", "active");
+            
+            return {
+              ...plan,
+              subscriber_count: count || 0,
+            };
+          })
+        );
         setPlans(plansWithCounts);
       }
 
@@ -118,24 +129,30 @@ const Dashboard = () => {
       value: `₦${stats.recurringRevenue.toLocaleString()}`,
       icon: DollarSign,
       showChart: false,
+      showButton: false,
     },
     {
       title: "Active Subscribers",
       value: stats.activeSubscribers.toString(),
       icon: Users,
       showChart: false,
+      showButton: true,
+      buttonText: "Manage",
+      onButtonClick: () => setShowSubscriberDialog(true),
     },
     {
       title: "Total Revenue",
       value: `₦${stats.totalRevenue.toLocaleString()}`,
       icon: TrendingUp,
       showChart: true,
+      showButton: false,
     },
     {
       title: "Total Lifetime Revenue",
       value: `₦${stats.totalLifetimeRevenue.toLocaleString()}`,
       icon: TrendingUp,
       showChart: false,
+      showButton: false,
     },
   ];
 
@@ -200,6 +217,15 @@ const Dashboard = () => {
                   <div className="rounded-lg bg-primary/10 p-3">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
+                  {metric.showButton && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={metric.onButtonClick}
+                    >
+                      {metric.buttonText}
+                    </Button>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
@@ -297,7 +323,18 @@ const Dashboard = () => {
             )}
           </Card>
         </div>
+
+        <div className="mt-8">
+          <VerifyTransactionCard />
+        </div>
       </div>
+
+      <SubscriberManagementDialog
+        open={showSubscriberDialog}
+        onOpenChange={setShowSubscriberDialog}
+        orgId={organization?.id || ""}
+        onSubscriberRemoved={fetchDashboardData}
+      />
     </div>
   );
 };
