@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, ExternalLink, Archive, Users } from "lucide-react";
+import { ArrowLeft, Plus, ExternalLink, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 interface Plan {
@@ -99,33 +99,30 @@ const Plans = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="border-b border-border/30 bg-gradient-card backdrop-blur-xl shadow-medium">
-        <div className="container mx-auto px-6 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border bg-card">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/dashboard")}
-                className="hover:bg-accent-soft hover:text-accent"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-4xl font-bold gradient-text mb-2">
+                <h1 className="text-3xl font-bold text-foreground">
                   Subscription Plans
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Manage and monitor all your recurring payment plans
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Manage your recurring payment plans
                 </p>
               </div>
             </div>
             <Button
               onClick={() => navigate("/plans/create")}
-              variant="premium"
-              className="gap-2"
-              size="lg"
+              className="bg-accent hover:bg-accent/90 gap-2"
             >
               <Plus className="h-4 w-4" />
               Create Plan
@@ -134,27 +131,26 @@ const Plans = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-10">
+      <div className="container mx-auto px-6 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
           </div>
         ) : plans.length === 0 ? (
-          <Card className="p-16 shadow-elegant">
+          <Card className="p-12">
             <div className="text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 shadow-soft">
-                <Plus className="h-10 w-10 text-accent" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Plus className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="mb-3 text-2xl font-bold text-foreground">
-                No plans created yet
+              <h3 className="mb-2 text-xl font-semibold text-foreground">
+                No plans yet
               </h3>
-              <p className="mb-8 text-muted-foreground max-w-md mx-auto">
-                Create your first subscription plan to start accepting recurring payments
+              <p className="mb-6 text-muted-foreground">
+                Create your first subscription plan to start accepting payments
               </p>
               <Button
                 onClick={() => navigate("/plans/create")}
-                variant="premium"
-                size="lg"
+                className="bg-accent hover:bg-accent/90"
               >
                 Create Your First Plan
               </Button>
@@ -165,23 +161,23 @@ const Plans = () => {
             {plans.map((plan, index) => (
               <Card
                 key={plan.id}
-                className="p-8 transition-all duration-500 hover:shadow-elegant hover:-translate-y-1 animate-fade-in group"
+                className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="mb-6 flex items-start justify-between">
+                <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-foreground group-hover:gradient-text transition-all">
+                    <h3 className="text-xl font-bold text-foreground">
                       {plan.name}
                     </h3>
                     {plan.category && (
-                      <span className="mt-3 inline-block rounded-full bg-gradient-to-r from-accent/10 to-accent-deep/10 px-4 py-1.5 text-xs font-semibold text-accent border border-accent/20 shadow-soft">
+                      <span className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                         {plan.category}
                       </span>
                     )}
                   </div>
-                  <div className={`rounded-full px-4 py-1.5 text-xs font-bold shadow-soft ${
+                  <div className={`rounded-full px-3 py-1 text-xs font-medium ${
                     plan.is_active
-                      ? "bg-gradient-to-r from-accent/20 to-accent/10 text-accent border border-accent/30"
+                      ? "bg-accent/10 text-accent"
                       : "bg-muted text-muted-foreground"
                   }`}>
                     {plan.is_active ? "Active" : "Deleted"}
@@ -189,31 +185,30 @@ const Plans = () => {
                 </div>
 
                 {plan.description && (
-                  <p className="mb-6 text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
                     {plan.description}
                   </p>
                 )}
 
-                <div className="mb-8">
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-4xl font-bold gradient-text">
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-foreground">
                       ₦{plan.price.toLocaleString()}
                     </span>
-                    <span className="text-sm text-muted-foreground font-medium">
+                    <span className="text-sm text-muted-foreground">
                       / {plan.interval}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Users className="h-4 w-4" />
+                  <p className="mt-2 text-sm text-muted-foreground">
                     {plan.subscriber_count || 0} active subscribers
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Button
                     onClick={() => copySubscriptionLink(plan.id)}
                     variant="outline"
-                    className="w-full gap-2 hover:bg-accent-soft hover:text-accent hover:border-accent"
+                    className="w-full gap-2"
                     disabled={!plan.is_active}
                     title={plan.is_active ? "Copy subscription link" : "This plan is deleted"}
                   >
@@ -223,7 +218,7 @@ const Plans = () => {
                   <Button
                     onClick={() => handleArchivePlan(plan.id)}
                     variant="destructive"
-                    className="w-full gap-2 shadow-medium hover:shadow-strong"
+                    className="w-full gap-2"
                   >
                     <Archive className="h-4 w-4" />
                     Delete Plan
