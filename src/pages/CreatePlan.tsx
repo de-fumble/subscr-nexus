@@ -95,31 +95,32 @@ const CreatePlan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6">
+    <div className="min-h-screen bg-gradient-subtle">
+      <div className="border-b border-border/30 bg-gradient-card backdrop-blur-xl shadow-medium">
+        <div className="container mx-auto px-6 py-8">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate("/dashboard")}
+              className="hover:bg-accent-soft hover:text-accent"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className="text-4xl font-bold gradient-text mb-2">
                 Create Subscription Plan
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Set up a new recurring payment plan for your subscribers
+              <p className="text-sm text-muted-foreground">
+                Configure a new recurring payment plan for your subscribers
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        <Card className="mx-auto max-w-2xl p-8">
+      <div className="container mx-auto px-6 py-10">
+        <Card className="mx-auto max-w-3xl p-10 shadow-elegant">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Plan Name *</Label>
@@ -208,27 +209,28 @@ const CreatePlan = () => {
               </p>
             </div>
 
-            <div className="rounded-lg bg-muted/50 p-4">
-              <h3 className="mb-2 font-semibold text-foreground">
+            <div className="rounded-xl bg-gradient-to-br from-accent-soft to-accent-soft/50 p-6 border border-accent/20 shadow-soft">
+              <h3 className="mb-3 font-bold text-foreground text-lg">
                 Plan Preview
               </h3>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-2 text-sm">
                 <p className="text-muted-foreground">
                   Subscribers will be charged{" "}
-                  <span className="font-semibold text-foreground">
+                  <span className="font-bold text-accent text-lg">
                     ₦{formData.price || "0"}
                   </span>{" "}
                   {formData.interval}
                 </p>
                 {formData.category && (
                   <p className="text-muted-foreground">
-                    Category: {formData.category}
+                    Category:{" "}
+                    <span className="font-semibold text-foreground">{formData.category}</span>
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -241,7 +243,9 @@ const CreatePlan = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-accent hover:bg-accent/90"
+                variant="premium"
+                className="flex-1"
+                size="lg"
               >
                 {loading ? (
                   <>

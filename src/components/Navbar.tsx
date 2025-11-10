@@ -31,40 +31,42 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="fixed top-0 z-50 w-full border-b border-border/30 glass-effect shadow-medium">
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img 
-            src={logoImage} 
-            alt="Recurra Logo" 
-            className="h-10 w-10 object-contain"
-          />
-          <span className="text-xl font-bold text-foreground">Recurra</span>
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="rounded-xl bg-gradient-to-br from-accent to-accent-deep p-2 shadow-soft group-hover:shadow-medium transition-all">
+            <img 
+              src={logoImage} 
+              alt="Recurra Logo" 
+              className="h-8 w-8 object-contain brightness-0 invert"
+            />
+          </div>
+          <span className="text-2xl font-bold gradient-text">Recurra</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
           <Link
             to="/#features"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-semibold text-muted-foreground transition-all hover:text-accent hover:scale-105"
           >
             Features
           </Link>
           <Link
             to="/#pricing"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-semibold text-muted-foreground transition-all hover:text-accent hover:scale-105"
           >
             Pricing
           </Link>
           <Link
             to="/#about"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-semibold text-muted-foreground transition-all hover:text-accent hover:scale-105"
           >
             About
           </Link>
           {session ? (
             <>
               <Link to="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
+                <Button variant="ghost" className="hover:bg-accent-soft hover:text-accent">Dashboard</Button>
               </Link>
               <Button onClick={handleSignOut} variant="outline">
                 Sign Out
@@ -73,10 +75,10 @@ const Navbar = () => {
           ) : (
             <>
               <Link to="/auth">
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost" className="hover:bg-accent-soft hover:text-accent">Sign In</Button>
               </Link>
               <Link to="/auth">
-                <Button className="bg-accent hover:bg-accent/90">Get Started</Button>
+                <Button variant="premium">Get Started</Button>
               </Link>
             </>
           )}

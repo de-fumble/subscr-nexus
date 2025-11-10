@@ -93,19 +93,20 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 px-6">
-      <Card className="w-full max-w-md p-8">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent">
-            <span className="text-2xl font-bold text-primary-foreground">R</span>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-hero px-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.05),transparent_50%)]" />
+      <Card className="w-full max-w-md p-10 shadow-elegant relative z-10">
+        <div className="mb-10 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep shadow-glow">
+            <span className="text-3xl font-bold text-white">R</span>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-4xl font-bold gradient-text mb-3">
             {isLogin ? "Welcome Back" : "Get Started"}
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-muted-foreground text-base">
             {isLogin
-              ? "Sign in to manage your subscriptions"
-              : "Create your account to start managing subscriptions"}
+              ? "Sign in to access your premium dashboard"
+              : "Create your account and start managing subscriptions"}
           </p>
         </div>
 
@@ -159,7 +160,9 @@ const Auth = () => {
 
           <Button
             type="submit"
-            className="w-full bg-accent hover:bg-accent/90"
+            variant="premium"
+            className="w-full"
+            size="lg"
             disabled={isLoading}
           >
             {isLoading ? (

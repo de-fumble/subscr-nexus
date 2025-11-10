@@ -168,15 +168,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6">
+    <div className="min-h-screen bg-gradient-subtle">
+      <div className="border-b border-border/30 bg-gradient-card backdrop-blur-xl shadow-medium">
+        <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className="text-4xl font-bold gradient-text mb-2">
                 {organization?.org_name || "Dashboard"}
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-accent rounded-full animate-pulse" />
                 {organization?.email}
               </p>
             </div>
@@ -192,58 +193,60 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-foreground">Overview</h2>
+      <div className="container mx-auto px-6 py-10">
+        <div className="mb-8 flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-foreground">Performance Overview</h2>
           <Button
             onClick={() => navigate("/plans/create")}
-            className="bg-accent hover:bg-accent/90 gap-2"
+            variant="premium"
+            className="gap-2"
           >
             <Plus className="h-4 w-4" />
             Create Plan
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           {metrics.map((metric, index) => {
             const Icon = metric.icon;
             return (
               <Card
                 key={index}
-                className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
+                className="p-7 transition-all duration-500 hover:shadow-elegant hover:-translate-y-1 animate-fade-in group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <Icon className="h-5 w-5 text-primary" />
+                <div className="flex items-center justify-between mb-5">
+                  <div className="rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 p-3.5 group-hover:from-accent/20 group-hover:to-accent/10 transition-all shadow-soft">
+                    <Icon className="h-6 w-6 text-accent" />
                   </div>
                   {metric.showButton && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={metric.onButtonClick}
+                      className="hover:bg-accent-soft hover:text-accent hover:border-accent"
                     >
                       {metric.buttonText}
                     </Button>
                   )}
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                     {metric.title}
                   </h3>
-                  <p className="mt-2 text-3xl font-bold text-foreground">
+                  <p className="text-4xl font-bold gradient-text">
                     {metric.value}
                   </p>
                 </div>
                 {metric.showChart && chartData.length > 0 && (
-                  <div className="mt-4 h-20">
+                  <div className="mt-6 h-20 -mb-2">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <Line
                           type="monotone"
                           dataKey="revenue"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={2}
+                          stroke="hsl(var(--accent))"
+                          strokeWidth={3}
                           dot={false}
                         />
                       </LineChart>
@@ -255,65 +258,74 @@ const Dashboard = () => {
           })}
         </div>
 
-        <div className="mt-8">
-          <Card className="p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">
-                Your Subscription Plans
-              </h3>
+        <div className="mt-10">
+          <Card className="p-8">
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-foreground mb-2">
+                  Active Subscription Plans
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage and monitor your recurring payment plans
+                </p>
+              </div>
               <Button
                 onClick={() => navigate("/plans")}
-                variant="ghost"
+                variant="outline"
                 size="sm"
+                className="hover:bg-accent-soft hover:text-accent hover:border-accent"
               >
-                View All
+                View All Plans
               </Button>
             </div>
 
             {plans.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                  <Plus className="h-8 w-8 text-muted-foreground" />
+              <div className="py-16 text-center">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 shadow-soft">
+                  <Plus className="h-10 w-10 text-accent" />
                 </div>
-                <h4 className="mb-2 text-lg font-semibold text-foreground">
-                  No plans yet
+                <h4 className="mb-3 text-xl font-bold text-foreground">
+                  No plans created yet
                 </h4>
-                <p className="mb-6 text-sm text-muted-foreground">
+                <p className="mb-8 text-muted-foreground max-w-md mx-auto">
                   Create your first subscription plan to start accepting
-                  payments
+                  recurring payments from your customers
                 </p>
                 <Button
                   onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90"
+                  variant="premium"
+                  size="lg"
                 >
                   Create Your First Plan
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {plans.map((plan) => (
+              <div className="space-y-5">
+                {plans.map((plan, index) => (
                   <div
                     key={plan.id}
-                    className="flex items-center justify-between border-b border-border pb-4 last:border-0 last:pb-0"
+                    className="flex items-center justify-between border-b border-border/50 pb-5 last:border-0 last:pb-0 hover:bg-accent-soft/30 -mx-2 px-2 py-3 rounded-lg transition-all duration-300"
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-medium text-foreground">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-bold text-lg text-foreground">
                           {plan.name}
                         </h4>
-                        <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+                        <span className="rounded-full bg-gradient-to-r from-accent/10 to-accent-deep/10 px-4 py-1.5 text-xs font-semibold text-accent border border-accent/20">
                           {plan.interval}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Users className="h-4 w-4" />
                         {plan.subscriber_count || 0} active subscribers
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-foreground">
+                      <p className="text-2xl font-bold gradient-text">
                         ₦{plan.price.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground font-medium">
                         per {plan.interval}
                       </p>
                     </div>
