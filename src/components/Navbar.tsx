@@ -33,11 +33,11 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-3 transition-transform duration-300 hover:scale-105">
           <img 
             src={logoImage} 
             alt="Recurra Logo" 
-            className="h-10 w-10 object-contain"
+            className="h-12 w-12 object-cover rounded-xl"
           />
           <span className="text-xl font-bold text-foreground">Recurra</span>
         </Link>
@@ -45,38 +45,38 @@ const Navbar = () => {
         <div className="hidden items-center gap-8 md:flex">
           <Link
             to="/#features"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105"
           >
             Features
           </Link>
           <Link
             to="/#pricing"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105"
           >
             Pricing
           </Link>
           <Link
             to="/#about"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105"
           >
             About
           </Link>
           {session ? (
             <>
               <Link to="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
+                <Button variant="ghost" className="transition-all duration-300 hover:scale-105">Dashboard</Button>
               </Link>
-              <Button onClick={handleSignOut} variant="outline">
+              <Button onClick={handleSignOut} variant="outline" className="transition-all duration-300 hover:scale-105">
                 Sign Out
               </Button>
             </>
           ) : (
             <>
               <Link to="/auth">
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost" className="transition-all duration-300 hover:scale-105">Sign In</Button>
               </Link>
               <Link to="/auth">
-                <Button className="bg-accent hover:bg-accent/90">Get Started</Button>
+                <Button className="bg-accent hover:bg-accent/90 transition-all duration-300 hover:scale-105">Get Started</Button>
               </Link>
             </>
           )}
