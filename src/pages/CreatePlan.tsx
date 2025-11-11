@@ -20,7 +20,7 @@ import { z } from "zod";
 const planSchema = z.object({
   name: z.string().trim().min(1, "Plan name is required").max(100),
   price: z.number().min(1, "Price must be at least ₦1"),
-  interval: z.enum(["daily", "weekly", "monthly", "annually"]),
+  interval: z.enum(["daily", "weekly", "monthly", "quarterly", "annually"]),
   description: z.string().trim().max(500).optional(),
   category: z.string().trim().max(50).optional(),
 });
@@ -170,6 +170,7 @@ const CreatePlan = () => {
                     <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
                     <SelectItem value="annually">Annually</SelectItem>
                   </SelectContent>
                 </Select>

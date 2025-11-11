@@ -39,6 +39,27 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Subscribe to real-time updates for subscribers table
+    const channel = supabase
+      .channel('dashboard-subscribers')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscribers'
+        },
+        () => {
+          // Refetch dashboard data when subscribers change
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
