@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Plus, ExternalLink, Archive } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Plan {
   id: string;
@@ -23,6 +33,7 @@ const Plans = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPlans();
@@ -199,9 +210,6 @@ const Plans = () => {
                       / {plan.interval}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {plan.subscriber_count || 0} active subscribers
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -216,7 +224,7 @@ const Plans = () => {
                     Copy Subscription Link
                   </Button>
                   <Button
-                    onClick={() => handleArchivePlan(plan.id)}
+                    onClick={() => setPlanToDelete(plan.id)}
                     variant="destructive"
                     className="w-full gap-2"
                   >
@@ -229,6 +237,31 @@ const Plans = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!planToDelete} onOpenChange={() => setPlanToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive this plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This plan will be archived, not permanently deleted. It will no longer be visible to new subscribers, but existing subscription data will be preserved for auditing purposes. You can view archived plans in your records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (planToDelete) {
+                  handleArchivePlan(planToDelete);
+                  setPlanToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Archive Plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

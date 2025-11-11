@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Users, TrendingUp, Plus, LogOut } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import * as recharts from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
 
@@ -148,7 +149,7 @@ const Dashboard = () => {
     {
       title: "Recurring Revenue",
       value: `₦${stats.recurringRevenue.toLocaleString()}`,
-      icon: DollarSign,
+      icon: Wallet,
       showChart: false,
       showButton: false,
     },
@@ -271,6 +272,36 @@ const Dashboard = () => {
                     </ResponsiveContainer>
                   </div>
                 )}
+                {metric.title === "Total Revenue" && plans.length > 0 && (
+                  <div className="mt-4 h-24">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <recharts.BarChart data={plans.map(plan => ({
+                        name: plan.name.substring(0, 10),
+                        revenue: plan.price * (plan.subscriber_count || 0)
+                      }))}>
+                        <recharts.XAxis 
+                          dataKey="name" 
+                          tick={{ fontSize: 10 }}
+                          stroke="hsl(var(--muted-foreground))"
+                        />
+                        <recharts.YAxis hide />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px"
+                          }}
+                          formatter={(value: number) => `₦${value.toLocaleString()}`}
+                        />
+                        <recharts.Bar 
+                          dataKey="revenue" 
+                          fill="hsl(var(--primary))"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </recharts.BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </Card>
             );
           })}
@@ -326,9 +357,6 @@ const Dashboard = () => {
                           {plan.interval}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {plan.subscriber_count || 0} active subscribers
-                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-foreground">
