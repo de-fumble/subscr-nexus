@@ -199,22 +199,31 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] opacity-30 pointer-events-none">
+        <img src="/src/assets/decorative-circle.svg" alt="" className="w-full h-full animate-glow" />
+      </div>
+      <div className="absolute bottom-0 left-0 w-[200px] h-[200px] opacity-20 pointer-events-none">
+        <img src="/src/assets/decorative-dots.svg" alt="" className="w-full h-full" />
+      </div>
+      
+      <div className="border-b border-border/50 glass-card relative z-10">
+        <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
+            <div className="animate-slide-in">
+              <h1 className="text-4xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-accent bg-clip-text text-transparent">
                 {organization?.org_name || "Dashboard"}
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
                 {organization?.email}
               </p>
             </div>
             <Button
               onClick={handleSignOut}
               variant="outline"
-              className="gap-2"
+              className="gap-2 hover-lift glass-card"
             >
               <LogOut className="h-4 w-4" />
               Sign Out
@@ -223,12 +232,15 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-foreground">Overview</h2>
+      <div className="container mx-auto px-6 py-8 relative z-10">
+        <div className="mb-8 flex items-center justify-between animate-slide-in">
+          <div>
+            <h2 className="text-3xl font-bold text-foreground mb-1">Overview</h2>
+            <p className="text-sm text-muted-foreground">Real-time metrics and insights</p>
+          </div>
           <Button
             onClick={() => navigate("/plans/create")}
-            className="bg-accent hover:bg-accent/90 gap-2"
+            className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
           >
             <Plus className="h-4 w-4" />
             Create Plan
@@ -241,28 +253,32 @@ const Dashboard = () => {
             return (
               <Card
                 key={index}
-                className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
+                className="p-6 glass-card hover-lift border-0 shadow-[var(--shadow-medium)] animate-scale-in relative overflow-hidden group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <Icon className="h-5 w-5 text-primary" />
+                {/* Shimmer effect on hover */}
+                <div className="absolute inset-0 shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="flex items-center justify-between mb-6 relative z-10">
+                  <div className="rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 p-3 shadow-lg backdrop-blur-sm">
+                    <Icon className="h-6 w-6 text-accent" />
                   </div>
                   {metric.showButton && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={metric.onButtonClick}
+                      className="glass-card hover-lift border-accent/20"
                     >
                       {metric.buttonText}
                     </Button>
                   )}
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
+                <div className="relative z-10">
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                     {metric.title}
                   </h3>
-                  <p className="mt-2 text-3xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-foreground mb-1">
                     {metric.value}
                   </p>
                 </div>
@@ -329,59 +345,74 @@ const Dashboard = () => {
           })}
         </div>
 
-        <div className="mt-8">
-          <Card className="p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">
-                Your Subscription Plans
-              </h3>
+        <div className="mt-12 animate-fade-in" style={{ animationDelay: "400ms" }}>
+          <Card className="p-8 glass-card border-0 shadow-[var(--shadow-strong)] relative overflow-hidden">
+            {/* Decorative wave at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 opacity-50 pointer-events-none">
+              <img src="/src/assets/wave-accent.svg" alt="" className="w-full" />
+            </div>
+            
+            <div className="mb-8 flex items-center justify-between relative z-10">
+              <div>
+                <h3 className="text-2xl font-bold text-foreground mb-1">
+                  Your Subscription Plans
+                </h3>
+                <p className="text-sm text-muted-foreground">Manage and monitor your active plans</p>
+              </div>
               <Button
                 onClick={() => navigate("/plans")}
                 variant="ghost"
                 size="sm"
+                className="hover-lift"
               >
                 View All
               </Button>
             </div>
 
             {plans.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                  <Plus className="h-8 w-8 text-muted-foreground" />
+              <div className="py-16 text-center relative z-10">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl glass-card shadow-lg">
+                  <Plus className="h-10 w-10 text-accent" />
                 </div>
-                <h4 className="mb-2 text-lg font-semibold text-foreground">
+                <h4 className="mb-3 text-xl font-bold text-foreground">
                   No plans yet
                 </h4>
-                <p className="mb-6 text-sm text-muted-foreground">
+                <p className="mb-8 text-sm text-muted-foreground max-w-md mx-auto">
                   Create your first subscription plan to start accepting
-                  payments
+                  payments and growing your business
                 </p>
                 <Button
                   onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90"
+                  className="bg-accent hover:bg-accent/90 hover-lift shadow-lg"
                 >
                   Create Your First Plan
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {plans.map((plan) => (
+              <div className="space-y-3 relative z-10">
+                {plans.map((plan, idx) => (
                   <div
                     key={plan.id}
-                    className="flex items-center justify-between border-b border-border pb-4 last:border-0 last:pb-0"
+                    className="flex items-center justify-between p-5 rounded-xl glass-card hover-lift border border-border/50 group animate-slide-in"
+                    style={{ animationDelay: `${idx * 50}ms` }}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <h4 className="font-medium text-foreground">
-                          {plan.name}
-                        </h4>
-                        <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
-                          {plan.interval}
-                        </span>
+                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
+                          <Wallet className="h-5 w-5 text-accent" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground mb-1">
+                            {plan.name}
+                          </h4>
+                          <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent backdrop-blur-sm">
+                            {plan.interval}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-foreground">
+                      <p className="text-2xl font-bold text-foreground mb-1">
                         ₦{plan.price.toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -395,7 +426,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-12 animate-fade-in" style={{ animationDelay: "500ms" }}>
           <VerifyTransactionCard />
         </div>
       </div>
