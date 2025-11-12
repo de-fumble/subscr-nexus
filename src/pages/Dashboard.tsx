@@ -124,13 +124,15 @@ const Dashboard = () => {
         console.error("Error fetching analytics:", analyticsError);
         toast.error("Failed to load analytics data");
       } else if (analyticsData) {
+        const chart = analyticsData.chartData || [];
+        setChartData(chart);
+        const totalFromPlans = chart.reduce((sum: number, item: { revenue: number }) => sum + (item.revenue || 0), 0);
         setStats({
-          totalRevenue: analyticsData.totalRevenue || 0,
+          totalRevenue: totalFromPlans,
           recurringRevenue: analyticsData.recurringRevenue || 0,
           activeSubscribers: analyticsData.activeSubscribers || 0,
-          totalLifetimeRevenue: analyticsData.totalLifetimeRevenue || 0,
+          totalLifetimeRevenue: totalFromPlans,
         });
-        setChartData(analyticsData.chartData || []);
       }
     } catch (error) {
       console.error("Error:", error);
