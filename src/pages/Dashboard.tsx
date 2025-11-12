@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Wallet, Users, TrendingUp, Plus, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import * as recharts from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
@@ -33,9 +33,10 @@ const Dashboard = () => {
     totalRevenue: 0,
     recurringRevenue: 0,
     activeSubscribers: 0,
-    totalLifetimeRevenue: 0,
+    totalFailedPayments: 0,
   });
   const [chartData, setChartData] = useState<Array<{ plan: string; revenue: number }>>([]);
+  const [failedPaymentsData, setFailedPaymentsData] = useState<Array<{ name: string; value: number }>>([]);
   const [showSubscriberDialog, setShowSubscriberDialog] = useState(false);
 
   useEffect(() => {
@@ -126,12 +127,15 @@ const Dashboard = () => {
       } else if (analyticsData) {
         const chart = analyticsData.chartData || [];
         setChartData(chart);
+        const failedData = analyticsData.failedPaymentsData || [];
+        setFailedPaymentsData(failedData);
         const totalFromPlans = chart.reduce((sum: number, item: { revenue: number }) => sum + (item.revenue || 0), 0);
+        const totalFailed = failedData.reduce((sum: number, item: { value: number }) => sum + (item.value || 0), 0);
         setStats({
           totalRevenue: totalFromPlans,
           recurringRevenue: analyticsData.recurringRevenue || 0,
           activeSubscribers: analyticsData.activeSubscribers || 0,
-          totalLifetimeRevenue: totalFromPlans,
+          totalFailedPayments: totalFailed,
         });
       }
     } catch (error) {
@@ -172,13 +176,16 @@ const Dashboard = () => {
       showButton: false,
     },
     {
-      title: "Total Lifetime Revenue",
-      value: `₦${stats.totalLifetimeRevenue.toLocaleString()}`,
+      title: "Failed Payments",
+      value: stats.totalFailedPayments.toString(),
       icon: TrendingUp,
       showChart: false,
+      showPieChart: true,
       showButton: false,
     },
   ];
+
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
 
   if (loading) {
     return (
@@ -286,6 +293,34 @@ const Dashboard = () => {
                           radius={[4, 4, 0, 0]}
                         />
                       </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                {metric.showPieChart && failedPaymentsData.length > 0 && (
+                  <div className="mt-4 h-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={failedPaymentsData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={50}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {failedPaymentsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px"
+                          }}
+                        />
+                      </PieChart>
                     </ResponsiveContainer>
                   </div>
                 )}

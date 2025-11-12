@@ -67,9 +67,9 @@ serve(async (req) => {
 
     const orgPlanCodes = new Set(orgPlans?.map(p => p.paystack_plan_code) || []);
 
-    // Fetch transactions from Paystack
+    // Fetch all transactions from Paystack (success, failed, and abandoned)
     const transactionsResponse = await fetch(
-      "https://api.paystack.co/transaction?perPage=100&status=success",
+      "https://api.paystack.co/transaction?perPage=100",
       {
         headers: {
           Authorization: `Bearer ${paystackSecretKey}`,
@@ -114,8 +114,11 @@ serve(async (req) => {
     const orgTransactions = transactions.filter(
       (txn: any) => txn.metadata?.subscription_code && orgSubscriptionCodes.has(txn.metadata.subscription_code)
     );
+    
+    // Filter only successful transactions for revenue calculation
+    const successfulTransactions = orgTransactions.filter((txn: any) => txn.status === "success");
 
-    const totalRevenue = orgTransactions.reduce(
+    const totalRevenue = successfulTransactions.reduce(
       (sum: number, txn: any) => sum + (txn.amount / 100),
       0
     );
@@ -130,7 +133,7 @@ serve(async (req) => {
 
     // Calculate revenue by plan for histogram
     const revenueByPlan: { [key: string]: number } = {};
-    orgTransactions.forEach((txn: any) => {
+    successfulTransactions.forEach((txn: any) => {
       const subscriptionCode = txn.metadata?.subscription_code;
       if (subscriptionCode) {
         const subscription = orgSubscriptions.find((sub: any) => sub.subscription_code === subscriptionCode);
@@ -148,6 +151,15 @@ serve(async (req) => {
       }))
       .sort((a, b) => b.revenue - a.revenue); // Sort by highest revenue first
 
+    // Calculate failed payments data
+    const abandonedCount = orgTransactions.filter((t: any) => t.status === 'abandoned').length;
+    const failedCount = orgTransactions.filter((t: any) => t.status === 'failed').length;
+
+    const failedPaymentsData = [
+      { name: 'Abandoned Checkout', value: abandonedCount },
+      { name: 'Failed Payments', value: failedCount },
+    ];
+
     return new Response(
       JSON.stringify({
         totalRevenue,
@@ -155,6 +167,7 @@ serve(async (req) => {
         activeSubscribers: activeSubscriptions,
         totalLifetimeRevenue: totalRevenue,
         chartData, // Revenue per plan for histogram
+        failedPaymentsData, // Failed payments breakdown
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
