@@ -35,7 +35,7 @@ const Dashboard = () => {
     activeSubscribers: 0,
     totalLifetimeRevenue: 0,
   });
-  const [chartData, setChartData] = useState<Array<{ month: string; revenue: number }>>([]);
+  const [chartData, setChartData] = useState<Array<{ plan: string; revenue: number }>>([]);
   const [showSubscriberDialog, setShowSubscriberDialog] = useState(false);
 
   useEffect(() => {
@@ -258,33 +258,18 @@ const Dashboard = () => {
                   </p>
                 </div>
                 {metric.showChart && chartData.length > 0 && (
-                  <div className="mt-4 h-20">
+                  <div className="mt-4 h-32">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <Line
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                {metric.title === "Total Revenue" && plans.length > 0 && (
-                  <div className="mt-4 h-24">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <recharts.BarChart data={plans.map(plan => ({
-                        name: plan.name.substring(0, 10),
-                        revenue: plan.price * (plan.subscriber_count || 0)
-                      }))}>
-                        <recharts.XAxis 
-                          dataKey="name" 
+                      <BarChart data={chartData}>
+                        <XAxis 
+                          dataKey="plan" 
                           tick={{ fontSize: 10 }}
                           stroke="hsl(var(--muted-foreground))"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
                         />
-                        <recharts.YAxis hide />
+                        <YAxis hide />
                         <Tooltip 
                           contentStyle={{
                             backgroundColor: "hsl(var(--card))",
@@ -293,12 +278,12 @@ const Dashboard = () => {
                           }}
                           formatter={(value: number) => `₦${value.toLocaleString()}`}
                         />
-                        <recharts.Bar 
+                        <Bar 
                           dataKey="revenue" 
                           fill="hsl(var(--primary))"
                           radius={[4, 4, 0, 0]}
                         />
-                      </recharts.BarChart>
+                      </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}

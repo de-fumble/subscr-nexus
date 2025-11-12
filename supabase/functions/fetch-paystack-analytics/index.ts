@@ -128,21 +128,25 @@ serve(async (req) => {
       .filter((sub: any) => sub.status === "active")
       .reduce((sum: number, sub: any) => sum + (sub.amount / 100), 0);
 
-    // Calculate revenue by month for charts - only org transactions
-    const revenueByMonth: { [key: string]: number } = {};
+    // Calculate revenue by plan for histogram
+    const revenueByPlan: { [key: string]: number } = {};
     orgTransactions.forEach((txn: any) => {
-      const date = new Date(txn.paid_at || txn.created_at);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      revenueByMonth[monthKey] = (revenueByMonth[monthKey] || 0) + (txn.amount / 100);
+      const subscriptionCode = txn.metadata?.subscription_code;
+      if (subscriptionCode) {
+        const subscription = orgSubscriptions.find((sub: any) => sub.subscription_code === subscriptionCode);
+        if (subscription && subscription.plan) {
+          const planName = subscription.plan.name;
+          revenueByPlan[planName] = (revenueByPlan[planName] || 0) + (txn.amount / 100);
+        }
+      }
     });
 
-    const chartData = Object.entries(revenueByMonth)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6) // Last 6 months
-      .map(([month, revenue]) => ({
-        month: new Date(month + "-01").toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    const chartData = Object.entries(revenueByPlan)
+      .map(([plan, revenue]) => ({
+        plan,
         revenue,
-      }));
+      }))
+      .sort((a, b) => b.revenue - a.revenue); // Sort by highest revenue first
 
     return new Response(
       JSON.stringify({
@@ -150,7 +154,7 @@ serve(async (req) => {
         recurringRevenue,
         activeSubscribers: activeSubscriptions,
         totalLifetimeRevenue: totalRevenue,
-        chartData,
+        chartData, // Revenue per plan for histogram
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
