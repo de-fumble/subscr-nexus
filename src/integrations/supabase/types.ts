@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       organizations: {
         Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
           created_at: string
           email: string
           id: string
@@ -26,6 +29,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
           created_at?: string
           email: string
           id?: string
@@ -36,6 +42,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
           created_at?: string
           email?: string
           id?: string
