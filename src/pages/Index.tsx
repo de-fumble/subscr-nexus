@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
+import dashboardPreview from "@/assets/dashboard-preview.png";
 
 const Index = () => {
   const features = [
@@ -156,12 +157,11 @@ const Index = () => {
           </div>
 
           <div className="mt-20 rounded-2xl border border-border bg-card p-4 shadow-2xl transition-all duration-500 hover:shadow-3xl animate-fade-in">
-            <div className="aspect-video rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-              <div className="text-center">
-                <BarChart3 className="mx-auto h-20 w-20 text-accent mb-4 animate-pulse" />
-                <p className="text-muted-foreground">Dashboard Preview</p>
-              </div>
-            </div>
+            <img 
+              src={dashboardPreview} 
+              alt="Recurra Dashboard Preview - Analytics and subscription management interface" 
+              className="w-full h-auto rounded-lg"
+            />
           </div>
         </div>
       </section>
