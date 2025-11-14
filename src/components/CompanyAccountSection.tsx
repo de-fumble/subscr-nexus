@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Edit2, Save, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2, Edit2, Save, X, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+interface Bank {
+  name: string;
+  code: string;
+}
 
 interface CompanyAccountSectionProps {
   organization: {
@@ -26,12 +32,70 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
     bank_name: organization.bank_name || "",
   });
   const [saving, setSaving] = useState(false);
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [selectedBankCode, setSelectedBankCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+
+  useEffect(() => {
+    fetchBanks();
+  }, []);
+
+  const fetchBanks = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('list-banks');
+      if (error) throw error;
+      setBanks(data.banks || []);
+    } catch (error) {
+      console.error('Error fetching banks:', error);
+      toast.error('Failed to load bank list');
+    }
+  };
+
+  const verifyAccount = async () => {
+    if (!formData.account_number || !selectedBankCode) {
+      toast.error('Please enter account number and select a bank');
+      return;
+    }
+
+    setVerifying(true);
+    setIsVerified(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('resolve-bank-account', {
+        body: {
+          account_number: formData.account_number,
+          bank_code: selectedBankCode,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.verified) {
+        setFormData(prev => ({ ...prev, account_name: data.account_name }));
+        setIsVerified(true);
+        toast.success('Account verified successfully');
+      } else {
+        toast.error(data.error || 'Failed to verify account');
+      }
+    } catch (error) {
+      console.error('Error verifying account:', error);
+      toast.error('Failed to verify account');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const hasAccountDetails = organization.account_number && organization.account_name && organization.bank_name;
 
   const handleSave = async () => {
     if (!formData.account_number || !formData.account_name || !formData.bank_name) {
       toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (!isVerified) {
+      toast.error("Please verify the account first");
       return;
     }
 
@@ -65,6 +129,8 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
       account_name: organization.account_name || "",
       bank_name: organization.bank_name || "",
     });
+    setSelectedBankCode("");
+    setIsVerified(false);
     setIsEditing(false);
   };
 
@@ -103,12 +169,57 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="bank_name">Bank Name</Label>
-              <Input
-                id="bank_name"
-                placeholder="e.g., First Bank"
-                value={formData.bank_name}
-                onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-              />
+              <Select
+                value={selectedBankCode}
+                onValueChange={(value) => {
+                  setSelectedBankCode(value);
+                  const bank = banks.find(b => b.code === value);
+                  if (bank) {
+                    setFormData({ ...formData, bank_name: bank.name });
+                  }
+                  setIsVerified(false);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a bank" />
+                </SelectTrigger>
+                <SelectContent>
+                  {banks.map((bank) => (
+                    <SelectItem key={bank.code} value={bank.code}>
+                      {bank.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="account_number">Account Number</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="account_number"
+                  placeholder="0123456789"
+                  value={formData.account_number}
+                  onChange={(e) => {
+                    setFormData({ ...formData, account_number: e.target.value });
+                    setIsVerified(false);
+                  }}
+                  maxLength={10}
+                />
+                <Button 
+                  type="button"
+                  onClick={verifyAccount} 
+                  disabled={verifying || !formData.account_number || !selectedBankCode}
+                  variant="outline"
+                >
+                  {verifying ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isVerified ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  ) : (
+                    'Verify'
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="account_name">Account Name</Label>
@@ -116,20 +227,19 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
                 id="account_name"
                 placeholder="Account holder name"
                 value={formData.account_name}
-                onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
+                readOnly
+                disabled
+                className={isVerified ? "bg-green-50 border-green-300" : ""}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="account_number">Account Number</Label>
-              <Input
-                id="account_number"
-                placeholder="0123456789"
-                value={formData.account_number}
-                onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-              />
+              {isVerified && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Account verified
+                </p>
+              )}
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving}>
+              <Button onClick={handleSave} disabled={saving || !isVerified}>
                 <Save className="h-4 w-4 mr-2" />
                 Save
               </Button>
@@ -138,6 +248,11 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
                 Cancel
               </Button>
             </div>
+            {!isVerified && formData.account_number && selectedBankCode && (
+              <p className="text-sm text-muted-foreground">
+                Please verify your account before saving
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
