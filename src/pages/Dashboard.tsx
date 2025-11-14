@@ -3,17 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, LogOut } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import * as recharts from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 
 interface Organization {
   id: string;
   org_name: string;
   email: string;
+  account_number?: string;
+  account_name?: string;
+  bank_name?: string;
 }
 
 interface SubscriptionPlan {
@@ -146,11 +152,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
-
   const metrics = [
     {
       title: "Recurring Revenue",
@@ -189,63 +190,60 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar organization={organization} />
+          <SidebarInset>
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading dashboard...</p>
+              </div>
+            </div>
+          </SidebarInset>
         </div>
-      </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] opacity-30 pointer-events-none">
-        <img src="/src/assets/decorative-circle.svg" alt="" className="w-full h-full animate-glow" />
-      </div>
-      <div className="absolute bottom-0 left-0 w-[200px] h-[200px] opacity-20 pointer-events-none">
-        <img src="/src/assets/decorative-dots.svg" alt="" className="w-full h-full" />
-      </div>
-      
-      <div className="border-b border-border/50 glass-card relative z-10">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="animate-slide-in">
-              <h1 className="text-4xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-accent bg-clip-text text-transparent">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar organization={organization} />
+        <SidebarInset className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+            <SidebarTrigger />
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-foreground">
                 {organization?.org_name || "Dashboard"}
               </h1>
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-                {organization?.email}
-              </p>
             </div>
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              className="gap-2 hover-lift glass-card"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
+          </header>
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-6 py-8">
+              <div className="mb-8 flex items-center justify-between animate-slide-in">
+                <div>
+                  <h2 className="text-3xl font-bold text-foreground mb-1">Overview</h2>
+                  <p className="text-sm text-muted-foreground">Real-time metrics and insights</p>
+                </div>
+                <Button
+                  onClick={() => navigate("/plans/create")}
+                  className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Plan
+                </Button>
+              </div>
 
-      <div className="container mx-auto px-6 py-8 relative z-10">
-        <div className="mb-8 flex items-center justify-between animate-slide-in">
-          <div>
-            <h2 className="text-3xl font-bold text-foreground mb-1">Overview</h2>
-            <p className="text-sm text-muted-foreground">Real-time metrics and insights</p>
-          </div>
-          <Button
-            onClick={() => navigate("/plans/create")}
-            className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
-          >
-            <Plus className="h-4 w-4" />
-            Create Plan
-          </Button>
-        </div>
+              {/* Company Account Section */}
+              {organization && (
+                <div className="mb-8 animate-fade-in">
+                  <CompanyAccountSection 
+                    organization={organization} 
+                    onUpdate={fetchDashboardData}
+                  />
+                </div>
+              )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {metrics.map((metric, index) => {
@@ -431,14 +429,18 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <SubscriberManagementDialog
-        open={showSubscriberDialog}
-        onOpenChange={setShowSubscriberDialog}
-        orgId={organization?.id || ""}
-        onSubscriberRemoved={fetchDashboardData}
-      />
-    </div>
-  );
-};
+            </main>
+          </SidebarInset>
+        </div>
+        
+        <SubscriberManagementDialog
+          open={showSubscriberDialog}
+          onOpenChange={setShowSubscriberDialog}
+          orgId={organization?.id || ""}
+          onSubscriberRemoved={fetchDashboardData}
+        />
+      </SidebarProvider>
+    );
+  };
 
 export default Dashboard;

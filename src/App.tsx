@@ -12,6 +12,10 @@ import Subscribe from "./pages/Subscribe";
 import SubscriptionCallback from "./pages/SubscriptionCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
+import DashboardProfile from "./pages/DashboardProfile";
+import DashboardSettings from "./pages/DashboardSettings";
+import DashboardAnalytics from "./pages/DashboardAnalytics";
+import DashboardSubscribers from "./pages/DashboardSubscribers";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +51,38 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CreatePlan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/profile"
+            element={
+              <ProtectedRoute>
+                <DashboardProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <DashboardSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/analytics"
+            element={
+              <ProtectedRoute>
+                <DashboardAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/subscribers"
+            element={
+              <ProtectedRoute>
+                <DashboardSubscribers />
               </ProtectedRoute>
             }
           />
