@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.fetch-paystack-analytics]
 verify_jwt = false
+
+[functions.paystack-webhook]
+verify_jwt = false
+
+[functions.list-banks]
+verify_jwt = false
+
+[functions.resolve-bank-account]
+verify_jwt = false
+
+[functions.retry-failed-payments]
+verify_jwt = false

@@ -50,7 +50,7 @@ serve(async (req) => {
 
     // Handle subscription creation
     if (event.event === "subscription.create") {
-      const { customer, plan, subscription_code, email_token } = event.data;
+      const { customer, plan, subscription_code, email_token, authorization } = event.data;
       
       // Extract plan_id from metadata
       const planId = event.data.metadata?.custom_fields?.find(
@@ -65,7 +65,7 @@ serve(async (req) => {
         );
       }
 
-      // Create subscriber record
+      // Create subscriber record with authorization code for retries
       const { error: insertError } = await supabase
         .from("subscribers")
         .insert({
@@ -76,6 +76,7 @@ serve(async (req) => {
             : customer.email,
           paystack_customer_code: customer.customer_code,
           paystack_subscription_code: subscription_code,
+          paystack_authorization_code: authorization?.authorization_code || null,
           amount: event.data.amount,
           status: "active",
           next_payment_date: event.data.next_payment_date,
@@ -89,12 +90,12 @@ serve(async (req) => {
         );
       }
 
-      console.log("Subscriber created successfully");
+      console.log("Subscriber created successfully with authorization code");
     }
 
-    // Handle successful charge
+    // Handle successful charge - clear any failed payment state
     if (event.event === "charge.success" && event.data.customer) {
-      const { reference, amount, customer, paid_at } = event.data;
+      const { reference, amount, customer, paid_at, authorization } = event.data;
 
       // Find subscriber by customer code
       const { data: subscriber } = await supabase
@@ -104,6 +105,20 @@ serve(async (req) => {
         .single();
 
       if (subscriber) {
+        // Clear failed payment state and update authorization code
+        const { error: updateError } = await supabase
+          .from("subscribers")
+          .update({
+            payment_failed_at: null,
+            retry_count: 0,
+            paystack_authorization_code: authorization?.authorization_code || null,
+          })
+          .eq("id", subscriber.id);
+
+        if (updateError) {
+          console.error("Error clearing failed payment state:", updateError);
+        }
+
         // Record transaction
         const { error: transactionError } = await supabase
           .from("transactions")
@@ -118,8 +133,46 @@ serve(async (req) => {
         if (transactionError) {
           console.error("Error recording transaction:", transactionError);
         } else {
-          console.log("Transaction recorded successfully");
+          console.log("Transaction recorded successfully, failed payment state cleared");
         }
+      }
+    }
+
+    // Handle failed charge - mark for retry
+    if (event.event === "charge.failed" && event.data.customer) {
+      const { reference, amount, customer } = event.data;
+      console.log(`Charge failed for customer ${customer.customer_code}`);
+
+      // Find subscriber by customer code
+      const { data: subscriber } = await supabase
+        .from("subscribers")
+        .select("id, retry_count")
+        .eq("paystack_customer_code", customer.customer_code)
+        .single();
+
+      if (subscriber) {
+        // Mark payment as failed for retry mechanism
+        const { error: updateError } = await supabase
+          .from("subscribers")
+          .update({
+            payment_failed_at: new Date().toISOString(),
+          })
+          .eq("id", subscriber.id);
+
+        if (updateError) {
+          console.error("Error marking payment as failed:", updateError);
+        } else {
+          console.log(`Payment marked as failed for subscriber ${subscriber.id}, will be retried`);
+        }
+
+        // Record failed transaction
+        await supabase.from("transactions").insert({
+          subscriber_id: subscriber.id,
+          paystack_reference: reference,
+          amount: amount,
+          status: "failed",
+          paid_at: null,
+        });
       }
     }
 
@@ -136,6 +189,26 @@ serve(async (req) => {
         console.error("Error updating subscriber status:", updateError);
       } else {
         console.log("Subscriber status updated to cancelled");
+      }
+    }
+
+    // Handle subscription not renew (when all retries exhausted by Paystack)
+    if (event.event === "subscription.not_renew") {
+      const { subscription_code, customer } = event.data;
+      console.log(`Subscription not renewed for ${subscription_code}`);
+
+      const { error: updateError } = await supabase
+        .from("subscribers")
+        .update({ 
+          status: "payment_failed",
+          payment_failed_at: new Date().toISOString(),
+        })
+        .eq("paystack_subscription_code", subscription_code);
+
+      if (updateError) {
+        console.error("Error updating subscriber status:", updateError);
+      } else {
+        console.log("Subscriber marked as payment_failed due to non-renewal");
       }
     }
 
