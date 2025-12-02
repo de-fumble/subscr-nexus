@@ -63,10 +63,14 @@ export type Database = {
           customer_name: string | null
           email: string
           id: string
+          last_retry_at: string | null
           next_payment_date: string | null
+          payment_failed_at: string | null
+          paystack_authorization_code: string | null
           paystack_customer_code: string | null
           paystack_subscription_code: string | null
           plan_id: string
+          retry_count: number | null
           status: string
           updated_at: string
         }
@@ -76,10 +80,14 @@ export type Database = {
           customer_name?: string | null
           email: string
           id?: string
+          last_retry_at?: string | null
           next_payment_date?: string | null
+          payment_failed_at?: string | null
+          paystack_authorization_code?: string | null
           paystack_customer_code?: string | null
           paystack_subscription_code?: string | null
           plan_id: string
+          retry_count?: number | null
           status?: string
           updated_at?: string
         }
@@ -89,10 +97,14 @@ export type Database = {
           customer_name?: string | null
           email?: string
           id?: string
+          last_retry_at?: string | null
           next_payment_date?: string | null
+          payment_failed_at?: string | null
+          paystack_authorization_code?: string | null
           paystack_customer_code?: string | null
           paystack_subscription_code?: string | null
           plan_id?: string
+          retry_count?: number | null
           status?: string
           updated_at?: string
         }
