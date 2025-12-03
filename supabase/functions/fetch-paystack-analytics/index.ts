@@ -258,16 +258,19 @@ serve(async (req) => {
       { name: 'Failed Payments', value: failedCount },
     ];
 
-    // Calculate monthly revenue trend (last 6 months)
+    // Calculate monthly revenue trend (last 12 months - yearly)
     const now = new Date();
     const monthlyRevenue: { [key: string]: number } = {};
+    const monthlySubscriberData: { [key: string]: { start: number; end: number; new: number; churned: number } } = {};
     
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthKey = date.toLocaleString('default', { month: 'short' });
       monthlyRevenue[monthKey] = 0;
+      monthlySubscriberData[monthKey] = { start: 0, end: 0, new: 0, churned: 0 };
     }
 
+    // Calculate monthly revenue from successful transactions
     successfulTransactions.forEach((txn: any) => {
       const txnDate = new Date(txn.paid_at || txn.created_at);
       const monthKey = txnDate.toLocaleString('default', { month: 'short' });
@@ -281,6 +284,80 @@ serve(async (req) => {
       revenue,
     }));
 
+    // Calculate subscriber metrics per month
+    const monthKeys = Object.keys(monthlySubscriberData);
+    
+    orgSubscriptions.forEach((sub: any) => {
+      const createdAt = new Date(sub.createdAt || sub.created_at);
+      const createdMonthKey = createdAt.toLocaleString('default', { month: 'short' });
+      
+      // Count new subscribers per month
+      if (monthlySubscriberData.hasOwnProperty(createdMonthKey)) {
+        monthlySubscriberData[createdMonthKey].new++;
+      }
+      
+      // Count churned subscribers (cancelled, non-renew, or failed payment after grace)
+      if (sub.status === 'cancelled' || sub.status === 'non-renewing' || sub.status === 'attention') {
+        const cancelledAt = sub.cancelledAt || sub.cancelled_at || sub.updatedAt || sub.updated_at;
+        if (cancelledAt) {
+          const cancelledDate = new Date(cancelledAt);
+          const cancelledMonthKey = cancelledDate.toLocaleString('default', { month: 'short' });
+          if (monthlySubscriberData.hasOwnProperty(cancelledMonthKey)) {
+            monthlySubscriberData[cancelledMonthKey].churned++;
+          }
+        }
+      }
+    });
+
+    // Calculate start/end subscribers for each month (cumulative)
+    let runningTotal = 0;
+    monthKeys.forEach((monthKey, index) => {
+      monthlySubscriberData[monthKey].start = runningTotal;
+      runningTotal += monthlySubscriberData[monthKey].new - monthlySubscriberData[monthKey].churned;
+      monthlySubscriberData[monthKey].end = Math.max(0, runningTotal);
+    });
+
+    // Calculate subscriber growth trend
+    const subscriberTrend = monthKeys.map(month => {
+      const data = monthlySubscriberData[month];
+      const growth = data.new - data.churned;
+      const growthRate = data.start > 0 ? ((data.end - data.start) / data.start * 100) : (data.new > 0 ? 100 : 0);
+      return {
+        month,
+        subscribers: data.end,
+        growth,
+        growthRate: Math.round(growthRate * 10) / 10,
+      };
+    });
+
+    // Calculate Churn Rate (industry standard)
+    // Churn Rate = (Subscribers lost during period / Subscribers at start of period) × 100
+    const currentMonthKey = now.toLocaleString('default', { month: 'short' });
+    const currentMonthData = monthlySubscriberData[currentMonthKey];
+    const churnRate = currentMonthData && currentMonthData.start > 0
+      ? (currentMonthData.churned / currentMonthData.start * 100)
+      : 0;
+
+    // Calculate total churned and total at period start for overall metrics
+    const totalChurned = Object.values(monthlySubscriberData).reduce((sum, d) => sum + d.churned, 0);
+    const periodStartSubscribers = monthlySubscriberData[monthKeys[0]]?.start || activeSubscriptions;
+
+    // Calculate ARPU (industry standard)
+    // ARPU = Total revenue / Average number of active subscribers
+    const monthlyActiveAvg = monthKeys.reduce((sum, key) => {
+      const data = monthlySubscriberData[key];
+      return sum + (data.start + data.end) / 2;
+    }, 0) / monthKeys.length;
+    
+    const arpu = monthlyActiveAvg > 0 ? totalRevenue / monthlyActiveAvg : 0;
+
+    // Calculate subscriber growth rate (current month vs previous)
+    const prevMonthKey = monthKeys[monthKeys.length - 2];
+    const prevMonthData = monthlySubscriberData[prevMonthKey];
+    const subscriberGrowthRate = prevMonthData && prevMonthData.end > 0
+      ? ((activeSubscriptions - prevMonthData.end) / prevMonthData.end * 100)
+      : 0;
+
     return new Response(
       JSON.stringify({
         totalRevenue,
@@ -291,6 +368,10 @@ serve(async (req) => {
         chartData,
         failedPaymentsData,
         revenueTrend,
+        subscriberTrend,
+        churnRate: Math.round(churnRate * 10) / 10,
+        arpu: Math.round(arpu),
+        subscriberGrowthRate: Math.round(subscriberGrowthRate * 10) / 10,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

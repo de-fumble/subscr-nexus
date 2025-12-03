@@ -106,34 +106,31 @@ export default function DashboardAnalytics() {
         const totalRevenue = analyticsData.totalRevenue || 0;
         const activeSubscribers = analyticsData.activeSubscribers || 0;
         
-        // Set revenue trend from Paystack data
+        // Set revenue trend from Paystack data (yearly - 12 months)
         if (analyticsData.revenueTrend) {
           setRevenueData(analyticsData.revenueTrend);
         }
 
-        // Calculate growth rates (would need historical data for accurate calculation)
-        const previousMonthRevenue = analyticsData.revenueTrend?.[4]?.revenue || totalRevenue;
-        const currentMonthRevenue = analyticsData.revenueTrend?.[5]?.revenue || totalRevenue;
+        // Set subscriber trend from Paystack data
+        if (analyticsData.subscriberTrend) {
+          setSubscriberTrend(analyticsData.subscriberTrend);
+        }
+
+        // Calculate revenue growth rate from last two months
+        const revenueTrendLength = analyticsData.revenueTrend?.length || 0;
+        const previousMonthRevenue = analyticsData.revenueTrend?.[revenueTrendLength - 2]?.revenue || 0;
+        const currentMonthRevenue = analyticsData.revenueTrend?.[revenueTrendLength - 1]?.revenue || totalRevenue;
         const revenueGrowth = previousMonthRevenue > 0 
           ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100)
           : 0;
-
-        // Mock subscriber trend (would need historical subscriber data)
-        const months = analyticsData.revenueTrend?.map((r: any) => r.month) || 
-          ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-        const subTrend = months.map((month: string, i: number) => ({
-          month,
-          subscribers: Math.floor(activeSubscribers * (0.5 + (i * 0.1))),
-        }));
-        setSubscriberTrend(subTrend);
 
         setStats({
           totalRevenue,
           revenueGrowth: Math.round(revenueGrowth * 10) / 10,
           activeSubscribers,
-          subscriberGrowth: 8.3, // Would need historical data
-          averageRevenue: activeSubscribers > 0 ? totalRevenue / activeSubscribers : 0,
-          churnRate: 2.1, // Would need historical data
+          subscriberGrowth: analyticsData.subscriberGrowthRate || 0,
+          averageRevenue: analyticsData.arpu || 0,
+          churnRate: analyticsData.churnRate || 0,
         });
       }
     } catch (error) {
