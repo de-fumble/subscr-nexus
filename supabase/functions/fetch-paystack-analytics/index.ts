@@ -133,28 +133,37 @@ serve(async (req) => {
 
     console.log("Organization subscriptions:", orgSubscriptions.length);
 
+    // Get subscription codes from organization's subscriptions for precise filtering
+    const orgSubscriptionCodes = new Set(
+      orgSubscriptions.map((sub: any) => sub.subscription_code).filter(Boolean)
+    );
+
     // Get customer codes from organization's subscriptions
     const orgCustomerCodes = new Set(
       orgSubscriptions.map((sub: any) => sub.customer?.customer_code).filter(Boolean)
     );
 
-    // Filter transactions to only include those from organization's customers
-    // and that are related to organization's plans
+    // Filter transactions to only include those related to organization's plans
+    // Be strict: transaction must be linked to org's subscription or have org plan metadata
     const orgTransactions = allTransactions.filter((txn: any) => {
-      // Check if transaction is from an org customer
-      const isOrgCustomer = txn.customer && orgCustomerCodes.has(txn.customer.customer_code);
+      // Check if transaction has subscription code matching org's subscriptions
+      const hasOrgSubscription = txn.subscription_code && orgSubscriptionCodes.has(txn.subscription_code);
       
-      // Check if transaction has plan metadata matching org plans
+      // Check if transaction has plan metadata matching org plans (by local plan ID)
       const hasPlanMetadata = txn.metadata?.plan_id && 
         orgPlans?.some(p => p.id === txn.metadata.plan_id);
       
-      // Check if transaction has custom_fields with plan_id
+      // Check if transaction has custom_fields with plan_id matching org plans
       const hasCustomFieldPlan = txn.metadata?.custom_fields?.some(
         (field: any) => field.variable_name === "plan_id" && 
           orgPlans?.some(p => p.id === field.value)
       );
 
-      return isOrgCustomer || hasPlanMetadata || hasCustomFieldPlan;
+      // Check if customer is ONLY subscribed to this org's plans (stricter check)
+      const isOrgOnlyCustomer = txn.customer && orgCustomerCodes.has(txn.customer.customer_code);
+
+      // Prioritize subscription-based matching, fall back to metadata/customer matching
+      return hasOrgSubscription || hasPlanMetadata || hasCustomFieldPlan || isOrgOnlyCustomer;
     });
 
     console.log("Organization transactions:", orgTransactions.length);
