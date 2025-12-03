@@ -61,24 +61,48 @@ serve(async (req) => {
     // Get organization's subscription plan codes
     const { data: orgPlans } = await supabase
       .from("subscription_plans")
-      .select("paystack_plan_code")
-      .eq("org_id", org.id)
-      .eq("is_active", true);
+      .select("id, paystack_plan_code, name, price")
+      .eq("org_id", org.id);
 
     const orgPlanCodes = new Set(orgPlans?.map(p => p.paystack_plan_code) || []);
+    const planCodeToName: { [key: string]: string } = {};
+    orgPlans?.forEach(p => {
+      planCodeToName[p.paystack_plan_code] = p.name;
+    });
 
-    // Fetch all transactions from Paystack (success, failed, and abandoned)
-    const transactionsResponse = await fetch(
-      "https://api.paystack.co/transaction?perPage=100",
-      {
-        headers: {
-          Authorization: `Bearer ${paystackSecretKey}`,
-          "Content-Type": "application/json",
-        },
+    console.log("Fetching Paystack data for organization:", org.id);
+    console.log("Organization plan codes:", Array.from(orgPlanCodes));
+
+    // Fetch all transactions from Paystack with pagination
+    let allTransactions: any[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore && page <= 10) { // Limit to 10 pages (1000 transactions)
+      const transactionsResponse = await fetch(
+        `https://api.paystack.co/transaction?perPage=100&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${paystackSecretKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const transactionsData = await transactionsResponse.json();
+      if (!transactionsData.status) {
+        console.error("Failed to fetch transactions:", transactionsData);
+        break;
       }
-    );
 
-    const transactionsData = await transactionsResponse.json();
+      const transactions = transactionsData.data || [];
+      allTransactions = [...allTransactions, ...transactions];
+      
+      hasMore = transactions.length === 100;
+      page++;
+    }
+
+    console.log("Total transactions fetched:", allTransactions.length);
 
     // Fetch subscriptions from Paystack
     const subscriptionsResponse = await fetch(
@@ -93,15 +117,13 @@ serve(async (req) => {
 
     const subscriptionsData = await subscriptionsResponse.json();
 
-    if (!transactionsData.status || !subscriptionsData.status) {
+    if (!subscriptionsData.status) {
       return new Response(
-        JSON.stringify({ error: "Failed to fetch Paystack data" }),
+        JSON.stringify({ error: "Failed to fetch Paystack subscriptions" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Calculate analytics - filter by organization's plans only
-    const transactions = transactionsData.data || [];
     const subscriptions = subscriptionsData.data || [];
 
     // Filter subscriptions to only include organization's plans
@@ -109,19 +131,76 @@ serve(async (req) => {
       (sub: any) => sub.plan && orgPlanCodes.has(sub.plan.plan_code)
     );
 
-    // Filter transactions to only include those from organization's subscriptions
-    const orgSubscriptionCodes = new Set(orgSubscriptions.map((sub: any) => sub.subscription_code));
-    const orgTransactions = transactions.filter(
-      (txn: any) => txn.metadata?.subscription_code && orgSubscriptionCodes.has(txn.metadata.subscription_code)
-    );
-    
-    // Filter only successful transactions for revenue calculation
-    const successfulTransactions = orgTransactions.filter((txn: any) => txn.status === "success");
+    console.log("Organization subscriptions:", orgSubscriptions.length);
 
-    const totalRevenue = successfulTransactions.reduce(
+    // Get customer codes from organization's subscriptions
+    const orgCustomerCodes = new Set(
+      orgSubscriptions.map((sub: any) => sub.customer?.customer_code).filter(Boolean)
+    );
+
+    // Filter transactions to only include those from organization's customers
+    // and that are related to organization's plans
+    const orgTransactions = allTransactions.filter((txn: any) => {
+      // Check if transaction is from an org customer
+      const isOrgCustomer = txn.customer && orgCustomerCodes.has(txn.customer.customer_code);
+      
+      // Check if transaction has plan metadata matching org plans
+      const hasPlanMetadata = txn.metadata?.plan_id && 
+        orgPlans?.some(p => p.id === txn.metadata.plan_id);
+      
+      // Check if transaction has custom_fields with plan_id
+      const hasCustomFieldPlan = txn.metadata?.custom_fields?.some(
+        (field: any) => field.variable_name === "plan_id" && 
+          orgPlans?.some(p => p.id === field.value)
+      );
+
+      return isOrgCustomer || hasPlanMetadata || hasCustomFieldPlan;
+    });
+
+    console.log("Organization transactions:", orgTransactions.length);
+
+    // Calculate revenue from successful payments only
+    const successfulTransactions = orgTransactions.filter(
+      (txn: any) => txn.status === "success"
+    );
+
+    // Fetch refunds to subtract from total
+    const refundsResponse = await fetch(
+      "https://api.paystack.co/refund?perPage=100",
+      {
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const refundsData = await refundsResponse.json();
+    let totalRefunds = 0;
+
+    if (refundsData.status && refundsData.data) {
+      // Filter refunds related to organization's transactions
+      const orgTransactionRefs = new Set(orgTransactions.map((t: any) => t.reference));
+      const orgRefunds = refundsData.data.filter((refund: any) => 
+        orgTransactionRefs.has(refund.transaction?.reference)
+      );
+      totalRefunds = orgRefunds.reduce(
+        (sum: number, refund: any) => sum + (refund.amount / 100),
+        0
+      );
+    }
+
+    console.log("Total refunds:", totalRefunds);
+
+    // Calculate total revenue (successful payments minus refunds)
+    const grossRevenue = successfulTransactions.reduce(
       (sum: number, txn: any) => sum + (txn.amount / 100),
       0
     );
+
+    const totalRevenue = grossRevenue - totalRefunds;
+
+    console.log("Gross revenue:", grossRevenue, "Net revenue:", totalRevenue);
 
     const activeSubscriptions = orgSubscriptions.filter(
       (sub: any) => sub.status === "active"
@@ -134,22 +213,41 @@ serve(async (req) => {
     // Calculate revenue by plan for histogram
     const revenueByPlan: { [key: string]: number } = {};
     successfulTransactions.forEach((txn: any) => {
-      const subscriptionCode = txn.metadata?.subscription_code;
-      if (subscriptionCode) {
-        const subscription = orgSubscriptions.find((sub: any) => sub.subscription_code === subscriptionCode);
-        if (subscription && subscription.plan) {
-          const planName = subscription.plan.name;
-          revenueByPlan[planName] = (revenueByPlan[planName] || 0) + (txn.amount / 100);
+      // Try to find plan name from subscription
+      let planName = "Other";
+      
+      if (txn.customer) {
+        const customerSub = orgSubscriptions.find(
+          (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
+        );
+        if (customerSub?.plan) {
+          planName = customerSub.plan.name;
         }
       }
+      
+      // Try metadata custom_fields
+      if (planName === "Other" && txn.metadata?.custom_fields) {
+        const planField = txn.metadata.custom_fields.find(
+          (f: any) => f.variable_name === "plan_id"
+        );
+        if (planField) {
+          const plan = orgPlans?.find(p => p.id === planField.value);
+          if (plan) planName = plan.name;
+        }
+      }
+
+      revenueByPlan[planName] = (revenueByPlan[planName] || 0) + (txn.amount / 100);
     });
 
+    // Subtract refunds from revenue by plan (distribute proportionally if can't attribute)
+    // For simplicity, we'll just report the gross per plan
     const chartData = Object.entries(revenueByPlan)
+      .filter(([plan]) => plan !== "Other" || revenueByPlan["Other"] > 0)
       .map(([plan, revenue]) => ({
         plan,
         revenue,
       }))
-      .sort((a, b) => b.revenue - a.revenue); // Sort by highest revenue first
+      .sort((a, b) => b.revenue - a.revenue);
 
     // Calculate failed payments data
     const abandonedCount = orgTransactions.filter((t: any) => t.status === 'abandoned').length;
@@ -160,14 +258,39 @@ serve(async (req) => {
       { name: 'Failed Payments', value: failedCount },
     ];
 
+    // Calculate monthly revenue trend (last 6 months)
+    const now = new Date();
+    const monthlyRevenue: { [key: string]: number } = {};
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleString('default', { month: 'short' });
+      monthlyRevenue[monthKey] = 0;
+    }
+
+    successfulTransactions.forEach((txn: any) => {
+      const txnDate = new Date(txn.paid_at || txn.created_at);
+      const monthKey = txnDate.toLocaleString('default', { month: 'short' });
+      if (monthlyRevenue.hasOwnProperty(monthKey)) {
+        monthlyRevenue[monthKey] += txn.amount / 100;
+      }
+    });
+
+    const revenueTrend = Object.entries(monthlyRevenue).map(([month, revenue]) => ({
+      month,
+      revenue,
+    }));
+
     return new Response(
       JSON.stringify({
         totalRevenue,
+        grossRevenue,
+        totalRefunds,
         recurringRevenue,
         activeSubscribers: activeSubscriptions,
-        totalLifetimeRevenue: totalRevenue,
-        chartData, // Revenue per plan for histogram
-        failedPaymentsData, // Failed payments breakdown
+        chartData,
+        failedPaymentsData,
+        revenueTrend,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
