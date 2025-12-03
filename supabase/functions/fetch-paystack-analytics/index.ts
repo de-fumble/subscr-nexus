@@ -211,9 +211,32 @@ serve(async (req) => {
 
     console.log("Gross revenue:", grossRevenue, "Net revenue:", totalRevenue);
 
+    // Active subscribers = non-canceled, non-expired, non-paused subscribers
+    const excludedStatuses = ['cancelled', 'canceled', 'expired', 'paused', 'non-renewing', 'attention', 'completed'];
     const activeSubscriptions = orgSubscriptions.filter(
-      (sub: any) => sub.status === "active"
+      (sub: any) => sub.status && !excludedStatuses.includes(sub.status.toLowerCase())
     ).length;
+
+    // Calculate Active Subscribers by Plan
+    const subscribersByPlan: { [planCode: string]: number } = {};
+    orgSubscriptions.forEach((sub: any) => {
+      if (sub.plan?.plan_code && sub.status && !excludedStatuses.includes(sub.status.toLowerCase())) {
+        const planCode = sub.plan.plan_code;
+        subscribersByPlan[planCode] = (subscribersByPlan[planCode] || 0) + 1;
+      }
+    });
+
+    // Calculate Plan Distribution (%) = (Active subscribers for each plan ÷ total active subscribers) × 100
+    const totalActiveForDistribution = Object.values(subscribersByPlan).reduce((sum, count) => sum + count, 0);
+    const planDistribution = Object.entries(subscribersByPlan).map(([planCode, count]) => {
+      const planName = planCodeToName[planCode] || planCode;
+      const percentage = totalActiveForDistribution > 0 ? (count / totalActiveForDistribution) * 100 : 0;
+      return {
+        name: planName,
+        count,
+        percentage: Math.round(percentage * 10) / 10,
+      };
+    }).sort((a, b) => b.count - a.count);
 
     const recurringRevenue = orgSubscriptions
       .filter((sub: any) => sub.status === "active")
@@ -381,6 +404,7 @@ serve(async (req) => {
         churnRate: Math.round(churnRate * 10) / 10,
         arpu: Math.round(arpu),
         subscriberGrowthRate: Math.round(subscriberGrowthRate * 10) / 10,
+        planDistribution,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

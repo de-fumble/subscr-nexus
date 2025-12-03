@@ -84,13 +84,14 @@ export default function DashboardAnalytics() {
 
       if (plans) {
         // Calculate plan distribution from local subscribers
+        // Active Subscribers = non-canceled, non-expired, non-paused subscribers
         const planDist = await Promise.all(
           plans.map(async (plan) => {
             const { count } = await supabase
               .from("subscribers")
               .select("*", { count: "exact", head: true })
               .eq("plan_id", plan.id)
-              .eq("status", "active");
+              .not("status", "in", "(cancelled,canceled,expired,paused,non-renewing,attention)");
             
             return {
               name: plan.name,
