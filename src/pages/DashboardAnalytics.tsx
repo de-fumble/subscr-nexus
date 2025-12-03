@@ -82,28 +82,34 @@ export default function DashboardAnalytics() {
         .select("*")
         .eq("org_id", orgData.id);
 
-      if (plans) {
-        // Calculate plan distribution from local subscribers
-        // Active Subscribers = non-canceled, non-expired, non-paused subscribers
-        const planDist = await Promise.all(
-          plans.map(async (plan) => {
-            const { count } = await supabase
-              .from("subscribers")
-              .select("*", { count: "exact", head: true })
-              .eq("plan_id", plan.id)
-              .not("status", "in", "(cancelled,canceled,expired,paused,non-renewing,attention)");
-            
-            return {
-              name: plan.name,
-              value: count || 0,
-            };
-          })
-        );
-        setPlanDistribution(planDist.filter(p => p.value > 0));
-      }
-
       // Use Paystack data if available, otherwise fallback to calculated values
       if (analyticsData) {
+        // Use plan distribution from edge function (active subscribers by plan)
+        if (analyticsData.planDistribution && analyticsData.planDistribution.length > 0) {
+          const planDist = analyticsData.planDistribution.map((p: { name: string; count: number; percentage: number }) => ({
+            name: p.name,
+            value: p.count,
+            percentage: p.percentage,
+          }));
+          setPlanDistribution(planDist);
+        } else if (plans) {
+          // Fallback to local database query
+          const planDist = await Promise.all(
+            plans.map(async (plan) => {
+              const { count } = await supabase
+                .from("subscribers")
+                .select("*", { count: "exact", head: true })
+                .eq("plan_id", plan.id)
+                .not("status", "in", "(cancelled,canceled,expired,paused,non-renewing,attention)");
+              
+              return {
+                name: plan.name,
+                value: count || 0,
+              };
+            })
+          );
+          setPlanDistribution(planDist.filter(p => p.value > 0));
+        }
         const totalRevenue = analyticsData.totalRevenue || 0;
         const activeSubscribers = analyticsData.activeSubscribers || 0;
         
@@ -273,7 +279,7 @@ export default function DashboardAnalytics() {
       <Card>
         <CardHeader>
           <CardTitle>Plan Distribution</CardTitle>
-          <CardDescription>Active subscribers by plan</CardDescription>
+          <CardDescription>Active subscribers by plan (count & percentage)</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -282,8 +288,8 @@ export default function DashboardAnalytics() {
                 data={planDistribution}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                labelLine={true}
+                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
                 outerRadius={100}
                 fill="hsl(var(--primary))"
                 dataKey="value"
@@ -298,7 +304,9 @@ export default function DashboardAnalytics() {
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
                 }}
+                formatter={(value: number) => [`${value} subscribers`, "Active"]}
               />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
