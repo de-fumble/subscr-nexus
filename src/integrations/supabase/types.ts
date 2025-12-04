@@ -328,6 +328,50 @@ export type Database = {
           },
         ]
       }
+      suspension_appeals: {
+        Row: {
+          admin_notes: string | null
+          appeal_reason: string
+          created_at: string
+          id: string
+          org_id: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          appeal_reason: string
+          created_at?: string
+          id?: string
+          org_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          appeal_reason?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suspension_appeals_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
