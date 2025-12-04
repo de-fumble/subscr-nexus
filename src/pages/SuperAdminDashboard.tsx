@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Building2, Users, DollarSign, AlertTriangle, Search, TrendingUp, Clock, Ban } from "lucide-react";
+import { Loader2, Building2, Users, DollarSign, AlertTriangle, Search, TrendingUp, Clock, Ban, Scale } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -24,8 +24,10 @@ interface PlatformStats {
   active_subscribers: number;
   total_revenue: number;
   platform_earnings: number;
+  transaction_count: number;
   pending_payouts: number;
   pending_deletions: number;
+  pending_appeals: number;
 }
 
 interface Organization {
@@ -108,6 +110,10 @@ export default function SuperAdminDashboard() {
             <AlertTriangle className="h-4 w-4 mr-2" />
             Deletions ({stats?.pending_deletions || 0})
           </Button>
+          <Button variant="outline" onClick={() => navigate('/superadmin/appeals')}>
+            <Scale className="h-4 w-4 mr-2" />
+            Appeals ({stats?.pending_appeals || 0})
+          </Button>
           <Button variant="outline" onClick={() => navigate('/superadmin/defaulters')}>
             <Ban className="h-4 w-4 mr-2" />
             Defaulters
@@ -164,7 +170,7 @@ export default function SuperAdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">₦{(stats?.platform_earnings || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              5% platform fee collected
+              ₦1,500 × {stats?.transaction_count || 0} transactions
             </p>
           </CardContent>
         </Card>

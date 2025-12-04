@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PLATFORM_FEE_PER_TRANSACTION = 1500; // ₦1,500 flat fee per transaction
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -118,6 +120,18 @@ serve(async (req) => {
       
       case 'mark_payment_resolved':
         result = await markPaymentResolved(supabase, user.id, params.subscriber_id);
+        break;
+
+      case 'get_suspension_appeals':
+        result = await getSuspensionAppeals(supabase, params.status);
+        break;
+
+      case 'approve_appeal':
+        result = await approveAppeal(supabase, user.id, params.appeal_id, params.admin_notes);
+        break;
+
+      case 'reject_appeal':
+        result = await rejectAppeal(supabase, user.id, params.appeal_id, params.admin_notes);
         break;
 
       default:
@@ -250,6 +264,7 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
     return {
       total_revenue: 0,
       recurring_revenue: 0,
+      platform_fee: 0,
       active_subscribers: 0,
       churned_subscribers: 0,
       defaulted_subscribers: 0,
@@ -300,53 +315,52 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
   }
 
   const totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+  const transactionCount = transactions.length;
 
-  // Platform fee calculation (5%)
-  const { data: feeSettings } = await supabase
-    .from('platform_settings')
-    .select('setting_value')
-    .eq('setting_key', 'platform_fee')
-    .single();
-
-  const platformFeePercent = feeSettings?.setting_value?.value || 5;
-  const platformFee = (totalRevenue * platformFeePercent) / 100;
-  const recurringRevenue = totalRevenue - platformFee;
+  // Platform fee calculation: ₦1,500 flat per transaction
+  const platformFee = transactionCount * PLATFORM_FEE_PER_TRANSACTION;
+  const recurringRevenue = Math.max(0, totalRevenue - platformFee);
 
   // Revenue by plan
   const revenueByPlan = plans?.map((plan: any) => {
     const planSubscribers = subscribers.filter((s: any) => s.plan_id === plan.id);
     const planSubscriberIds = planSubscribers.map((s: any) => s.id);
-    const planRevenue = transactions
-      .filter((t: any) => planSubscriberIds.includes(t.subscriber_id))
-      .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+    const planTransactions = transactions.filter((t: any) => planSubscriberIds.includes(t.subscriber_id));
+    const planRevenue = planTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+    const planFee = planTransactions.length * PLATFORM_FEE_PER_TRANSACTION;
     
     return {
       name: plan.name,
       revenue: planRevenue,
+      platform_fee: planFee,
+      net_revenue: Math.max(0, planRevenue - planFee),
       active_subscribers: planSubscribers.filter((s: any) => activeStatuses.includes(s.status)).length,
     };
   }) || [];
 
   // Monthly revenue trend (last 12 months)
-  const monthlyRevenue: { [key: string]: number } = {};
+  const monthlyRevenue: { [key: string]: { revenue: number; transactions: number } } = {};
   const now = new Date();
   for (let i = 11; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = date.toISOString().slice(0, 7);
-    monthlyRevenue[key] = 0;
+    monthlyRevenue[key] = { revenue: 0, transactions: 0 };
   }
 
   transactions.forEach((t: any) => {
     const date = new Date(t.paid_at || t.created_at);
     const key = date.toISOString().slice(0, 7);
     if (monthlyRevenue.hasOwnProperty(key)) {
-      monthlyRevenue[key] += t.amount || 0;
+      monthlyRevenue[key].revenue += t.amount || 0;
+      monthlyRevenue[key].transactions += 1;
     }
   });
 
-  const monthlyRevenueTrend = Object.entries(monthlyRevenue).map(([month, revenue]) => ({
+  const monthlyRevenueTrend = Object.entries(monthlyRevenue).map(([month, data]) => ({
     month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-    revenue,
+    revenue: data.revenue,
+    platform_fee: data.transactions * PLATFORM_FEE_PER_TRANSACTION,
+    net_revenue: Math.max(0, data.revenue - (data.transactions * PLATFORM_FEE_PER_TRANSACTION)),
   }));
 
   // Subscribers by plan
@@ -394,6 +408,7 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
     total_revenue: totalRevenue,
     recurring_revenue: recurringRevenue,
     platform_fee: platformFee,
+    transaction_count: transactionCount,
     active_subscribers: activeSubscribers.length,
     churned_subscribers: churnedSubscribers.length,
     defaulted_subscribers: defaultedSubscribers.length,
@@ -662,22 +677,15 @@ async function getPlatformStats(supabase: any) {
     .not('status', 'in', '(cancelled,canceled,expired)');
 
   // Total transactions
-  const { data: transactions } = await supabase
+  const { data: transactions, count: transactionCount } = await supabase
     .from('transactions')
-    .select('amount')
+    .select('amount', { count: 'exact' })
     .eq('status', 'success');
 
   const totalRevenue = transactions?.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
 
-  // Platform fee
-  const { data: feeSettings } = await supabase
-    .from('platform_settings')
-    .select('setting_value')
-    .eq('setting_key', 'platform_fee')
-    .single();
-
-  const platformFeePercent = feeSettings?.setting_value?.value || 5;
-  const platformEarnings = (totalRevenue * platformFeePercent) / 100;
+  // Platform earnings: ₦1,500 flat per transaction
+  const platformEarnings = (transactionCount || 0) * PLATFORM_FEE_PER_TRANSACTION;
 
   // Pending payouts
   const { count: pendingPayouts } = await supabase
@@ -691,6 +699,12 @@ async function getPlatformStats(supabase: any) {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
 
+  // Pending appeals
+  const { count: pendingAppeals } = await supabase
+    .from('suspension_appeals')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending');
+
   return {
     total_organizations: totalOrgs || 0,
     active_organizations: activeOrgs || 0,
@@ -699,8 +713,10 @@ async function getPlatformStats(supabase: any) {
     active_subscribers: activeSubscribers || 0,
     total_revenue: totalRevenue,
     platform_earnings: platformEarnings,
+    transaction_count: transactionCount || 0,
     pending_payouts: pendingPayouts || 0,
     pending_deletions: pendingDeletions || 0,
+    pending_appeals: pendingAppeals || 0,
   };
 }
 
@@ -748,6 +764,103 @@ async function markPaymentResolved(supabase: any, actorId: string, subscriberId:
     action: 'mark_payment_resolved',
     entity_type: 'subscriber',
     entity_id: subscriberId,
+  });
+
+  return { success: true };
+}
+
+async function getSuspensionAppeals(supabase: any, status?: string) {
+  let query = supabase
+    .from('suspension_appeals')
+    .select('*, organizations(org_name, email, suspension_reason)')
+    .order('created_at', { ascending: false });
+
+  if (status) {
+    query = query.eq('status', status);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return { appeals: data || [] };
+}
+
+async function approveAppeal(supabase: any, actorId: string, appealId: string, adminNotes?: string) {
+  // Get the appeal to find the org_id
+  const { data: appeal, error: fetchError } = await supabase
+    .from('suspension_appeals')
+    .select('org_id')
+    .eq('id', appealId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Update the appeal
+  const { error: appealError } = await supabase
+    .from('suspension_appeals')
+    .update({
+      status: 'approved',
+      processed_at: new Date().toISOString(),
+      processed_by: actorId,
+      admin_notes: adminNotes,
+    })
+    .eq('id', appealId);
+
+  if (appealError) throw appealError;
+
+  // Restore the organization
+  const { error: orgError } = await supabase
+    .from('organizations')
+    .update({
+      is_suspended: false,
+      suspended_at: null,
+      suspended_by: null,
+      suspension_reason: null,
+    })
+    .eq('id', appeal.org_id);
+
+  if (orgError) throw orgError;
+
+  // Log audit
+  await supabase.from('audit_logs').insert({
+    actor_id: actorId,
+    action: 'approve_suspension_appeal',
+    entity_type: 'suspension_appeal',
+    entity_id: appealId,
+    details: { org_id: appeal.org_id, admin_notes: adminNotes },
+  });
+
+  return { success: true };
+}
+
+async function rejectAppeal(supabase: any, actorId: string, appealId: string, adminNotes: string) {
+  const { data: appeal, error: fetchError } = await supabase
+    .from('suspension_appeals')
+    .select('org_id')
+    .eq('id', appealId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const { error } = await supabase
+    .from('suspension_appeals')
+    .update({
+      status: 'rejected',
+      processed_at: new Date().toISOString(),
+      processed_by: actorId,
+      admin_notes: adminNotes,
+    })
+    .eq('id', appealId);
+
+  if (error) throw error;
+
+  // Log audit
+  await supabase.from('audit_logs').insert({
+    actor_id: actorId,
+    action: 'reject_suspension_appeal',
+    entity_type: 'suspension_appeal',
+    entity_id: appealId,
+    details: { org_id: appeal.org_id, admin_notes: adminNotes },
   });
 
   return { success: true };

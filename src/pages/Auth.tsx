@@ -42,7 +42,7 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -54,6 +54,20 @@ const Auth = () => {
             toast.error(error.message);
           }
           return;
+        }
+
+        // Check if organization is suspended
+        if (authData.user) {
+          const { data: org } = await supabase
+            .from("organizations")
+            .select("is_suspended")
+            .eq("user_id", authData.user.id)
+            .single();
+
+          if (org?.is_suspended) {
+            navigate("/suspended");
+            return;
+          }
         }
 
         toast.success("Welcome back!");
