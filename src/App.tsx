@@ -16,6 +16,11 @@ import DashboardProfile from "./pages/DashboardProfile";
 import DashboardSettings from "./pages/DashboardSettings";
 import DashboardAnalytics from "./pages/DashboardAnalytics";
 import DashboardSubscribers from "./pages/DashboardSubscribers";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminOrganization from "./pages/SuperAdminOrganization";
+import SuperAdminPayouts from "./pages/SuperAdminPayouts";
+import SuperAdminDeletions from "./pages/SuperAdminDeletions";
+import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
 
 const queryClient = new QueryClient();
 
@@ -30,63 +35,19 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/subscribe/:planId" element={<Subscribe />} />
           <Route path="/subscription-callback" element={<SubscriptionCallback />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/plans"
-            element={
-              <ProtectedRoute>
-                <Plans />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/plans/create"
-            element={
-              <ProtectedRoute>
-                <CreatePlan />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/profile"
-            element={
-              <ProtectedRoute>
-                <DashboardProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/settings"
-            element={
-              <ProtectedRoute>
-                <DashboardSettings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/analytics"
-            element={
-              <ProtectedRoute>
-                <DashboardAnalytics />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/subscribers"
-            element={
-              <ProtectedRoute>
-                <DashboardSubscribers />
-              </ProtectedRoute>
-            }
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+          <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
+          <Route path="/dashboard/profile" element={<ProtectedRoute><DashboardProfile /></ProtectedRoute>} />
+          <Route path="/dashboard/settings" element={<ProtectedRoute><DashboardSettings /></ProtectedRoute>} />
+          <Route path="/dashboard/analytics" element={<ProtectedRoute><DashboardAnalytics /></ProtectedRoute>} />
+          <Route path="/dashboard/subscribers" element={<ProtectedRoute><DashboardSubscribers /></ProtectedRoute>} />
+          {/* Super Admin Routes */}
+          <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+          <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
+          <Route path="/superadmin/payouts" element={<ProtectedRoute><SuperAdminPayouts /></ProtectedRoute>} />
+          <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminDeletions /></ProtectedRoute>} />
+          <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
