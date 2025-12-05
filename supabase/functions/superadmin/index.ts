@@ -134,6 +134,10 @@ serve(async (req) => {
         result = await rejectAppeal(supabase, user.id, params.appeal_id, params.admin_notes);
         break;
 
+      case 'get_eligible_payouts':
+        result = await getEligiblePayouts(supabase);
+        break;
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown action' }), {
           status: 400,
@@ -154,6 +158,63 @@ serve(async (req) => {
   }
 });
 
+// Helper function to fetch Paystack data for an organization
+async function fetchPaystackData(paystackKey: string) {
+  let subscriptions: any[] = [];
+  let transactions: any[] = [];
+
+  try {
+    // Fetch subscriptions
+    const subsResponse = await fetch('https://api.paystack.co/subscription?perPage=1000', {
+      headers: {
+        'Authorization': `Bearer ${paystackKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (subsResponse.ok) {
+      const subsData = await subsResponse.json();
+      subscriptions = subsData.data || [];
+    }
+
+    // Fetch transactions
+    const txResponse = await fetch('https://api.paystack.co/transaction?status=success&perPage=1000', {
+      headers: {
+        'Authorization': `Bearer ${paystackKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (txResponse.ok) {
+      const txData = await txResponse.json();
+      transactions = txData.data || [];
+    }
+  } catch (error) {
+    console.error('Error fetching Paystack data:', error);
+  }
+
+  return { subscriptions, transactions };
+}
+
+// Calculate MRR from subscriptions - normalize all intervals to monthly
+function calculateMRR(subscriptions: any[]) {
+  const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
+  
+  return activeSubscriptions.reduce((sum, sub) => {
+    const amount = (sub.amount || 0) / 100; // Convert kobo to naira
+    const interval = sub.plan?.interval || 'monthly';
+    
+    // Normalize to monthly
+    switch (interval) {
+      case 'daily': return sum + (amount * 30);
+      case 'weekly': return sum + (amount * 4);
+      case 'monthly': return sum + amount;
+      case 'quarterly': return sum + (amount / 3);
+      case 'biannually': return sum + (amount / 6);
+      case 'annually': return sum + (amount / 12);
+      default: return sum + amount;
+    }
+  }, 0);
+}
+
 async function getAllOrganizations(supabase: any) {
   const { data: organizations, error } = await supabase
     .from('organizations')
@@ -162,50 +223,38 @@ async function getAllOrganizations(supabase: any) {
 
   if (error) throw error;
 
-  // Get subscriber counts and revenue for each org from Paystack
+  // Get detailed stats for each org from Paystack
   const orgsWithStats = await Promise.all(organizations.map(async (org: any) => {
     let activeSubscribers = 0;
+    let totalSubscribers = 0;
     let totalRevenue = 0;
+    let transactionCount = 0;
+    let mrr = 0;
+    let defaultedSubscribers = 0;
 
-    // If org has Paystack key, fetch live data
     if (org.paystack_secret_key) {
-      try {
-        // Fetch subscriptions from Paystack
-        const subscriptionsResponse = await fetch('https://api.paystack.co/subscription', {
-          headers: {
-            'Authorization': `Bearer ${org.paystack_secret_key}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (subscriptionsResponse.ok) {
-          const subscriptionsData = await subscriptionsResponse.json();
-          const subscriptions = subscriptionsData.data || [];
-          activeSubscribers = subscriptions.filter((s: any) => s.status === 'active').length;
-        }
-
-        // Fetch transactions from Paystack
-        const transactionsResponse = await fetch('https://api.paystack.co/transaction?status=success&perPage=1000', {
-          headers: {
-            'Authorization': `Bearer ${org.paystack_secret_key}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (transactionsResponse.ok) {
-          const transactionsData = await transactionsResponse.json();
-          const transactions = transactionsData.data || [];
-          totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100; // Convert kobo to naira
-        }
-      } catch (error) {
-        console.error(`Error fetching Paystack data for org ${org.org_name}:`, error);
-      }
+      const { subscriptions, transactions } = await fetchPaystackData(org.paystack_secret_key);
+      
+      totalSubscribers = subscriptions.length;
+      activeSubscribers = subscriptions.filter((s: any) => s.status === 'active').length;
+      defaultedSubscribers = subscriptions.filter((s: any) => 
+        ['attention', 'non-renewing', 'cancelled'].includes(s.status)
+      ).length;
+      
+      totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100;
+      transactionCount = transactions.length;
+      mrr = calculateMRR(subscriptions);
     }
 
     return {
       ...org,
       active_subscribers: activeSubscribers,
+      total_subscribers: totalSubscribers,
       total_revenue: totalRevenue,
+      transaction_count: transactionCount,
+      mrr: mrr,
+      arr: mrr * 12,
+      defaulted_subscribers: defaultedSubscribers,
     };
   }));
 
@@ -227,16 +276,26 @@ async function getOrganizationDetails(supabase: any, orgId: string) {
     .select('*')
     .eq('org_id', orgId);
 
-  // Get subscribers
+  // Get local subscribers
   const planIds = plans?.map((p: any) => p.id) || [];
-  let subscribers: any[] = [];
+  let localSubscribers: any[] = [];
   
   if (planIds.length > 0) {
     const { data } = await supabase
       .from('subscribers')
       .select('*, subscription_plans(name, price, interval)')
       .in('plan_id', planIds);
-    subscribers = data || [];
+    localSubscribers = data || [];
+  }
+
+  // Get live Paystack data if available
+  let liveSubscribers: any[] = [];
+  let liveTransactions: any[] = [];
+  
+  if (org.paystack_secret_key) {
+    const { subscriptions, transactions } = await fetchPaystackData(org.paystack_secret_key);
+    liveSubscribers = subscriptions;
+    liveTransactions = transactions;
   }
 
   // Get payout requests
@@ -256,97 +315,49 @@ async function getOrganizationDetails(supabase: any, orgId: string) {
   return {
     organization: org,
     plans: plans || [],
-    subscribers: subscribers,
+    subscribers: localSubscribers,
+    live_subscribers: liveSubscribers,
+    live_transactions: liveTransactions,
     payout_requests: payoutRequests || [],
     deletion_requests: deletionRequests || [],
   };
 }
 
 async function getOrganizationAnalytics(supabase: any, orgId: string) {
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('paystack_secret_key')
+    .eq('id', orgId)
+    .single();
+
   const { data: plans } = await supabase
     .from('subscription_plans')
     .select('*')
     .eq('org_id', orgId);
 
-  const planIds = plans?.map((p: any) => p.id) || [];
-  
-  if (planIds.length === 0) {
-    return {
-      total_revenue: 0,
-      recurring_revenue: 0,
-      platform_fee: 0,
-      active_subscribers: 0,
-      churned_subscribers: 0,
-      defaulted_subscribers: 0,
-      new_subscribers_this_month: 0,
-      subscriber_growth_rate: 0,
-      churn_rate: 0,
-      arpu: 0,
-      revenue_by_plan: [],
-      monthly_revenue_trend: [],
-      subscribers_by_plan: [],
-      plan_distribution: [],
-    };
+  if (!org?.paystack_secret_key) {
+    // Fallback to local data
+    return getLocalOrganizationAnalytics(supabase, orgId, plans || []);
   }
 
-  // Get all subscribers
-  const { data: allSubscribers } = await supabase
-    .from('subscribers')
-    .select('*, subscription_plans(name, price)')
-    .in('plan_id', planIds);
+  // Fetch live data from Paystack
+  const { subscriptions, transactions } = await fetchPaystackData(org.paystack_secret_key);
 
-  const subscribers = allSubscribers || [];
-  
-  const activeStatuses = ['active'];
-  const churnedStatuses = ['cancelled', 'canceled', 'expired'];
-  const defaultedStatuses = ['attention', 'paused', 'non-renewing'];
+  const activeSubscribers = subscriptions.filter((s: any) => s.status === 'active');
+  const defaultedSubscribers = subscriptions.filter((s: any) => 
+    ['attention', 'non-renewing'].includes(s.status)
+  );
+  const churnedSubscribers = subscriptions.filter((s: any) => 
+    ['cancelled', 'canceled', 'expired'].includes(s.status)
+  );
 
-  const activeSubscribers = subscribers.filter((s: any) => activeStatuses.includes(s.status));
-  const churnedSubscribers = subscribers.filter((s: any) => churnedStatuses.includes(s.status));
-  const defaultedSubscribers = subscribers.filter((s: any) => defaultedStatuses.includes(s.status));
-
-  // New subscribers this month
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-  const newSubscribers = subscribers.filter((s: any) => new Date(s.created_at) >= startOfMonth);
-
-  // Get transactions for revenue calculation
-  const subscriberIds = subscribers.map((s: any) => s.id);
-  let transactions: any[] = [];
-  
-  if (subscriberIds.length > 0) {
-    const { data } = await supabase
-      .from('transactions')
-      .select('*')
-      .in('subscriber_id', subscriberIds)
-      .eq('status', 'success');
-    transactions = data || [];
-  }
-
-  const totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+  const totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100;
   const transactionCount = transactions.length;
-
-  // Platform fee calculation: ₦1,500 flat per transaction
   const platformFee = transactionCount * PLATFORM_FEE_PER_TRANSACTION;
   const recurringRevenue = Math.max(0, totalRevenue - platformFee);
 
-  // Revenue by plan
-  const revenueByPlan = plans?.map((plan: any) => {
-    const planSubscribers = subscribers.filter((s: any) => s.plan_id === plan.id);
-    const planSubscriberIds = planSubscribers.map((s: any) => s.id);
-    const planTransactions = transactions.filter((t: any) => planSubscriberIds.includes(t.subscriber_id));
-    const planRevenue = planTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-    const planFee = planTransactions.length * PLATFORM_FEE_PER_TRANSACTION;
-    
-    return {
-      name: plan.name,
-      revenue: planRevenue,
-      platform_fee: planFee,
-      net_revenue: Math.max(0, planRevenue - planFee),
-      active_subscribers: planSubscribers.filter((s: any) => activeStatuses.includes(s.status)).length,
-    };
-  }) || [];
+  const mrr = calculateMRR(subscriptions);
+  const arr = mrr * 12;
 
   // Monthly revenue trend (last 12 months)
   const monthlyRevenue: { [key: string]: { revenue: number; transactions: number } } = {};
@@ -361,7 +372,7 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
     const date = new Date(t.paid_at || t.created_at);
     const key = date.toISOString().slice(0, 7);
     if (monthlyRevenue.hasOwnProperty(key)) {
-      monthlyRevenue[key].revenue += t.amount || 0;
+      monthlyRevenue[key].revenue += (t.amount || 0) / 100;
       monthlyRevenue[key].transactions += 1;
     }
   });
@@ -373,45 +384,86 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
     net_revenue: Math.max(0, data.revenue - (data.transactions * PLATFORM_FEE_PER_TRANSACTION)),
   }));
 
-  // Subscribers by plan
-  const subscribersByPlan = plans?.map((plan: any) => {
-    const planSubscribers = subscribers.filter((s: any) => s.plan_id === plan.id);
-    return {
-      name: plan.name,
-      active: planSubscribers.filter((s: any) => activeStatuses.includes(s.status)).length,
-      defaulted: planSubscribers.filter((s: any) => defaultedStatuses.includes(s.status)).length,
-      churned: planSubscribers.filter((s: any) => churnedStatuses.includes(s.status)).length,
-    };
-  }) || [];
+  // Subscriber growth over time
+  const subscriberGrowth: { [key: string]: number } = {};
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = date.toISOString().slice(0, 7);
+    subscriberGrowth[key] = 0;
+  }
+
+  subscriptions.forEach((s: any) => {
+    const date = new Date(s.createdAt || s.created_at);
+    const key = date.toISOString().slice(0, 7);
+    if (subscriberGrowth.hasOwnProperty(key)) {
+      subscriberGrowth[key] += 1;
+    }
+  });
+
+  const subscriberGrowthTrend = Object.entries(subscriberGrowth).map(([month, count]) => ({
+    month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+    subscribers: count,
+  }));
 
   // Plan distribution
+  const planCounts: { [key: string]: number } = {};
+  activeSubscribers.forEach((s: any) => {
+    const planName = s.plan?.name || 'Unknown';
+    planCounts[planName] = (planCounts[planName] || 0) + 1;
+  });
+
   const totalActive = activeSubscribers.length;
-  const planDistribution = plans?.map((plan: any) => {
-    const planActive = subscribers.filter((s: any) => s.plan_id === plan.id && activeStatuses.includes(s.status)).length;
+  const planDistribution = Object.entries(planCounts).map(([name, count]) => ({
+    name,
+    count,
+    percentage: totalActive > 0 ? Math.round((count / totalActive) * 100) : 0,
+  }));
+
+  // Revenue by plan
+  const revenueByPlan = (plans || []).map((plan: any) => {
+    const planSubs = subscriptions.filter((s: any) => s.plan?.plan_code === plan.paystack_plan_code);
+    const planActiveSubs = planSubs.filter((s: any) => s.status === 'active');
+    // Estimate revenue based on plan price and active subscribers
+    const planRevenue = planActiveSubs.length * plan.price;
+    
     return {
       name: plan.name,
-      count: planActive,
-      percentage: totalActive > 0 ? Math.round((planActive / totalActive) * 100) : 0,
+      revenue: planRevenue,
+      active_subscribers: planActiveSubs.length,
+      platform_fee: planActiveSubs.length * PLATFORM_FEE_PER_TRANSACTION,
+      net_revenue: Math.max(0, planRevenue - (planActiveSubs.length * PLATFORM_FEE_PER_TRANSACTION)),
     };
-  }) || [];
+  });
 
-  // Churn rate
-  const totalSubscribersAtStart = subscribers.length;
-  const churnRate = totalSubscribersAtStart > 0 
-    ? Math.round((churnedSubscribers.length / totalSubscribersAtStart) * 100 * 10) / 10 
+  // Subscribers by plan
+  const subscribersByPlan = (plans || []).map((plan: any) => {
+    const planSubs = subscriptions.filter((s: any) => s.plan?.plan_code === plan.paystack_plan_code);
+    return {
+      name: plan.name,
+      active: planSubs.filter((s: any) => s.status === 'active').length,
+      defaulted: planSubs.filter((s: any) => ['attention', 'non-renewing'].includes(s.status)).length,
+      churned: planSubs.filter((s: any) => ['cancelled', 'canceled', 'expired'].includes(s.status)).length,
+    };
+  });
+
+  // Defaulted subscribers with details
+  const defaultedList = defaultedSubscribers.map((s: any) => ({
+    id: s.subscription_code,
+    email: s.customer?.email || 'Unknown',
+    customer_name: `${s.customer?.first_name || ''} ${s.customer?.last_name || ''}`.trim() || 'Unknown',
+    plan: s.plan?.name || 'Unknown',
+    amount: (s.amount || 0) / 100,
+    status: s.status,
+    date: s.updatedAt || s.createdAt,
+    reason: s.status === 'attention' ? 'Payment Failed' : s.status === 'non-renewing' ? 'Non-Renewing' : 'Unknown',
+  }));
+
+  const churnRate = subscriptions.length > 0 
+    ? Math.round((churnedSubscribers.length / subscriptions.length) * 100 * 10) / 10 
     : 0;
 
-  // ARPU
   const arpu = activeSubscribers.length > 0 
     ? Math.round(totalRevenue / activeSubscribers.length) 
-    : 0;
-
-  // Subscriber growth rate (compare to last month)
-  const lastMonth = new Date();
-  lastMonth.setMonth(lastMonth.getMonth() - 1);
-  const subscribersLastMonth = subscribers.filter((s: any) => new Date(s.created_at) < lastMonth).length;
-  const subscriberGrowthRate = subscribersLastMonth > 0
-    ? Math.round(((subscribers.length - subscribersLastMonth) / subscribersLastMonth) * 100 * 10) / 10
     : 0;
 
   return {
@@ -419,17 +471,127 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
     recurring_revenue: recurringRevenue,
     platform_fee: platformFee,
     transaction_count: transactionCount,
+    mrr: mrr,
+    arr: arr,
     active_subscribers: activeSubscribers.length,
     churned_subscribers: churnedSubscribers.length,
     defaulted_subscribers: defaultedSubscribers.length,
-    new_subscribers_this_month: newSubscribers.length,
-    subscriber_growth_rate: subscriberGrowthRate,
+    total_subscribers: subscriptions.length,
     churn_rate: churnRate,
     arpu,
     revenue_by_plan: revenueByPlan,
     monthly_revenue_trend: monthlyRevenueTrend,
+    subscriber_growth: subscriberGrowthTrend,
     subscribers_by_plan: subscribersByPlan,
     plan_distribution: planDistribution,
+    defaulted_list: defaultedList,
+  };
+}
+
+async function getLocalOrganizationAnalytics(supabase: any, orgId: string, plans: any[]) {
+  const planIds = plans?.map((p: any) => p.id) || [];
+  
+  if (planIds.length === 0) {
+    return {
+      total_revenue: 0,
+      recurring_revenue: 0,
+      platform_fee: 0,
+      mrr: 0,
+      arr: 0,
+      active_subscribers: 0,
+      churned_subscribers: 0,
+      defaulted_subscribers: 0,
+      churn_rate: 0,
+      arpu: 0,
+      revenue_by_plan: [],
+      monthly_revenue_trend: [],
+      subscriber_growth: [],
+      subscribers_by_plan: [],
+      plan_distribution: [],
+      defaulted_list: [],
+    };
+  }
+
+  const { data: allSubscribers } = await supabase
+    .from('subscribers')
+    .select('*, subscription_plans(name, price, interval)')
+    .in('plan_id', planIds);
+
+  const subscribers = allSubscribers || [];
+  
+  const activeStatuses = ['active'];
+  const churnedStatuses = ['cancelled', 'canceled', 'expired'];
+  const defaultedStatuses = ['attention', 'paused', 'non-renewing'];
+
+  const activeSubscribers = subscribers.filter((s: any) => activeStatuses.includes(s.status));
+  const churnedSubscribers = subscribers.filter((s: any) => churnedStatuses.includes(s.status));
+  const defaultedSubscribers = subscribers.filter((s: any) => defaultedStatuses.includes(s.status));
+
+  const subscriberIds = subscribers.map((s: any) => s.id);
+  let transactions: any[] = [];
+  
+  if (subscriberIds.length > 0) {
+    const { data } = await supabase
+      .from('transactions')
+      .select('*')
+      .in('subscriber_id', subscriberIds)
+      .eq('status', 'success');
+    transactions = data || [];
+  }
+
+  const totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+  const transactionCount = transactions.length;
+  const platformFee = transactionCount * PLATFORM_FEE_PER_TRANSACTION;
+  const recurringRevenue = Math.max(0, totalRevenue - platformFee);
+
+  // Calculate MRR from active subscribers
+  const mrr = activeSubscribers.reduce((sum: number, s: any) => {
+    const price = s.subscription_plans?.price || 0;
+    const interval = s.subscription_plans?.interval || 'monthly';
+    
+    switch (interval) {
+      case 'daily': return sum + (price * 30);
+      case 'weekly': return sum + (price * 4);
+      case 'monthly': return sum + price;
+      case 'quarterly': return sum + (price / 3);
+      case 'biannually': return sum + (price / 6);
+      case 'annually': return sum + (price / 12);
+      default: return sum + price;
+    }
+  }, 0);
+
+  const arr = mrr * 12;
+
+  return {
+    total_revenue: totalRevenue,
+    recurring_revenue: recurringRevenue,
+    platform_fee: platformFee,
+    transaction_count: transactionCount,
+    mrr: mrr,
+    arr: arr,
+    active_subscribers: activeSubscribers.length,
+    churned_subscribers: churnedSubscribers.length,
+    defaulted_subscribers: defaultedSubscribers.length,
+    total_subscribers: subscribers.length,
+    churn_rate: subscribers.length > 0 ? Math.round((churnedSubscribers.length / subscribers.length) * 100 * 10) / 10 : 0,
+    arpu: activeSubscribers.length > 0 ? Math.round(totalRevenue / activeSubscribers.length) : 0,
+    revenue_by_plan: [],
+    monthly_revenue_trend: [],
+    subscriber_growth: [],
+    subscribers_by_plan: [],
+    plan_distribution: [],
+    defaulted_list: defaultedSubscribers.map((s: any) => ({
+      id: s.id,
+      email: s.email,
+      customer_name: s.customer_name || 'Unknown',
+      plan: s.subscription_plans?.name || 'Unknown',
+      amount: s.amount,
+      status: s.status,
+      date: s.payment_failed_at,
+      reason: s.status === 'attention' ? 'Payment Failed' : s.status,
+      retry_count: s.retry_count || 0,
+      last_retry_at: s.last_retry_at,
+    })),
   };
 }
 
@@ -446,7 +608,6 @@ async function suspendOrganization(supabase: any, actorId: string, orgId: string
 
   if (error) throw error;
 
-  // Log audit
   await supabase.from('audit_logs').insert({
     actor_id: actorId,
     action: 'suspend_organization',
@@ -501,7 +662,6 @@ async function approveDeletion(supabase: any, actorId: string, requestId: string
 
   if (error) throw error;
 
-  // Actually delete the organization
   await supabase.from('organizations').delete().eq('id', request.org_id);
 
   await supabase.from('audit_logs').insert({
@@ -608,7 +768,7 @@ async function completePayout(supabase: any, actorId: string, requestId: string)
 async function getPayoutRequests(supabase: any, status?: string) {
   let query = supabase
     .from('payout_requests')
-    .select('*, organizations(org_name, email)')
+    .select('*, organizations(org_name, email, account_number, account_name, bank_name)')
     .order('created_at', { ascending: false });
 
   if (status) {
@@ -619,6 +779,47 @@ async function getPayoutRequests(supabase: any, status?: string) {
   if (error) throw error;
 
   return { payout_requests: data };
+}
+
+async function getEligiblePayouts(supabase: any) {
+  // Get all organizations with their revenue data
+  const { data: organizations } = await supabase
+    .from('organizations')
+    .select('*')
+    .not('paystack_secret_key', 'is', null);
+
+  const eligiblePayouts = await Promise.all((organizations || []).map(async (org: any) => {
+    const { transactions } = await fetchPaystackData(org.paystack_secret_key);
+    const totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100;
+    const platformFee = transactions.length * PLATFORM_FEE_PER_TRANSACTION;
+    const amountOwed = Math.max(0, totalRevenue - platformFee);
+
+    // Get completed payouts
+    const { data: completedPayouts } = await supabase
+      .from('payout_requests')
+      .select('amount')
+      .eq('org_id', org.id)
+      .eq('status', 'completed');
+
+    const totalPaidOut = (completedPayouts || []).reduce((sum: number, p: any) => sum + p.amount, 0);
+    const eligibleAmount = Math.max(0, amountOwed - totalPaidOut);
+
+    return {
+      org_id: org.id,
+      org_name: org.org_name,
+      email: org.email,
+      total_revenue: totalRevenue,
+      platform_fee: platformFee,
+      amount_owed: amountOwed,
+      total_paid_out: totalPaidOut,
+      eligible_amount: eligibleAmount,
+      bank_name: org.bank_name,
+      account_number: org.account_number,
+      account_name: org.account_name,
+    };
+  }));
+
+  return { eligible_payouts: eligiblePayouts.filter(p => p.eligible_amount > 0) };
 }
 
 async function getDeletionRequests(supabase: any, status?: string) {
@@ -660,24 +861,22 @@ async function getAuditLogs(supabase: any, entityType?: string, entityId?: strin
 async function getPlatformStats(supabase: any) {
   console.log('Fetching platform stats with live Paystack data...');
   
-  // Total organizations
+  // Organization counts
   const { count: totalOrgs } = await supabase
     .from('organizations')
     .select('*', { count: 'exact', head: true });
 
-  // Active organizations (not suspended)
   const { count: activeOrgs } = await supabase
     .from('organizations')
     .select('*', { count: 'exact', head: true })
     .eq('is_suspended', false);
 
-  // Suspended organizations
   const { count: suspendedOrgs } = await supabase
     .from('organizations')
     .select('*', { count: 'exact', head: true })
     .eq('is_suspended', true);
 
-  // Get all organizations with Paystack keys for live data
+  // Get all organizations with Paystack keys
   const { data: orgsWithKeys } = await supabase
     .from('organizations')
     .select('id, org_name, paystack_secret_key')
@@ -685,73 +884,67 @@ async function getPlatformStats(supabase: any) {
 
   let totalSubscribers = 0;
   let activeSubscribers = 0;
+  let defaultedSubscribers = 0;
   let totalRevenue = 0;
   let totalTransactions = 0;
+  let totalMRR = 0;
+  let failedPayments = 0;
 
   // Fetch live data from Paystack for each organization
   for (const org of orgsWithKeys || []) {
     if (!org.paystack_secret_key) continue;
 
     try {
-      // Fetch subscriptions from Paystack
-      const subscriptionsResponse = await fetch('https://api.paystack.co/subscription', {
+      const { subscriptions, transactions } = await fetchPaystackData(org.paystack_secret_key);
+      
+      totalSubscribers += subscriptions.length;
+      activeSubscribers += subscriptions.filter((s: any) => s.status === 'active').length;
+      defaultedSubscribers += subscriptions.filter((s: any) => 
+        ['attention', 'non-renewing'].includes(s.status)
+      ).length;
+      
+      totalRevenue += transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100;
+      totalTransactions += transactions.length;
+      totalMRR += calculateMRR(subscriptions);
+
+      // Count failed transactions
+      const failedResponse = await fetch('https://api.paystack.co/transaction?status=failed&perPage=1000', {
         headers: {
           'Authorization': `Bearer ${org.paystack_secret_key}`,
           'Content-Type': 'application/json',
         },
       });
-
-      if (subscriptionsResponse.ok) {
-        const subscriptionsData = await subscriptionsResponse.json();
-        const subscriptions = subscriptionsData.data || [];
-        totalSubscribers += subscriptions.length;
-        activeSubscribers += subscriptions.filter((s: any) => s.status === 'active').length;
-        console.log(`Org ${org.org_name}: ${subscriptions.length} subscriptions, ${subscriptions.filter((s: any) => s.status === 'active').length} active`);
+      if (failedResponse.ok) {
+        const failedData = await failedResponse.json();
+        failedPayments += (failedData.data || []).length;
       }
 
-      // Fetch transactions from Paystack
-      const transactionsResponse = await fetch('https://api.paystack.co/transaction?status=success&perPage=1000', {
-        headers: {
-          'Authorization': `Bearer ${org.paystack_secret_key}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (transactionsResponse.ok) {
-        const transactionsData = await transactionsResponse.json();
-        const transactions = transactionsData.data || [];
-        const orgRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100; // Paystack amounts are in kobo
-        totalRevenue += orgRevenue;
-        totalTransactions += transactions.length;
-        console.log(`Org ${org.org_name}: ${transactions.length} transactions, ₦${orgRevenue.toLocaleString()} revenue`);
-      }
+      console.log(`Org ${org.org_name}: ${subscriptions.length} subs, ₦${transactions.reduce((s: number, t: any) => s + (t.amount || 0), 0) / 100} revenue`);
     } catch (error) {
       console.error(`Error fetching Paystack data for org ${org.org_name}:`, error);
     }
   }
 
-  // Platform earnings: ₦1,500 flat per transaction
   const platformEarnings = totalTransactions * PLATFORM_FEE_PER_TRANSACTION;
+  const totalARR = totalMRR * 12;
 
-  console.log(`Platform totals: ${totalSubscribers} subscribers, ${activeSubscribers} active, ₦${totalRevenue.toLocaleString()} revenue, ${totalTransactions} transactions, ₦${platformEarnings.toLocaleString()} platform earnings`);
-
-  // Pending payouts
+  // Pending counts
   const { count: pendingPayouts } = await supabase
     .from('payout_requests')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
 
-  // Pending deletions
   const { count: pendingDeletions } = await supabase
     .from('deletion_requests')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
 
-  // Pending appeals
   const { count: pendingAppeals } = await supabase
     .from('suspension_appeals')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
+
+  console.log(`Platform totals: ${totalSubscribers} subscribers, ${activeSubscribers} active, ₦${totalRevenue.toLocaleString()} revenue, ${totalTransactions} transactions`);
 
   return {
     total_organizations: totalOrgs || 0,
@@ -759,9 +952,13 @@ async function getPlatformStats(supabase: any) {
     suspended_organizations: suspendedOrgs || 0,
     total_subscribers: totalSubscribers,
     active_subscribers: activeSubscribers,
+    defaulted_subscribers: defaultedSubscribers,
     total_revenue: totalRevenue,
     platform_earnings: platformEarnings,
     transaction_count: totalTransactions,
+    mrr: totalMRR,
+    arr: totalARR,
+    failed_payments: failedPayments,
     pending_payouts: pendingPayouts || 0,
     pending_deletions: pendingDeletions || 0,
     pending_appeals: pendingAppeals || 0,
@@ -769,7 +966,47 @@ async function getPlatformStats(supabase: any) {
 }
 
 async function getDefaultedSubscribers(supabase: any, orgId?: string) {
-  let query = supabase
+  // Get all organizations with Paystack keys
+  const { data: organizations } = await supabase
+    .from('organizations')
+    .select('id, org_name, paystack_secret_key')
+    .not('paystack_secret_key', 'is', null);
+
+  let allDefaulters: any[] = [];
+
+  for (const org of organizations || []) {
+    if (orgId && org.id !== orgId) continue;
+    if (!org.paystack_secret_key) continue;
+
+    try {
+      const { subscriptions } = await fetchPaystackData(org.paystack_secret_key);
+      
+      const defaulted = subscriptions
+        .filter((s: any) => ['attention', 'non-renewing', 'cancelled'].includes(s.status))
+        .map((s: any) => ({
+          id: s.subscription_code,
+          organization: org.org_name,
+          org_id: org.id,
+          email: s.customer?.email || 'Unknown',
+          customer_name: `${s.customer?.first_name || ''} ${s.customer?.last_name || ''}`.trim() || 'Unknown',
+          plan: s.plan?.name || 'Unknown',
+          amount: (s.amount || 0) / 100,
+          status: s.status,
+          failure_reason: s.status === 'attention' ? 'Payment Failed' : 
+                         s.status === 'non-renewing' ? 'Non-Renewing' : 
+                         s.status === 'cancelled' ? 'Cancelled' : 'Unknown',
+          next_payment_date: s.next_payment_date,
+          created_at: s.createdAt,
+        }));
+
+      allDefaulters = [...allDefaulters, ...defaulted];
+    } catch (error) {
+      console.error(`Error fetching defaulters for org ${org.org_name}:`, error);
+    }
+  }
+
+  // Also include local defaulters
+  let localQuery = supabase
     .from('subscribers')
     .select('*, subscription_plans(name, price, interval, org_id, organizations(org_name))')
     .in('status', ['attention', 'paused', 'non-renewing']);
@@ -782,16 +1019,35 @@ async function getDefaultedSubscribers(supabase: any, orgId?: string) {
     
     const planIds = plans?.map((p: any) => p.id) || [];
     if (planIds.length > 0) {
-      query = query.in('plan_id', planIds);
-    } else {
-      return { defaulted_subscribers: [] };
+      localQuery = localQuery.in('plan_id', planIds);
     }
   }
 
-  const { data, error } = await query.order('payment_failed_at', { ascending: false });
-  if (error) throw error;
+  const { data: localDefaulters } = await localQuery.order('payment_failed_at', { ascending: false });
 
-  return { defaulted_subscribers: data || [] };
+  const mappedLocalDefaulters = (localDefaulters || []).map((d: any) => ({
+    id: d.id,
+    organization: d.subscription_plans?.organizations?.org_name || 'Unknown',
+    org_id: d.subscription_plans?.org_id,
+    email: d.email,
+    customer_name: d.customer_name || 'Unknown',
+    plan: d.subscription_plans?.name || 'Unknown',
+    amount: d.amount,
+    status: d.status,
+    failure_reason: d.status === 'attention' ? 'Payment Failed' : d.status,
+    retry_count: d.retry_count || 0,
+    last_retry_at: d.last_retry_at,
+    payment_failed_at: d.payment_failed_at,
+    next_payment_date: d.next_payment_date,
+  }));
+
+  // Merge and deduplicate
+  const allDefaultersMap = new Map();
+  [...allDefaulters, ...mappedLocalDefaulters].forEach(d => {
+    allDefaultersMap.set(d.email + d.plan, d);
+  });
+
+  return { defaulted_subscribers: Array.from(allDefaultersMap.values()) };
 }
 
 async function markPaymentResolved(supabase: any, actorId: string, subscriberId: string) {
@@ -834,7 +1090,6 @@ async function getSuspensionAppeals(supabase: any, status?: string) {
 }
 
 async function approveAppeal(supabase: any, actorId: string, appealId: string, adminNotes?: string) {
-  // Get the appeal to find the org_id
   const { data: appeal, error: fetchError } = await supabase
     .from('suspension_appeals')
     .select('org_id')
@@ -843,7 +1098,6 @@ async function approveAppeal(supabase: any, actorId: string, appealId: string, a
 
   if (fetchError) throw fetchError;
 
-  // Update the appeal
   const { error: appealError } = await supabase
     .from('suspension_appeals')
     .update({
@@ -856,7 +1110,6 @@ async function approveAppeal(supabase: any, actorId: string, appealId: string, a
 
   if (appealError) throw appealError;
 
-  // Restore the organization
   const { error: orgError } = await supabase
     .from('organizations')
     .update({
@@ -869,7 +1122,6 @@ async function approveAppeal(supabase: any, actorId: string, appealId: string, a
 
   if (orgError) throw orgError;
 
-  // Log audit
   await supabase.from('audit_logs').insert({
     actor_id: actorId,
     action: 'approve_suspension_appeal',
@@ -902,7 +1154,6 @@ async function rejectAppeal(supabase: any, actorId: string, appealId: string, ad
 
   if (error) throw error;
 
-  // Log audit
   await supabase.from('audit_logs').insert({
     actor_id: actorId,
     action: 'reject_suspension_appeal',

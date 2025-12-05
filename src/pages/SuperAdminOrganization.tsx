@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle } from "lucide-react";
+import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle, RefreshCw, CreditCard } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -38,6 +38,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
@@ -46,6 +48,8 @@ interface OrganizationDetails {
   organization: any;
   plans: any[];
   subscribers: any[];
+  live_subscribers: any[];
+  live_transactions: any[];
   payout_requests: any[];
   deletion_requests: any[];
 }
@@ -54,17 +58,21 @@ interface Analytics {
   total_revenue: number;
   recurring_revenue: number;
   platform_fee: number;
+  transaction_count: number;
+  mrr: number;
+  arr: number;
   active_subscribers: number;
   churned_subscribers: number;
   defaulted_subscribers: number;
-  new_subscribers_this_month: number;
-  subscriber_growth_rate: number;
+  total_subscribers: number;
   churn_rate: number;
   arpu: number;
   revenue_by_plan: any[];
   monthly_revenue_trend: any[];
+  subscriber_growth: any[];
   subscribers_by_plan: any[];
   plan_distribution: any[];
+  defaulted_list: any[];
 }
 
 export default function SuperAdminOrganization() {
@@ -74,6 +82,7 @@ export default function SuperAdminOrganization() {
   const [details, setDetails] = useState<OrganizationDetails | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -85,13 +94,8 @@ export default function SuperAdminOrganization() {
     }
   }, [authLoading, isSuperadmin, navigate]);
 
-  useEffect(() => {
-    if (isSuperadmin && orgId) {
-      fetchData();
-    }
-  }, [isSuperadmin, orgId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
     try {
       const [detailsData, analyticsData] = await Promise.all([
         invokeSuperadmin('get_organization_details', { org_id: orgId }),
@@ -99,13 +103,21 @@ export default function SuperAdminOrganization() {
       ]);
       setDetails(detailsData);
       setAnalytics(analyticsData);
+      if (showRefresh) toast.success('Data refreshed');
     } catch (error: any) {
       console.error('Error fetching data:', error);
       toast.error(error.message || 'Failed to fetch organization data');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [invokeSuperadmin, orgId]);
+
+  useEffect(() => {
+    if (isSuperadmin && orgId) {
+      fetchData();
+    }
+  }, [isSuperadmin, orgId, fetchData]);
 
   const handleSuspend = async () => {
     setActionLoading(true);
@@ -182,6 +194,9 @@ export default function SuperAdminOrganization() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={() => fetchData(true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
           {org.is_suspended ? (
             <Button onClick={handleRestore} disabled={actionLoading}>
               <CheckCircle className="h-4 w-4 mr-2" />
@@ -196,7 +211,7 @@ export default function SuperAdminOrganization() {
         </div>
       </div>
 
-      {/* Revenue Summary Cards */}
+      {/* Revenue Summary Cards - Row 1 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -205,7 +220,9 @@ export default function SuperAdminOrganization() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₦{(analytics?.total_revenue || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">All successful payments</p>
+            <p className="text-xs text-muted-foreground">
+              From {analytics?.transaction_count || 0} transactions
+            </p>
           </CardContent>
         </Card>
 
@@ -216,19 +233,63 @@ export default function SuperAdminOrganization() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₦{(analytics?.recurring_revenue || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">After {((analytics?.platform_fee || 0) / (analytics?.total_revenue || 1) * 100).toFixed(0)}% platform fee</p>
+            <p className="text-xs text-muted-foreground">
+              After ₦{(analytics?.platform_fee || 0).toLocaleString()} platform fee
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">MRR</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">₦{(analytics?.mrr || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Monthly Recurring Revenue
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">ARR</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">₦{(analytics?.arr || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Annual Recurring Revenue
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Subscriber Stats - Row 2 */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analytics?.total_subscribers || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              All-time subscribers
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.active_subscribers || 0}</div>
+            <div className="text-2xl font-bold text-green-600">{analytics?.active_subscribers || 0}</div>
             <p className="text-xs text-muted-foreground">
-              +{analytics?.subscriber_growth_rate || 0}% growth
+              Currently paying
             </p>
           </CardContent>
         </Card>
@@ -236,12 +297,25 @@ export default function SuperAdminOrganization() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Defaulted</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.defaulted_subscribers || 0}</div>
+            <div className="text-2xl font-bold text-destructive">{analytics?.defaulted_subscribers || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {analytics?.churn_rate || 0}% churn rate
+              Payment issues
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{analytics?.churn_rate || 0}%</div>
+            <p className="text-xs text-muted-foreground">
+              {analytics?.churned_subscribers || 0} churned
             </p>
           </CardContent>
         </Card>
@@ -251,9 +325,9 @@ export default function SuperAdminOrganization() {
         <TabsList>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="plans">Plans ({details.plans.length})</TabsTrigger>
-          <TabsTrigger value="subscribers">Subscribers ({details.subscribers.length})</TabsTrigger>
+          <TabsTrigger value="subscribers">Subscribers ({details.live_subscribers?.length || details.subscribers.length})</TabsTrigger>
+          <TabsTrigger value="defaulters">Defaulters ({analytics?.defaulted_subscribers || 0})</TabsTrigger>
           <TabsTrigger value="payouts">Payouts ({details.payout_requests.length})</TabsTrigger>
-          <TabsTrigger value="audit">Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4">
@@ -262,10 +336,11 @@ export default function SuperAdminOrganization() {
             <Card>
               <CardHeader>
                 <CardTitle>Monthly Revenue Trend</CardTitle>
+                <CardDescription>Revenue over the last 12 months</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analytics?.monthly_revenue_trend || []}>
+                  <AreaChart data={analytics?.monthly_revenue_trend || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                     <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -277,17 +352,50 @@ export default function SuperAdminOrganization() {
                       }}
                       formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
                     />
-                    <Line
+                    <Area
                       type="monotone"
                       dataKey="revenue"
                       stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.2}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscriber Growth</CardTitle>
+                <CardDescription>New subscribers over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={analytics?.subscriber_growth || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="subscribers"
+                      stroke="hsl(var(--chart-2))"
                       strokeWidth={2}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+          </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Subscribers by Plan</CardTitle>
@@ -313,37 +421,42 @@ export default function SuperAdminOrganization() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Plan Distribution</CardTitle>
+                <CardDescription>Active subscribers by plan</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(analytics?.plan_distribution || []).length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={analytics?.plan_distribution || []}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={({ name, count, percentage }) => `${name}: ${count} (${percentage}%)`}
+                        outerRadius={100}
+                        dataKey="count"
+                      >
+                        {(analytics?.plan_distribution || []).map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                    No active subscribers to show distribution
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Distribution</CardTitle>
-              <CardDescription>Active subscribers by plan</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={analytics?.plan_distribution || []}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={true}
-                    label={({ name, count, percentage }) => `${name}: ${count} (${percentage}%)`}
-                    outerRadius={100}
-                    dataKey="count"
-                  >
-                    {(analytics?.plan_distribution || []).map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Metrics Table */}
+          {/* Revenue by Plan Table */}
           <Card>
             <CardHeader>
               <CardTitle>Revenue by Plan</CardTitle>
@@ -355,20 +468,27 @@ export default function SuperAdminOrganization() {
                     <TableHead>Plan Name</TableHead>
                     <TableHead className="text-right">Active Subscribers</TableHead>
                     <TableHead className="text-right">Revenue</TableHead>
-                    <TableHead className="text-right">ARPU</TableHead>
+                    <TableHead className="text-right">Platform Fee</TableHead>
+                    <TableHead className="text-right">Net Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {analytics?.revenue_by_plan?.map((plan) => (
+                  {(analytics?.revenue_by_plan || []).map((plan) => (
                     <TableRow key={plan.name}>
                       <TableCell className="font-medium">{plan.name}</TableCell>
                       <TableCell className="text-right">{plan.active_subscribers}</TableCell>
                       <TableCell className="text-right">₦{plan.revenue.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
-                        ₦{plan.active_subscribers > 0 ? Math.round(plan.revenue / plan.active_subscribers).toLocaleString() : 0}
-                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">₦{plan.platform_fee.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-medium">₦{plan.net_revenue.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
+                  {(analytics?.revenue_by_plan || []).length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No revenue data available
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -407,6 +527,13 @@ export default function SuperAdminOrganization() {
                       <TableCell className="font-mono text-xs">{plan.paystack_plan_code}</TableCell>
                     </TableRow>
                   ))}
+                  {details.plans.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No plans found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -416,7 +543,8 @@ export default function SuperAdminOrganization() {
         <TabsContent value="subscribers">
           <Card>
             <CardHeader>
-              <CardTitle>Subscribers</CardTitle>
+              <CardTitle>Subscribers (Live from Paystack)</CardTitle>
+              <CardDescription>All subscribers for this organization</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -426,13 +554,36 @@ export default function SuperAdminOrganization() {
                     <TableHead>Email</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Retries</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Next Payment</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {details.subscribers.map((sub) => (
+                  {(details.live_subscribers || []).map((sub, index) => (
+                    <TableRow key={sub.subscription_code || index}>
+                      <TableCell className="font-medium">
+                        {`${sub.customer?.first_name || ''} ${sub.customer?.last_name || ''}`.trim() || '-'}
+                      </TableCell>
+                      <TableCell>{sub.customer?.email || '-'}</TableCell>
+                      <TableCell>{sub.plan?.name || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          sub.status === 'active' ? 'default' :
+                          sub.status === 'attention' ? 'destructive' :
+                          'secondary'
+                        }>
+                          {sub.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">₦{((sub.amount || 0) / 100).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {sub.next_payment_date 
+                          ? new Date(sub.next_payment_date).toLocaleDateString()
+                          : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(details.live_subscribers || []).length === 0 && details.subscribers.map((sub) => (
                     <TableRow key={sub.id}>
                       <TableCell className="font-medium">{sub.customer_name || '-'}</TableCell>
                       <TableCell>{sub.email}</TableCell>
@@ -446,21 +597,80 @@ export default function SuperAdminOrganization() {
                           {sub.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>₦{sub.amount.toLocaleString()}</TableCell>
-                      <TableCell>{sub.retry_count || 0}</TableCell>
+                      <TableCell className="text-right">₦{sub.amount.toLocaleString()}</TableCell>
                       <TableCell>
-                        {['attention', 'paused', 'non-renewing'].includes(sub.status) && (
+                        {sub.next_payment_date 
+                          ? new Date(sub.next_payment_date).toLocaleDateString()
+                          : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(details.live_subscribers || []).length === 0 && details.subscribers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                        No subscribers found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="defaulters">
+          <Card>
+            <CardHeader>
+              <CardTitle>Defaulted Subscribers</CardTitle>
+              <CardDescription>Subscribers with payment issues</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(analytics?.defaulted_list || []).map((defaulter, index) => (
+                    <TableRow key={defaulter.id || index}>
+                      <TableCell className="font-medium">{defaulter.customer_name || '-'}</TableCell>
+                      <TableCell>{defaulter.email}</TableCell>
+                      <TableCell>{defaulter.plan}</TableCell>
+                      <TableCell>
+                        <Badge variant="destructive">{defaulter.reason}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">₦{(defaulter.amount || 0).toLocaleString()}</TableCell>
+                      <TableCell>
+                        {defaulter.date ? new Date(defaulter.date).toLocaleDateString() : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {defaulter.id && !defaulter.id.startsWith('SUB_') && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleMarkResolved(sub.id)}
+                            onClick={() => handleMarkResolved(defaulter.id)}
                           >
-                            Mark Resolved
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Resolve
                           </Button>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
+                  {(analytics?.defaulted_list || []).length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                        No defaulted subscribers
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -470,7 +680,7 @@ export default function SuperAdminOrganization() {
         <TabsContent value="payouts">
           <Card>
             <CardHeader>
-              <CardTitle>Payout Requests</CardTitle>
+              <CardTitle>Payout History</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -484,27 +694,29 @@ export default function SuperAdminOrganization() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {details.payout_requests.map((req) => (
-                    <TableRow key={req.id}>
-                      <TableCell className="font-medium">₦{req.amount.toLocaleString()}</TableCell>
+                  {details.payout_requests.map((payout) => (
+                    <TableRow key={payout.id}>
+                      <TableCell className="font-medium">₦{payout.amount.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant={
-                          req.status === 'completed' ? 'default' :
-                          req.status === 'pending' ? 'secondary' :
-                          req.status === 'approved' ? 'outline' :
+                          payout.status === 'completed' ? 'default' :
+                          payout.status === 'pending' ? 'secondary' :
+                          payout.status === 'approved' ? 'outline' :
                           'destructive'
                         }>
-                          {req.status}
+                          {payout.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{new Date(req.requested_at).toLocaleDateString()}</TableCell>
-                      <TableCell>{req.processed_at ? new Date(req.processed_at).toLocaleDateString() : '-'}</TableCell>
-                      <TableCell>{req.notes || '-'}</TableCell>
+                      <TableCell>{new Date(payout.requested_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {payout.processed_at ? new Date(payout.processed_at).toLocaleDateString() : '-'}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{payout.notes || '-'}</TableCell>
                     </TableRow>
                   ))}
                   {details.payout_requests.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                         No payout requests
                       </TableCell>
                     </TableRow>
@@ -514,10 +726,6 @@ export default function SuperAdminOrganization() {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="audit">
-          <AuditLogSection orgId={orgId!} invokeSuperadmin={invokeSuperadmin} />
-        </TabsContent>
       </Tabs>
 
       {/* Suspend Dialog */}
@@ -526,7 +734,7 @@ export default function SuperAdminOrganization() {
           <DialogHeader>
             <DialogTitle>Suspend Organization</DialogTitle>
             <DialogDescription>
-              This will prevent the organization from accessing their account and processing payments.
+              This will prevent the organization from accessing the platform. Please provide a reason.
             </DialogDescription>
           </DialogHeader>
           <Textarea
@@ -538,7 +746,7 @@ export default function SuperAdminOrganization() {
             <Button variant="outline" onClick={() => setSuspendDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleSuspend} disabled={actionLoading}>
+            <Button variant="destructive" onClick={handleSuspend} disabled={actionLoading || !suspendReason}>
               {actionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Suspend
             </Button>
@@ -546,69 +754,5 @@ export default function SuperAdminOrganization() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function AuditLogSection({ orgId, invokeSuperadmin }: { orgId: string; invokeSuperadmin: any }) {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchLogs();
-  }, [orgId]);
-
-  const fetchLogs = async () => {
-    try {
-      const data = await invokeSuperadmin('get_audit_logs', { entity_id: orgId, limit: 50 });
-      setLogs(data.audit_logs);
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <Loader2 className="h-6 w-6 animate-spin" />;
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Audit Log</CardTitle>
-        <CardDescription>Recent actions on this organization</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity Type</TableHead>
-              <TableHead>Details</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {logs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell className="font-medium">{log.action}</TableCell>
-                <TableCell>{log.entity_type}</TableCell>
-                <TableCell className="max-w-xs truncate">
-                  {log.details ? JSON.stringify(log.details) : '-'}
-                </TableCell>
-                <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
-              </TableRow>
-            ))}
-            {logs.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                  No audit logs found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
   );
 }
