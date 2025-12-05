@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Building2, Users, DollarSign, AlertTriangle, Search, TrendingUp, Clock, Ban, Scale } from "lucide-react";
+import { 
+  Loader2, Building2, Users, DollarSign, AlertTriangle, Search, 
+  TrendingUp, Clock, Ban, Scale, RefreshCw, TrendingDown, CreditCard 
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,9 +25,13 @@ interface PlatformStats {
   suspended_organizations: number;
   total_subscribers: number;
   active_subscribers: number;
+  defaulted_subscribers: number;
   total_revenue: number;
   platform_earnings: number;
   transaction_count: number;
+  mrr: number;
+  arr: number;
+  failed_payments: number;
   pending_payouts: number;
   pending_deletions: number;
   pending_appeals: number;
@@ -37,7 +44,11 @@ interface Organization {
   created_at: string;
   is_suspended: boolean;
   active_subscribers: number;
+  total_subscribers: number;
   total_revenue: number;
+  mrr: number;
+  arr: number;
+  defaulted_subscribers: number;
 }
 
 export default function SuperAdminDashboard() {
@@ -46,6 +57,7 @@ export default function SuperAdminDashboard() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -55,13 +67,8 @@ export default function SuperAdminDashboard() {
     }
   }, [authLoading, isSuperadmin, navigate]);
 
-  useEffect(() => {
-    if (isSuperadmin) {
-      fetchData();
-    }
-  }, [isSuperadmin]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
     try {
       const [statsData, orgsData] = await Promise.all([
         invokeSuperadmin('get_platform_stats'),
@@ -69,13 +76,21 @@ export default function SuperAdminDashboard() {
       ]);
       setStats(statsData);
       setOrganizations(orgsData.organizations);
+      if (showRefresh) toast.success('Data refreshed');
     } catch (error: any) {
       console.error('Error fetching data:', error);
       toast.error(error.message || 'Failed to fetch data');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [invokeSuperadmin]);
+
+  useEffect(() => {
+    if (isSuperadmin) {
+      fetchData();
+    }
+  }, [isSuperadmin, fetchData]);
 
   const filteredOrganizations = organizations.filter(org =>
     org.org_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -102,6 +117,9 @@ export default function SuperAdminDashboard() {
           <p className="text-muted-foreground">Manage and monitor all organizations on Recurra</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={() => fetchData(true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
           <Button variant="outline" onClick={() => navigate('/superadmin/payouts')}>
             <Clock className="h-4 w-4 mr-2" />
             Payouts ({stats?.pending_payouts || 0})
@@ -116,12 +134,12 @@ export default function SuperAdminDashboard() {
           </Button>
           <Button variant="outline" onClick={() => navigate('/superadmin/defaulters')}>
             <Ban className="h-4 w-4 mr-2" />
-            Defaulters
+            Defaulters ({stats?.defaulted_subscribers || 0})
           </Button>
         </div>
       </div>
 
-      {/* Platform Stats */}
+      {/* Platform Stats - Row 1 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -157,7 +175,7 @@ export default function SuperAdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">₦{(stats?.total_revenue || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              All successful payments collected
+              From {stats?.transaction_count || 0} successful transactions
             </p>
           </CardContent>
         </Card>
@@ -176,13 +194,68 @@ export default function SuperAdminDashboard() {
         </Card>
       </div>
 
+      {/* Platform Stats - Row 2 */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Recurring Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">₦{(stats?.mrr || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Sum of all active monthly subscriptions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Annual Recurring Revenue</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">₦{(stats?.arr || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              MRR × 12 projected annually
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Defaulted Subscribers</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{stats?.defaulted_subscribers || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Payment failed or non-renewing
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Failed Payments</CardTitle>
+            <TrendingDown className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats?.failed_payments || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Total failed payment attempts
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Organizations Table */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Organizations</CardTitle>
-              <CardDescription>All organizations registered on the platform</CardDescription>
+              <CardDescription>All organizations registered on the platform with live metrics</CardDescription>
             </div>
             <div className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -202,8 +275,10 @@ export default function SuperAdminDashboard() {
                 <TableHead>Organization</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Active Subscribers</TableHead>
-                <TableHead className="text-right">Total Revenue</TableHead>
+                <TableHead className="text-right">Subscribers</TableHead>
+                <TableHead className="text-right">Revenue</TableHead>
+                <TableHead className="text-right">MRR</TableHead>
+                <TableHead className="text-right">Defaulted</TableHead>
                 <TableHead className="text-right">Joined</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -220,8 +295,19 @@ export default function SuperAdminDashboard() {
                       <Badge variant="default">Active</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{org.active_subscribers}</TableCell>
-                  <TableCell className="text-right">₦{org.total_revenue.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-medium">{org.active_subscribers}</span>
+                    <span className="text-muted-foreground text-xs"> / {org.total_subscribers}</span>
+                  </TableCell>
+                  <TableCell className="text-right">₦{(org.total_revenue || 0).toLocaleString()}</TableCell>
+                  <TableCell className="text-right text-green-600">₦{(org.mrr || 0).toLocaleString()}</TableCell>
+                  <TableCell className="text-right">
+                    {org.defaulted_subscribers > 0 ? (
+                      <span className="text-destructive font-medium">{org.defaulted_subscribers}</span>
+                    ) : (
+                      <span className="text-muted-foreground">0</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     {new Date(org.created_at).toLocaleDateString()}
                   </TableCell>
@@ -231,15 +317,15 @@ export default function SuperAdminDashboard() {
                       size="sm"
                       onClick={() => navigate(`/superadmin/organization/${org.id}`)}
                     >
-                      View Details
+                      View Dashboard
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
               {filteredOrganizations.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No organizations found
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    {searchQuery ? 'No organizations match your search' : 'No organizations found'}
                   </TableCell>
                 </TableRow>
               )}
