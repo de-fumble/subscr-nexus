@@ -162,34 +162,44 @@ async function getAllOrganizations(supabase: any) {
 
   if (error) throw error;
 
-  // Get subscriber counts and revenue for each org
+  // Get subscriber counts and revenue for each org from Paystack
   const orgsWithStats = await Promise.all(organizations.map(async (org: any) => {
-    const { data: plans } = await supabase
-      .from('subscription_plans')
-      .select('id')
-      .eq('org_id', org.id);
-
-    const planIds = plans?.map((p: any) => p.id) || [];
-
     let activeSubscribers = 0;
     let totalRevenue = 0;
 
-    if (planIds.length > 0) {
-      const { count } = await supabase
-        .from('subscribers')
-        .select('*', { count: 'exact', head: true })
-        .in('plan_id', planIds)
-        .not('status', 'in', '(cancelled,canceled,expired)');
-      
-      activeSubscribers = count || 0;
+    // If org has Paystack key, fetch live data
+    if (org.paystack_secret_key) {
+      try {
+        // Fetch subscriptions from Paystack
+        const subscriptionsResponse = await fetch('https://api.paystack.co/subscription', {
+          headers: {
+            'Authorization': `Bearer ${org.paystack_secret_key}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      const { data: transactions } = await supabase
-        .from('transactions')
-        .select('amount')
-        .in('subscriber_id', (await supabase.from('subscribers').select('id').in('plan_id', planIds)).data?.map((s: any) => s.id) || [])
-        .eq('status', 'success');
+        if (subscriptionsResponse.ok) {
+          const subscriptionsData = await subscriptionsResponse.json();
+          const subscriptions = subscriptionsData.data || [];
+          activeSubscribers = subscriptions.filter((s: any) => s.status === 'active').length;
+        }
 
-      totalRevenue = transactions?.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
+        // Fetch transactions from Paystack
+        const transactionsResponse = await fetch('https://api.paystack.co/transaction?status=success&perPage=1000', {
+          headers: {
+            'Authorization': `Bearer ${org.paystack_secret_key}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (transactionsResponse.ok) {
+          const transactionsData = await transactionsResponse.json();
+          const transactions = transactionsData.data || [];
+          totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100; // Convert kobo to naira
+        }
+      } catch (error) {
+        console.error(`Error fetching Paystack data for org ${org.org_name}:`, error);
+      }
     }
 
     return {
@@ -648,6 +658,8 @@ async function getAuditLogs(supabase: any, entityType?: string, entityId?: strin
 }
 
 async function getPlatformStats(supabase: any) {
+  console.log('Fetching platform stats with live Paystack data...');
+  
   // Total organizations
   const { count: totalOrgs } = await supabase
     .from('organizations')
@@ -665,27 +677,63 @@ async function getPlatformStats(supabase: any) {
     .select('*', { count: 'exact', head: true })
     .eq('is_suspended', true);
 
-  // Total subscribers
-  const { count: totalSubscribers } = await supabase
-    .from('subscribers')
-    .select('*', { count: 'exact', head: true });
+  // Get all organizations with Paystack keys for live data
+  const { data: orgsWithKeys } = await supabase
+    .from('organizations')
+    .select('id, org_name, paystack_secret_key')
+    .not('paystack_secret_key', 'is', null);
 
-  // Active subscribers
-  const { count: activeSubscribers } = await supabase
-    .from('subscribers')
-    .select('*', { count: 'exact', head: true })
-    .not('status', 'in', '(cancelled,canceled,expired)');
+  let totalSubscribers = 0;
+  let activeSubscribers = 0;
+  let totalRevenue = 0;
+  let totalTransactions = 0;
 
-  // Total transactions
-  const { data: transactions, count: transactionCount } = await supabase
-    .from('transactions')
-    .select('amount', { count: 'exact' })
-    .eq('status', 'success');
+  // Fetch live data from Paystack for each organization
+  for (const org of orgsWithKeys || []) {
+    if (!org.paystack_secret_key) continue;
 
-  const totalRevenue = transactions?.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
+    try {
+      // Fetch subscriptions from Paystack
+      const subscriptionsResponse = await fetch('https://api.paystack.co/subscription', {
+        headers: {
+          'Authorization': `Bearer ${org.paystack_secret_key}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (subscriptionsResponse.ok) {
+        const subscriptionsData = await subscriptionsResponse.json();
+        const subscriptions = subscriptionsData.data || [];
+        totalSubscribers += subscriptions.length;
+        activeSubscribers += subscriptions.filter((s: any) => s.status === 'active').length;
+        console.log(`Org ${org.org_name}: ${subscriptions.length} subscriptions, ${subscriptions.filter((s: any) => s.status === 'active').length} active`);
+      }
+
+      // Fetch transactions from Paystack
+      const transactionsResponse = await fetch('https://api.paystack.co/transaction?status=success&perPage=1000', {
+        headers: {
+          'Authorization': `Bearer ${org.paystack_secret_key}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (transactionsResponse.ok) {
+        const transactionsData = await transactionsResponse.json();
+        const transactions = transactionsData.data || [];
+        const orgRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) / 100; // Paystack amounts are in kobo
+        totalRevenue += orgRevenue;
+        totalTransactions += transactions.length;
+        console.log(`Org ${org.org_name}: ${transactions.length} transactions, ₦${orgRevenue.toLocaleString()} revenue`);
+      }
+    } catch (error) {
+      console.error(`Error fetching Paystack data for org ${org.org_name}:`, error);
+    }
+  }
 
   // Platform earnings: ₦1,500 flat per transaction
-  const platformEarnings = (transactionCount || 0) * PLATFORM_FEE_PER_TRANSACTION;
+  const platformEarnings = totalTransactions * PLATFORM_FEE_PER_TRANSACTION;
+
+  console.log(`Platform totals: ${totalSubscribers} subscribers, ${activeSubscribers} active, ₦${totalRevenue.toLocaleString()} revenue, ${totalTransactions} transactions, ₦${platformEarnings.toLocaleString()} platform earnings`);
 
   // Pending payouts
   const { count: pendingPayouts } = await supabase
@@ -709,11 +757,11 @@ async function getPlatformStats(supabase: any) {
     total_organizations: totalOrgs || 0,
     active_organizations: activeOrgs || 0,
     suspended_organizations: suspendedOrgs || 0,
-    total_subscribers: totalSubscribers || 0,
-    active_subscribers: activeSubscribers || 0,
+    total_subscribers: totalSubscribers,
+    active_subscribers: activeSubscribers,
     total_revenue: totalRevenue,
     platform_earnings: platformEarnings,
-    transaction_count: transactionCount || 0,
+    transaction_count: totalTransactions,
     pending_payouts: pendingPayouts || 0,
     pending_deletions: pendingDeletions || 0,
     pending_appeals: pendingAppeals || 0,
