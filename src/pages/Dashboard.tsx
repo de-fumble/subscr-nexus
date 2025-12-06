@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import * as recharts from "recharts";
@@ -12,6 +12,7 @@ import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
+import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 
 interface Organization {
   id: string;
@@ -44,7 +45,8 @@ const Dashboard = () => {
   const [chartData, setChartData] = useState<Array<{ plan: string; revenue: number }>>([]);
   const [failedPaymentsData, setFailedPaymentsData] = useState<Array<{ name: string; value: number }>>([]);
   const [showSubscriberDialog, setShowSubscriberDialog] = useState(false);
-
+  const [showPayoutDialog, setShowPayoutDialog] = useState(false);
+  const [availableBalance, setAvailableBalance] = useState(0);
   useEffect(() => {
     fetchDashboardData();
 
@@ -137,6 +139,14 @@ const Dashboard = () => {
         setFailedPaymentsData(failedData);
         const totalFromPlans = chart.reduce((sum: number, item: { revenue: number }) => sum + (item.revenue || 0), 0);
         const totalFailed = failedData.reduce((sum: number, item: { value: number }) => sum + (item.value || 0), 0);
+        
+        // Calculate available balance (total revenue - platform fees - already paid out)
+        const platformFee = 1500; // Flat fee per transaction
+        const transactionCount = analyticsData.transactionCount || 0;
+        const totalPlatformFees = transactionCount * platformFee;
+        const calculatedBalance = Math.max(0, totalFromPlans - totalPlatformFees);
+        setAvailableBalance(calculatedBalance);
+        
         setStats({
           totalRevenue: totalFromPlans,
           recurringRevenue: analyticsData.recurringRevenue || 0,
@@ -226,13 +236,23 @@ const Dashboard = () => {
                   <h2 className="text-3xl font-bold text-foreground mb-1">Overview</h2>
                   <p className="text-sm text-muted-foreground">Real-time metrics and insights</p>
                 </div>
-                <Button
-                  onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Plan
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setShowPayoutDialog(true)}
+                    variant="outline"
+                    className="gap-2 hover-lift border-accent/30"
+                  >
+                    <Banknote className="h-4 w-4" />
+                    Request Payout
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/plans/create")}
+                    className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Plan
+                  </Button>
+                </div>
               </div>
 
               {/* Company Account Section */}
@@ -438,6 +458,14 @@ const Dashboard = () => {
           onOpenChange={setShowSubscriberDialog}
           orgId={organization?.id || ""}
           onSubscriberRemoved={fetchDashboardData}
+        />
+        
+        <PayoutRequestDialog
+          open={showPayoutDialog}
+          onOpenChange={setShowPayoutDialog}
+          orgId={organization?.id || ""}
+          availableBalance={availableBalance}
+          onRequestSubmitted={fetchDashboardData}
         />
       </SidebarProvider>
     );
