@@ -48,14 +48,30 @@ const Plans = () => {
         return;
       }
 
-      // Get organization
-      const { data: org } = await supabase
+      // Get organization - check if owner first, then check membership
+      let orgId = null;
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (!org) return;
+      if (ownedOrg) {
+        orgId = ownedOrg.id;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (membership) {
+          orgId = membership.org_id;
+        }
+      }
+
+      if (!orgId) return;
 
       // Fetch plans with subscriber counts
       const { data, error } = await supabase

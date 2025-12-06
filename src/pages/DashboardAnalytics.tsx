@@ -58,13 +58,30 @@ export default function DashboardAnalytics() {
         return;
       }
 
-      const { data: orgData } = await supabase
+      // Get organization - check if owner first, then check membership
+      let orgId = null;
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (!orgData) return;
+      if (ownedOrg) {
+        orgId = ownedOrg.id;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (membership) {
+          orgId = membership.org_id;
+        }
+      }
+
+      if (!orgId) return;
 
       // Fetch real analytics from Paystack
       const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
@@ -80,7 +97,7 @@ export default function DashboardAnalytics() {
       const { data: plans } = await supabase
         .from("subscription_plans")
         .select("*")
-        .eq("org_id", orgData.id);
+        .eq("org_id", orgId);
 
       // Use Paystack data if available, otherwise fallback to calculated values
       if (analyticsData) {
