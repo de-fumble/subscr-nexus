@@ -81,16 +81,39 @@ const Dashboard = () => {
         return;
       }
 
-      // Fetch organization
-      const { data: orgData, error: orgError } = await supabase
+      // First check if user is an org owner
+      let orgData = null;
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (orgError) {
-        console.error("Error fetching organization:", orgError);
-        toast.error("Failed to load organization data");
+      if (ownedOrg) {
+        orgData = ownedOrg;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (membership) {
+          const { data: staffOrg } = await supabase
+            .from("organizations")
+            .select("*")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          
+          orgData = staffOrg;
+        }
+      }
+
+      if (!orgData) {
+        console.error("No organization found for user");
+        toast.error("No organization found");
+        navigate("/auth");
         return;
       }
 

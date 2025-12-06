@@ -45,13 +45,36 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   const checkSuspensionStatus = async (userId: string) => {
     try {
-      const { data: org } = await supabase
+      // First check if user is an org owner
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("is_suspended")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
-      setIsSuspended(org?.is_suspended || false);
+      if (ownedOrg) {
+        setIsSuspended(ownedOrg.is_suspended || false);
+        setLoading(false);
+        return;
+      }
+
+      // Check if user is a staff member
+      const { data: membership } = await supabase
+        .from("organization_members")
+        .select("org_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (membership) {
+        // Fetch org suspension status
+        const { data: org } = await supabase
+          .from("organizations")
+          .select("is_suspended")
+          .eq("id", membership.org_id)
+          .maybeSingle();
+
+        setIsSuspended(org?.is_suspended || false);
+      }
     } catch (error) {
       console.error("Error checking suspension:", error);
     } finally {
