@@ -165,20 +165,35 @@ export default function SuperAdminPayouts() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Organization</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead>Bank Details</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Requested</TableHead>
                       <TableHead>Processed</TableHead>
-                      <TableHead>Notes</TableHead>
+                      <TableHead>Request Notes</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {payouts.map((payout) => (
                       <TableRow key={payout.id}>
-                        <TableCell className="font-medium">{payout.organizations?.org_name}</TableCell>
-                        <TableCell>{payout.organizations?.email}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{payout.organizations?.org_name}</p>
+                            <p className="text-xs text-muted-foreground">{payout.organizations?.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {payout.organizations?.bank_name ? (
+                            <div className="text-sm">
+                              <p className="font-medium">{payout.organizations?.bank_name}</p>
+                              <p className="text-muted-foreground">{payout.organizations?.account_number}</p>
+                              <p className="text-xs text-muted-foreground">{payout.organizations?.account_name}</p>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No bank details</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">₦{payout.amount.toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant={
