@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.retry-failed-payments]
 verify_jwt = false
+
+[functions.manage-staff]
+verify_jwt = true

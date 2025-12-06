@@ -18,11 +18,14 @@ import DashboardProfile from "./pages/DashboardProfile";
 import DashboardSettings from "./pages/DashboardSettings";
 import DashboardAnalytics from "./pages/DashboardAnalytics";
 import DashboardSubscribers from "./pages/DashboardSubscribers";
+import DashboardLogs from "./pages/DashboardLogs";
+import DashboardStaff from "./pages/DashboardStaff";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminOrganization from "./pages/SuperAdminOrganization";
 import SuperAdminPayouts from "./pages/SuperAdminPayouts";
 import SuperAdminDeletions from "./pages/SuperAdminDeletions";
 import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
+import SuperAdminLogs from "./pages/SuperAdminLogs";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +48,8 @@ const App = () => (
           <Route path="/dashboard/settings" element={<ProtectedRoute><DashboardSettings /></ProtectedRoute>} />
           <Route path="/dashboard/analytics" element={<ProtectedRoute><DashboardAnalytics /></ProtectedRoute>} />
           <Route path="/dashboard/subscribers" element={<ProtectedRoute><DashboardSubscribers /></ProtectedRoute>} />
+          <Route path="/dashboard/logs" element={<ProtectedRoute><DashboardLogs /></ProtectedRoute>} />
+          <Route path="/dashboard/staff" element={<ProtectedRoute><DashboardStaff /></ProtectedRoute>} />
           {/* Super Admin Routes */}
           <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
@@ -52,6 +57,7 @@ const App = () => (
           <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminDeletions /></ProtectedRoute>} />
           <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
           <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminAppeals /></ProtectedRoute>} />
+          <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
