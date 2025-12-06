@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +67,7 @@ export default function SuperAdminDashboard() {
     }
   }, [authLoading, isSuperadmin, navigate]);
 
-  const fetchData = useCallback(async (showRefresh = false) => {
+  const fetchData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     try {
       const [statsData, orgsData] = await Promise.all([
@@ -84,13 +84,14 @@ export default function SuperAdminDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [invokeSuperadmin]);
+  };
 
   useEffect(() => {
     if (isSuperadmin) {
       fetchData();
     }
-  }, [isSuperadmin, fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuperadmin]);
 
   const filteredOrganizations = organizations.filter(org =>
     org.org_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
