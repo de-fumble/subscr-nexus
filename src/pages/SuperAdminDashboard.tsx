@@ -141,6 +141,7 @@ export default function SuperAdminDashboard() {
             <FileText className="h-4 w-4 mr-2" />
             Logs
           </Button>
+        </div>
       </div>
 
       {/* Platform Stats - Row 1 */}
