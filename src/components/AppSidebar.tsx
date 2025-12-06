@@ -6,7 +6,9 @@ import {
   Settings, 
   User,
   LogOut,
-  Building2
+  Building2,
+  FileText,
+  Shield
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -43,6 +45,8 @@ export function AppSidebar({ organization }: AppSidebarProps) {
     { title: "Plans", icon: CreditCard, url: "/plans" },
     { title: "Subscribers", icon: Users, url: "/dashboard/subscribers" },
     { title: "Analytics", icon: TrendingUp, url: "/dashboard/analytics" },
+    { title: "Activity Logs", icon: FileText, url: "/dashboard/logs" },
+    { title: "Staff", icon: Shield, url: "/dashboard/staff" },
   ];
 
   const settingsItems = [

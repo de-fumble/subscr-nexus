@@ -24,6 +24,7 @@ export type Database = {
           entity_type: string
           id: string
           ip_address: string | null
+          module: string | null
         }
         Insert: {
           action: string
@@ -34,6 +35,7 @@ export type Database = {
           entity_type: string
           id?: string
           ip_address?: string | null
+          module?: string | null
         }
         Update: {
           action?: string
@@ -44,6 +46,7 @@ export type Database = {
           entity_type?: string
           id?: string
           ip_address?: string | null
+          module?: string | null
         }
         Relationships: []
       }
@@ -81,6 +84,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "deletion_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          org_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -436,6 +477,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_write_to_org: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_org_access: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_org_role: {
+        Args: {
+          _org_id: string
+          _role: Database["public"]["Enums"]["org_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -443,9 +500,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_org_owner: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "superadmin" | "admin" | "user"
+      org_role: "admin" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -574,6 +636,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["superadmin", "admin", "user"],
+      org_role: ["admin", "staff"],
     },
   },
 } as const
