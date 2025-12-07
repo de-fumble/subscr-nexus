@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, Mail, Phone } from "lucide-react";
-import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
+import { Users, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import {
   Table,
@@ -29,43 +28,30 @@ interface Subscriber {
   customer_name: string | null;
   amount: number;
   status: string;
-  next_payment_date: string | null;
-  plan_id: string;
-  phone?: string | null;
+  plan_name: string;
+  paystack_subscription_code: string;
+  paystack_customer_code: string;
+  created_at: string;
 }
 
 export default function DashboardSubscribers() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  const [showDialog, setShowDialog] = useState(false);
-  const [orgId, setOrgId] = useState<string>("");
-  const { role, canWrite } = useOrgRole();
+  const { canWrite } = useOrgRole();
 
   useEffect(() => {
     fetchSubscribers();
-
-    const channel = supabase
-      .channel('subscribers-page')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'subscribers'
-        },
-        () => {
-          fetchSubscribers();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
-  const fetchSubscribers = async () => {
+  const fetchSubscribers = async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -74,60 +60,33 @@ export default function DashboardSubscribers() {
         return;
       }
 
-      // First check if user is org owner
-      let organizationId: string | null = null;
-
-      const { data: ownedOrg } = await supabase
-        .from("organizations")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (ownedOrg) {
-        organizationId = ownedOrg.id;
-      } else {
-        // Check if user is a staff member
-        const { data: membership } = await supabase
-          .from("organization_members")
-          .select("org_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (membership) {
-          organizationId = membership.org_id;
-        }
-      }
-
-      if (!organizationId) {
-        toast.error("No organization found");
-        return;
-      }
-      
-      setOrgId(organizationId);
-
-      const { data: plans } = await supabase
-        .from("subscription_plans")
-        .select("id")
-        .eq("org_id", organizationId);
-
-      if (!plans) return;
-
-      const planIds = plans.map(p => p.id);
-
-      const { data: subsData, error } = await supabase
-        .from("subscribers")
-        .select("*")
-        .in("plan_id", planIds)
-        .order("created_at", { ascending: false });
+      // Fetch subscribers from Paystack via edge function
+      const { data, error } = await supabase.functions.invoke('list-subscribers');
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      setSubscribers(subsData || []);
-    } catch (error) {
+      setSubscribers(data.subscribers || []);
+    } catch (error: any) {
       console.error("Error fetching subscribers:", error);
-      toast.error("Failed to load subscribers");
+      toast.error(error.message || "Failed to load subscribers");
     } finally {
       setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'default';
+      case 'attention':
+        return 'secondary';
+      case 'cancelled':
+      case 'non-renewing':
+        return 'destructive';
+      default:
+        return 'outline';
     }
   };
 
@@ -144,11 +103,19 @@ export default function DashboardSubscribers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Subscribers</h1>
-          <p className="text-muted-foreground">Manage your subscription customers</p>
+          <p className="text-muted-foreground">View your subscription customers from Paystack</p>
         </div>
-        <Button onClick={() => setShowDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Subscriber
+        <Button 
+          onClick={() => fetchSubscribers(true)} 
+          variant="outline"
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
+          Refresh
         </Button>
       </div>
 
@@ -159,18 +126,17 @@ export default function DashboardSubscribers() {
             <CardTitle>All Subscribers</CardTitle>
           </div>
           <CardDescription>
-            {subscribers.length} total subscriber{subscribers.length !== 1 ? 's' : ''}
+            {subscribers.length} total subscriber{subscribers.length !== 1 ? 's' : ''} from Paystack
           </CardDescription>
         </CardHeader>
         <CardContent>
           {subscribers.length === 0 ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">No subscribers yet</p>
-              <Button onClick={() => setShowDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Subscriber
-              </Button>
+              <p className="text-muted-foreground mb-2">No subscribers yet</p>
+              <p className="text-sm text-muted-foreground">
+                Subscribers will appear here once customers subscribe to your plans
+              </p>
             </div>
           ) : (
             <TooltipProvider>
@@ -179,9 +145,10 @@ export default function DashboardSubscribers() {
                   <TableRow>
                     <TableHead>Customer</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Plan</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Next Payment</TableHead>
+                    <TableHead>Subscribed</TableHead>
                     {canWrite && <TableHead className="text-right">Contact</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -192,53 +159,35 @@ export default function DashboardSubscribers() {
                         {sub.customer_name || "N/A"}
                       </TableCell>
                       <TableCell>{sub.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{sub.plan_name}</Badge>
+                      </TableCell>
                       <TableCell>₦{sub.amount.toLocaleString()}</TableCell>
                       <TableCell>
-                        <Badge variant={sub.status === "active" ? "default" : "secondary"}>
+                        <Badge variant={getStatusVariant(sub.status)}>
                           {sub.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {sub.next_payment_date
-                          ? new Date(sub.next_payment_date).toLocaleDateString()
-                          : "N/A"}
+                        {new Date(sub.created_at).toLocaleDateString()}
                       </TableCell>
                       {canWrite && (
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => window.location.href = `mailto:${sub.email}`}
-                                >
-                                  <Mail className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Email {sub.email}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            {sub.phone && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => window.location.href = `tel:${sub.phone}`}
-                                  >
-                                    <Phone className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Call {sub.phone}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => window.location.href = `mailto:${sub.email}`}
+                              >
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Email {sub.email}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </TableCell>
                       )}
                     </TableRow>
@@ -249,13 +198,6 @@ export default function DashboardSubscribers() {
           )}
         </CardContent>
       </Card>
-
-      <SubscriberManagementDialog
-        open={showDialog}
-        onOpenChange={setShowDialog}
-        orgId={orgId}
-        onSubscriberRemoved={fetchSubscribers}
-      />
     </div>
   );
 }
