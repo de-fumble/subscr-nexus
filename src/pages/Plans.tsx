@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, ExternalLink, Archive, Users } from "lucide-react";
+import { ArrowLeft, Plus, ExternalLink, Archive, Users, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -37,13 +37,17 @@ const Plans = () => {
   const { canCreatePlans, canWrite } = useOrgRole();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPlans();
   }, []);
 
-  const fetchPlans = async () => {
+  const fetchPlans = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -77,13 +81,10 @@ const Plans = () => {
 
       if (!orgId) return;
 
-      // Fetch plans for this organization only with subscriber counts
-      const { data, error } = await supabase
+      // Fetch plans for this organization
+      const { data: plansData, error } = await supabase
         .from("subscription_plans")
-        .select(`
-          *,
-          subscribers(count)
-        `)
+        .select("*")
         .eq("org_id", orgId)
         .order("is_active", { ascending: false })
         .order("created_at", { ascending: false });
@@ -94,9 +95,22 @@ const Plans = () => {
         return;
       }
 
-      const plansWithCounts = data.map((plan) => ({
+      // Fetch subscriber counts from Paystack
+      const { data: subscriberData, error: subError } = await supabase.functions.invoke('list-subscribers');
+      
+      let subscriberCountByPlan: Record<string, number> = {};
+      
+      if (!subError && subscriberData?.subscribers) {
+        // Group subscribers by plan_name and count
+        subscriberData.subscribers.forEach((sub: any) => {
+          const planName = sub.plan_name;
+          subscriberCountByPlan[planName] = (subscriberCountByPlan[planName] || 0) + 1;
+        });
+      }
+
+      const plansWithCounts = (plansData || []).map((plan) => ({
         ...plan,
-        subscriber_count: plan.subscribers?.[0]?.count || 0,
+        subscriber_count: subscriberCountByPlan[plan.name] || 0,
       }));
 
       setPlans(plansWithCounts);
@@ -105,6 +119,7 @@ const Plans = () => {
       toast.error("Failed to load plans");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -226,15 +241,29 @@ const Plans = () => {
                 </p>
               </div>
             </div>
-            {canCreatePlans && (
+            <div className="flex items-center gap-2">
               <Button
-                onClick={() => navigate("/plans/create")}
-                className="bg-accent hover:bg-accent/90 gap-2"
+                variant="outline"
+                size="icon"
+                onClick={() => fetchPlans(true)}
+                disabled={refreshing}
               >
-                <Plus className="h-4 w-4" />
-                Create Plan
+                {refreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
               </Button>
-            )}
+              {canCreatePlans && (
+                <Button
+                  onClick={() => navigate("/plans/create")}
+                  className="bg-accent hover:bg-accent/90 gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Plan
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
