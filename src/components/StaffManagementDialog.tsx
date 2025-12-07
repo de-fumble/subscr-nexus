@@ -277,7 +277,7 @@ export function StaffManagementDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member Details</TableHead>
+                  <TableHead>Staff Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -286,13 +286,8 @@ export function StaffManagementDialog({
               <TableBody>
                 {members.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{member.email || "N/A"}</p>
-                        <p className="font-mono text-xs text-muted-foreground">
-                          ID: {member.user_id.slice(0, 8)}...
-                        </p>
-                      </div>
+                    <TableCell className="font-medium">
+                      {member.email || "N/A"}
                     </TableCell>
                     <TableCell>
                       <Select
