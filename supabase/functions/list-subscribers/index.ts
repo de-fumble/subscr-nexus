@@ -131,7 +131,7 @@ serve(async (req) => {
         id: sub.subscription_code,
         email: customer.email || "",
         customer_name: fullName,
-        amount: typeof sub.amount === "number" ? sub.amount : (plan.amount ?? 0),
+        amount: typeof sub.amount === "number" ? sub.amount / 100 : (plan.amount ?? 0),
         status: sub.status || "",
         paystack_subscription_code: sub.subscription_code,
         paystack_customer_code: customer.customer_code || "",
