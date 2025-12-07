@@ -78,14 +78,17 @@ export function StaffManagementDialog({
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select('*')
-        .eq('org_id', orgId)
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('manage-staff', {
+        body: {
+          action: 'list_staff',
+          org_id: orgId,
+        },
+      });
 
       if (error) throw error;
-      setMembers(data || []);
+      if (data.error) throw new Error(data.error);
+      
+      setMembers(data.members || []);
     } catch (error: any) {
       console.error('Error fetching members:', error);
       toast.error('Failed to load staff members');
@@ -270,6 +273,7 @@ export function StaffManagementDialog({
               <TableHeader>
                 <TableRow>
                   <TableHead>Member ID</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -280,6 +284,9 @@ export function StaffManagementDialog({
                   <TableRow key={member.id}>
                     <TableCell className="font-mono text-xs">
                       {member.user_id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {member.email || "N/A"}
                     </TableCell>
                     <TableCell>
                       <Select

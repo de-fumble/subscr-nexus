@@ -64,25 +64,8 @@ const SubscriptionCallback = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <Button 
-              className="w-full" 
-              onClick={() => navigate("/dashboard")}
-            >
-              Go to Dashboard
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => navigate("/plans")}
-            >
-              View All Plans
-            </Button>
-          </div>
-
-          <p className="text-xs text-center text-muted-foreground">
-            A confirmation email has been sent to your registered email address
+          <p className="text-sm text-center text-muted-foreground">
+            The receipt for this transaction has been forwarded to your registered email address
           </p>
         </CardContent>
       </Card>

@@ -45,6 +45,10 @@ serve(async (req) => {
         result = await createStaff(supabase, user.id, params);
         break;
       
+      case 'list_staff':
+        result = await listStaff(supabase, user.id, params);
+        break;
+      
       case 'update_staff_role':
         result = await updateStaffRole(supabase, user.id, params);
         break;
@@ -136,6 +140,59 @@ async function createStaff(supabase: any, actorId: string, params: { org_id: str
   };
 }
 
+async function listStaff(supabase: any, actorId: string, params: { org_id: string }) {
+  const { org_id } = params;
+
+  // Verify the actor has access to this org (owner or member)
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, user_id')
+    .eq('id', org_id)
+    .single();
+
+  if (!org) {
+    throw new Error('Organization not found');
+  }
+
+  const isOwner = org.user_id === actorId;
+  
+  if (!isOwner) {
+    // Check if actor is a member
+    const { data: membership } = await supabase
+      .from('organization_members')
+      .select('id')
+      .eq('org_id', org_id)
+      .eq('user_id', actorId)
+      .maybeSingle();
+    
+    if (!membership) {
+      throw new Error('You do not have access to this organization');
+    }
+  }
+
+  // Get all members
+  const { data: members, error } = await supabase
+    .from('organization_members')
+    .select('*')
+    .eq('org_id', org_id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Get emails for each member from auth.users
+  const membersWithEmails = await Promise.all(
+    (members || []).map(async (member: any) => {
+      const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
+      return {
+        ...member,
+        email: userData?.user?.email || null,
+      };
+    })
+  );
+
+  return { members: membersWithEmails };
+}
+
 async function updateStaffRole(supabase: any, actorId: string, params: { member_id: string; new_role: string }) {
   const { member_id, new_role } = params;
 
@@ -206,12 +263,21 @@ async function removeStaff(supabase: any, actorId: string, params: { member_id: 
     throw new Error('Only organization owners can remove staff');
   }
 
+  // Delete the member from organization_members
   const { error } = await supabase
     .from('organization_members')
     .delete()
     .eq('id', member_id);
 
   if (error) throw error;
+
+  // Delete the user account so they can no longer log in
+  const { error: deleteUserError } = await supabase.auth.admin.deleteUser(member.user_id);
+  
+  if (deleteUserError) {
+    console.error('Warning: Failed to delete user account:', deleteUserError);
+    // Continue anyway - the membership is removed so they can't access the org
+  }
 
   // Log the action
   await supabase.from('audit_logs').insert({
@@ -220,7 +286,7 @@ async function removeStaff(supabase: any, actorId: string, params: { member_id: 
     entity_type: 'organization',
     entity_id: member.org_id,
     module: 'staff',
-    details: { member_id, user_id: member.user_id },
+    details: { member_id, user_id: member.user_id, account_deleted: !deleteUserError },
   });
 
   return { success: true };
