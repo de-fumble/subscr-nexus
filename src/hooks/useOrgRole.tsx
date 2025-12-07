@@ -11,6 +11,7 @@ interface OrgRoleResult {
   canManageStaff: boolean;
   canRequestPayout: boolean;
   canAccessSettings: boolean;
+  canCreatePlans: boolean;
   refreshRole: () => Promise<void>;
 }
 
@@ -74,8 +75,9 @@ export const useOrgRole = (): OrgRoleResult => {
 
   const canWrite = role === 'owner' || role === 'admin';
   const canManageStaff = role === 'owner';
-  const canRequestPayout = role === 'owner' || role === 'admin';
-  const canAccessSettings = role === 'owner' || role === 'admin';
+  const canRequestPayout = role === 'owner'; // Only owner can request payouts
+  const canAccessSettings = role === 'owner'; // Only owner can access bank settings
+  const canCreatePlans = role === 'owner' || role === 'admin'; // Staff cannot create plans
 
   return {
     role,
@@ -85,6 +87,7 @@ export const useOrgRole = (): OrgRoleResult => {
     canManageStaff,
     canRequestPayout,
     canAccessSettings,
+    canCreatePlans,
     refreshRole: checkRole,
   };
 };
