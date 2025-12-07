@@ -7,9 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Key, Save, Eye, EyeOff } from "lucide-react";
+import { useOrgRole } from "@/hooks/useOrgRole";
+import { RestrictedPage } from "@/components/RestrictedPage";
 
 export default function DashboardSettings() {
   const navigate = useNavigate();
+  const { canAccessSettings, loading: roleLoading } = useOrgRole();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
@@ -108,12 +111,17 @@ export default function DashboardSettings() {
     }
   };
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Show restricted page for non-owners
+  if (!canAccessSettings) {
+    return <RestrictedPage />;
   }
 
   return (

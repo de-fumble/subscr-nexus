@@ -8,7 +8,8 @@ import {
   LogOut,
   Building2,
   FileText,
-  Shield
+  Shield,
+  Lock
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -23,19 +24,23 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { RoleBadge } from "@/components/RoleBadge";
+import { OrgRoleType } from "@/hooks/useOrgRole";
 
 interface AppSidebarProps {
   organization: {
     org_name: string;
     email: string;
   } | null;
+  role?: OrgRoleType;
+  userEmail?: string;
+  canAccessSettings?: boolean;
 }
 
-export function AppSidebar({ organization }: AppSidebarProps) {
+export function AppSidebar({ organization, role, userEmail, canAccessSettings = true }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { open } = useSidebar();
@@ -49,10 +54,20 @@ export function AppSidebar({ organization }: AppSidebarProps) {
     { title: "Staff", icon: Shield, url: "/dashboard/staff" },
   ];
 
-  const settingsItems = [
-    { title: "Profile", icon: User, url: "/dashboard/profile" },
-    { title: "Settings", icon: Settings, url: "/dashboard/settings" },
-  ];
+  // Only show profile/settings to owners
+  const settingsItems = canAccessSettings 
+    ? [
+        { title: "Profile", icon: User, url: "/dashboard/profile" },
+        { title: "Settings", icon: Settings, url: "/dashboard/settings" },
+      ]
+    : [
+        { title: "Profile", icon: Lock, url: "/dashboard/profile", restricted: true },
+        { title: "Settings", icon: Lock, url: "/dashboard/settings", restricted: true },
+      ];
+
+  // Display name and email based on role
+  const displayName = role === 'staff' ? userEmail?.split('@')[0] || 'Staff' : organization?.org_name;
+  const displayEmail = role === 'staff' ? userEmail : organization?.email;
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -65,13 +80,14 @@ export function AppSidebar({ organization }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <SidebarGroup>
+      <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2">
             {open && (
-              <>
-                <Building2 className="h-4 w-4" />
-                <span className="truncate">{organization?.org_name || "Dashboard"}</span>
-              </>
+              <div className="flex items-center gap-2 w-full">
+                <Building2 className="h-4 w-4 shrink-0" />
+                <span className="truncate flex-1">{organization?.org_name || "Dashboard"}</span>
+                <RoleBadge role={role || null} />
+              </div>
             )}
             {!open && <Building2 className="h-4 w-4" />}
           </SidebarGroupLabel>
@@ -120,13 +136,13 @@ export function AppSidebar({ organization }: AppSidebarProps) {
             <div className="flex items-center gap-2 px-2 py-1.5">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {organization?.org_name?.charAt(0).toUpperCase() || "U"}
+                  {displayName?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
               {open && (
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-medium truncate">{organization?.org_name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{organization?.email}</p>
+                  <p className="text-sm font-medium truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{displayEmail}</p>
                 </div>
               )}
             </div>
