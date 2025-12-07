@@ -45,13 +45,40 @@ export default function DashboardProfile() {
         return;
       }
 
-      const { data: orgData, error } = await supabase
-        .from("organizations")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      // First check if user is org owner
+      let orgData = null;
 
-      if (error) throw error;
+      const { data: ownedOrg } = await supabase
+        .from("organizations")
+        .select("id, org_name, email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (ownedOrg) {
+        orgData = ownedOrg;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (membership) {
+          const { data: memberOrg } = await supabase
+            .from("organizations")
+            .select("id, org_name, email")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          
+          orgData = memberOrg;
+        }
+      }
+
+      if (!orgData) {
+        toast.error("No organization found");
+        return;
+      }
 
       setOrganization(orgData);
       setOrgName(orgData.org_name);

@@ -65,20 +65,41 @@ export default function DashboardSubscribers() {
         return;
       }
 
-      const { data: orgData } = await supabase
+      // First check if user is org owner
+      let organizationId: string | null = null;
+
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (!orgData) return;
+      if (ownedOrg) {
+        organizationId = ownedOrg.id;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (membership) {
+          organizationId = membership.org_id;
+        }
+      }
+
+      if (!organizationId) {
+        toast.error("No organization found");
+        return;
+      }
       
-      setOrgId(orgData.id);
+      setOrgId(organizationId);
 
       const { data: plans } = await supabase
         .from("subscription_plans")
         .select("id")
-        .eq("org_id", orgData.id);
+        .eq("org_id", organizationId);
 
       if (!plans) return;
 

@@ -56,15 +56,38 @@ serve(async (req) => {
       )
     }
 
-    // Get organization
-    const { data: org, error: orgError } = await supabase
+    // Get organization - first check if user is owner
+    let org = null;
+
+    const { data: ownedOrg } = await supabase
       .from('organizations')
       .select('*')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (orgError || !org) {
-      console.error('Organization not found:', orgError)
+    if (ownedOrg) {
+      org = ownedOrg;
+    } else {
+      // Check if user is a staff member
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('org_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (membership) {
+        const { data: memberOrg } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', membership.org_id)
+          .maybeSingle()
+        
+        org = memberOrg;
+      }
+    }
+
+    if (!org) {
+      console.error('Organization not found for user:', user.id)
       return new Response(
         JSON.stringify({ error: 'Organization not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
