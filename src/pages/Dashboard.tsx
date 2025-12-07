@@ -36,6 +36,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { canRequestPayout, canCreatePlans, canAccessSettings, role } = useOrgRole();
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [userEmail, setUserEmail] = useState<string | undefined>();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -82,6 +83,9 @@ const Dashboard = () => {
         navigate("/auth");
         return;
       }
+
+      // Store user email for staff display
+      setUserEmail(user.email);
 
       // First check if user is an org owner
       let orgData = null;
@@ -227,7 +231,7 @@ const Dashboard = () => {
     return (
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} />
+          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
             <div className="flex min-h-screen items-center justify-center">
               <div className="text-center">
@@ -244,11 +248,11 @@ const Dashboard = () => {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} />
+        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <div className="flex-1">
+            <div className="flex-1 flex items-center gap-3">
               <h1 className="text-xl font-bold text-foreground">
                 {organization?.org_name || "Dashboard"}
               </h1>
