@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, ExternalLink, Archive } from "lucide-react";
+import { ArrowLeft, Plus, ExternalLink, Archive, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -16,6 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Plan {
   id: string;
@@ -75,13 +77,15 @@ const Plans = () => {
 
       if (!orgId) return;
 
-      // Fetch plans with subscriber counts
+      // Fetch plans for this organization only with subscriber counts
       const { data, error } = await supabase
         .from("subscription_plans")
         .select(`
           *,
           subscribers(count)
         `)
+        .eq("org_id", orgId)
+        .order("is_active", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -126,6 +130,79 @@ const Plans = () => {
       toast.error("Failed to archive plan");
     }
   };
+
+  const activePlans = plans.filter(p => p.is_active);
+  const deletedPlans = plans.filter(p => !p.is_active);
+
+  const renderPlanCard = (plan: Plan, index: number) => (
+    <Card
+      key={plan.id}
+      className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
+      style={{ animationDelay: `${index * 100}ms` }}
+    >
+      <div className="mb-4 flex items-start justify-between">
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-foreground">
+            {plan.name}
+          </h3>
+          {plan.category && (
+            <span className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              {plan.category}
+            </span>
+          )}
+        </div>
+        <Badge variant={plan.is_active ? "default" : "secondary"}>
+          {plan.is_active ? "Active" : "Deleted"}
+        </Badge>
+      </div>
+
+      {plan.description && (
+        <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
+          {plan.description}
+        </p>
+      )}
+
+      <div className="mb-4">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold text-foreground">
+            ₦{plan.price.toLocaleString()}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            / {plan.interval}
+          </span>
+        </div>
+      </div>
+
+      {/* Subscriber count */}
+      <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+        <Users className="h-4 w-4" />
+        <span>{plan.subscriber_count} subscriber{plan.subscriber_count !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="space-y-2">
+        <Button
+          onClick={() => copySubscriptionLink(plan.id)}
+          variant="outline"
+          className="w-full gap-2"
+          disabled={!plan.is_active}
+          title={plan.is_active ? "Copy subscription link" : "This plan is deleted"}
+        >
+          <ExternalLink className="h-4 w-4" />
+          Copy Subscription Link
+        </Button>
+        {canWrite && plan.is_active && (
+          <Button
+            onClick={() => setPlanToDelete(plan.id)}
+            variant="destructive"
+            className="w-full gap-2"
+          >
+            <Archive className="h-4 w-4" />
+            Delete Plan
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -190,75 +267,55 @@ const Plans = () => {
             </div>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {plans.map((plan, index) => (
-              <Card
-                key={plan.id}
-                className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-foreground">
-                      {plan.name}
-                    </h3>
-                    {plan.category && (
-                      <span className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                        {plan.category}
-                      </span>
+          <Tabs defaultValue="active" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="active" className="gap-2">
+                Active Plans
+                <Badge variant="secondary" className="ml-1">{activePlans.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="deleted" className="gap-2">
+                Deleted Plans
+                <Badge variant="secondary" className="ml-1">{deletedPlans.length}</Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active">
+              {activePlans.length === 0 ? (
+                <Card className="p-8">
+                  <div className="text-center text-muted-foreground">
+                    <p>No active plans</p>
+                    {canCreatePlans && (
+                      <Button
+                        onClick={() => navigate("/plans/create")}
+                        className="mt-4"
+                        variant="outline"
+                      >
+                        Create a Plan
+                      </Button>
                     )}
                   </div>
-                  <div className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    plan.is_active
-                      ? "bg-accent/10 text-accent"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {plan.is_active ? "Active" : "Deleted"}
+                </Card>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {activePlans.map((plan, index) => renderPlanCard(plan, index))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="deleted">
+              {deletedPlans.length === 0 ? (
+                <Card className="p-8">
+                  <div className="text-center text-muted-foreground">
+                    <p>No deleted plans</p>
                   </div>
+                </Card>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {deletedPlans.map((plan, index) => renderPlanCard(plan, index))}
                 </div>
-
-                {plan.description && (
-                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
-                    {plan.description}
-                  </p>
-                )}
-
-                <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">
-                      ₦{plan.price.toLocaleString()}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      / {plan.interval}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => copySubscriptionLink(plan.id)}
-                    variant="outline"
-                    className="w-full gap-2"
-                    disabled={!plan.is_active}
-                    title={plan.is_active ? "Copy subscription link" : "This plan is deleted"}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Copy Subscription Link
-                  </Button>
-                  {canWrite && (
-                    <Button
-                      onClick={() => setPlanToDelete(plan.id)}
-                      variant="destructive"
-                      className="w-full gap-2"
-                    >
-                      <Archive className="h-4 w-4" />
-                      Delete Plan
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </div>
 

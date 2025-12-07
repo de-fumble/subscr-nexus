@@ -155,17 +155,22 @@ export function StaffManagementDialog({
 
   const handleRemoveStaff = async (memberId: string) => {
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('id', memberId);
+      // Use edge function to properly delete user and membership
+      const { data, error } = await supabase.functions.invoke('manage-staff', {
+        body: {
+          action: 'remove_staff',
+          member_id: memberId,
+        },
+      });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
       toast.success('Staff member removed');
       fetchMembers();
     } catch (error: any) {
       console.error('Error removing staff:', error);
-      toast.error('Failed to remove staff member');
+      toast.error(error.message || 'Failed to remove staff member');
     }
   };
 
