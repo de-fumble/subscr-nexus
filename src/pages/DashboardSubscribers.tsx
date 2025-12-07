@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Mail, Phone } from "lucide-react";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
+import { useOrgRole } from "@/hooks/useOrgRole";
 import {
   Table,
   TableBody,
@@ -15,6 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Subscriber {
   id: string;
@@ -24,6 +31,7 @@ interface Subscriber {
   status: string;
   next_payment_date: string | null;
   plan_id: string;
+  phone?: string | null;
 }
 
 export default function DashboardSubscribers() {
@@ -32,6 +40,7 @@ export default function DashboardSubscribers() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [orgId, setOrgId] = useState<string>("");
+  const { role, canWrite } = useOrgRole();
 
   useEffect(() => {
     fetchSubscribers();
@@ -164,38 +173,79 @@ export default function DashboardSubscribers() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Next Payment</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscribers.map((sub) => (
-                  <TableRow key={sub.id}>
-                    <TableCell className="font-medium">
-                      {sub.customer_name || "N/A"}
-                    </TableCell>
-                    <TableCell>{sub.email}</TableCell>
-                    <TableCell>₦{sub.amount.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge variant={sub.status === "active" ? "default" : "secondary"}>
-                        {sub.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {sub.next_payment_date
-                        ? new Date(sub.next_payment_date).toLocaleDateString()
-                        : "N/A"}
-                    </TableCell>
+            <TooltipProvider>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Next Payment</TableHead>
+                    {canWrite && <TableHead className="text-right">Contact</TableHead>}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {subscribers.map((sub) => (
+                    <TableRow key={sub.id}>
+                      <TableCell className="font-medium">
+                        {sub.customer_name || "N/A"}
+                      </TableCell>
+                      <TableCell>{sub.email}</TableCell>
+                      <TableCell>₦{sub.amount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={sub.status === "active" ? "default" : "secondary"}>
+                          {sub.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {sub.next_payment_date
+                          ? new Date(sub.next_payment_date).toLocaleDateString()
+                          : "N/A"}
+                      </TableCell>
+                      {canWrite && (
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => window.location.href = `mailto:${sub.email}`}
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Email {sub.email}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            {sub.phone && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => window.location.href = `tel:${sub.phone}`}
+                                  >
+                                    <Phone className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Call {sub.phone}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>
