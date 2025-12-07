@@ -13,6 +13,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
+import { useOrgRole } from "@/hooks/useOrgRole";
 
 interface Organization {
   id: string;
@@ -33,6 +34,7 @@ interface SubscriptionPlan {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { canRequestPayout, canCreatePlans, canAccessSettings, role } = useOrgRole();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,26 +262,30 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">Real-time metrics and insights</p>
                 </div>
                 <div className="flex gap-3">
-                  <Button
-                    onClick={() => setShowPayoutDialog(true)}
-                    variant="outline"
-                    className="gap-2 hover-lift border-accent/30"
-                  >
-                    <Banknote className="h-4 w-4" />
-                    Request Payout
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/plans/create")}
-                    className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create Plan
-                  </Button>
+                  {canRequestPayout && (
+                    <Button
+                      onClick={() => setShowPayoutDialog(true)}
+                      variant="outline"
+                      className="gap-2 hover-lift border-accent/30"
+                    >
+                      <Banknote className="h-4 w-4" />
+                      Request Payout
+                    </Button>
+                  )}
+                  {canCreatePlans && (
+                    <Button
+                      onClick={() => navigate("/plans/create")}
+                      className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create Plan
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              {/* Company Account Section */}
-              {organization && (
+              {/* Company Account Section - Only show to owners */}
+              {organization && canAccessSettings && (
                 <div className="mb-8 animate-fade-in">
                   <CompanyAccountSection 
                     organization={organization} 
@@ -422,12 +428,14 @@ const Dashboard = () => {
                   Create your first subscription plan to start accepting
                   payments and growing your business
                 </p>
-                <Button
-                  onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90 hover-lift shadow-lg"
-                >
-                  Create Your First Plan
-                </Button>
+                {canCreatePlans && (
+                  <Button
+                    onClick={() => navigate("/plans/create")}
+                    className="bg-accent hover:bg-accent/90 hover-lift shadow-lg"
+                  >
+                    Create Your First Plan
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-3 relative z-10">

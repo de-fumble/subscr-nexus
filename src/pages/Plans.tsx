@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useOrgRole } from "@/hooks/useOrgRole";
 
 interface Plan {
   id: string;
@@ -31,6 +32,7 @@ interface Plan {
 
 const Plans = () => {
   const navigate = useNavigate();
+  const { canCreatePlans, canWrite } = useOrgRole();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
@@ -147,13 +149,15 @@ const Plans = () => {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => navigate("/plans/create")}
-              className="bg-accent hover:bg-accent/90 gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create Plan
-            </Button>
+            {canCreatePlans && (
+              <Button
+                onClick={() => navigate("/plans/create")}
+                className="bg-accent hover:bg-accent/90 gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create Plan
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -175,12 +179,14 @@ const Plans = () => {
               <p className="mb-6 text-muted-foreground">
                 Create your first subscription plan to start accepting payments
               </p>
-              <Button
-                onClick={() => navigate("/plans/create")}
-                className="bg-accent hover:bg-accent/90"
-              >
-                Create Your First Plan
-              </Button>
+              {canCreatePlans && (
+                <Button
+                  onClick={() => navigate("/plans/create")}
+                  className="bg-accent hover:bg-accent/90"
+                >
+                  Create Your First Plan
+                </Button>
+              )}
             </div>
           </Card>
         ) : (
@@ -239,14 +245,16 @@ const Plans = () => {
                     <ExternalLink className="h-4 w-4" />
                     Copy Subscription Link
                   </Button>
-                  <Button
-                    onClick={() => setPlanToDelete(plan.id)}
-                    variant="destructive"
-                    className="w-full gap-2"
-                  >
-                    <Archive className="h-4 w-4" />
-                    Delete Plan
-                  </Button>
+                  {canWrite && (
+                    <Button
+                      onClick={() => setPlanToDelete(plan.id)}
+                      variant="destructive"
+                      className="w-full gap-2"
+                    >
+                      <Archive className="h-4 w-4" />
+                      Delete Plan
+                    </Button>
+                  )}
                 </div>
               </Card>
             ))}
