@@ -34,13 +34,40 @@ export default function DashboardSettings() {
         return;
       }
 
-      const { data: orgData, error } = await supabase
+      // First check if user is org owner
+      let orgData = null;
+
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("id, paystack_public_key, paystack_secret_key")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (ownedOrg) {
+        orgData = ownedOrg;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (membership) {
+          const { data: memberOrg } = await supabase
+            .from("organizations")
+            .select("id, paystack_public_key, paystack_secret_key")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          
+          orgData = memberOrg;
+        }
+      }
+
+      if (!orgData) {
+        toast.error("No organization found");
+        return;
+      }
 
       setOrganization(orgData);
       setPublicKey(orgData.paystack_public_key || "");
