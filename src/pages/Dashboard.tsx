@@ -206,7 +206,7 @@ const Dashboard = () => {
       showChart: false,
       showButton: true,
       buttonText: "Manage",
-      onButtonClick: () => setShowSubscriberDialog(true),
+      onButtonClick: () => navigate("/dashboard/subscribers"),
     },
     {
       title: "Total Revenue",
