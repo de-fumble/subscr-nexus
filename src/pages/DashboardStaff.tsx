@@ -223,14 +223,17 @@ export default function DashboardStaff() {
       if (orgData) {
         setOrganization(orgData);
         
-        // Fetch staff members
-        const { data: membersData } = await supabase
-          .from('organization_members')
-          .select('*')
-          .eq('org_id', orgData.id)
-          .order('created_at', { ascending: false });
-        
-        setMembers(membersData || []);
+        // Fetch staff members using edge function to get emails
+        const { data, error } = await supabase.functions.invoke('manage-staff', {
+          body: {
+            action: 'list_staff',
+            org_id: orgData.id,
+          },
+        });
+
+        if (!error && data?.members) {
+          setMembers(data.members);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
