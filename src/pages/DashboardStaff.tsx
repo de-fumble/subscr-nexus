@@ -17,14 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -35,8 +27,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Loader2, Shield, User, UserPlus, Trash2, Users } from "lucide-react";
+import { Loader2, Shield, User, UserPlus, Trash2, Users, ChevronDown, ChevronUp, Mail, Calendar, Hash } from "lucide-react";
 
 interface Organization {
   id: string;
@@ -49,6 +46,144 @@ interface StaffMember {
   user_id: string;
   role: 'admin' | 'staff';
   created_at: string;
+  email?: string;
+}
+
+interface StaffMemberCardProps {
+  member: StaffMember;
+  onUpdateRole: (memberId: string, newRole: 'admin' | 'staff') => void;
+  onRemove: (memberId: string) => void;
+}
+
+function StaffMemberCard({ member, onUpdateRole, onRemove }: StaffMemberCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="border rounded-lg bg-card overflow-hidden">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
+              {member.role === 'admin' ? (
+                <Shield className="h-5 w-5 text-accent" />
+              ) : (
+                <User className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <div>
+              <p className="font-medium text-sm">{member.email || `User ${member.user_id.slice(0, 8)}...`}</p>
+              <Badge variant={member.role === 'admin' ? 'default' : 'secondary'} className="mt-1">
+                {member.role === 'admin' ? 'Admin' : 'Staff'}
+              </Badge>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1">
+                {isOpen ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Details
+                  </>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove Staff Member</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove the staff member's access to your organization. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onRemove(member.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+        
+        <CollapsibleContent>
+          <div className="border-t px-4 py-4 bg-muted/30 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Mail className="h-3 w-3" />
+                  Email
+                </div>
+                <p className="text-sm font-medium">{member.email || "N/A"}</p>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Hash className="h-3 w-3" />
+                  Member ID
+                </div>
+                <p className="text-sm font-mono text-muted-foreground">{member.id.slice(0, 8)}...</p>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  Added On
+                </div>
+                <p className="text-sm font-medium">
+                  {new Date(member.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Shield className="h-3 w-3" />
+                  Role
+                </div>
+                <Select
+                  value={member.role}
+                  onValueChange={(value: 'admin' | 'staff') => onUpdateRole(member.id, value)}
+                >
+                  <SelectTrigger className="w-full h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="staff">
+                      <div className="flex items-center gap-2">
+                        <User className="h-3 w-3" />
+                        Staff (Read-only)
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="admin">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-3 w-3" />
+                        Admin (Full access)
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
 }
 
 export default function DashboardStaff() {
@@ -314,81 +449,23 @@ export default function DashboardStaff() {
                     </form>
                   )}
 
-                  {/* Staff Members Table */}
+                  {/* Staff Members List */}
                   {members.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground border rounded-lg">
                       <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No staff members yet. Add your first staff member above.</p>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Member ID</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Added</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {members.map((member) => (
-                          <TableRow key={member.id}>
-                            <TableCell className="font-mono text-xs">
-                              {member.user_id.slice(0, 8)}...
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={member.role}
-                                onValueChange={(value: 'admin' | 'staff') => 
-                                  handleUpdateRole(member.id, value)
-                                }
-                              >
-                                <SelectTrigger className="w-32">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="staff">
-                                    <Badge variant="secondary">Staff</Badge>
-                                  </SelectItem>
-                                  <SelectItem value="admin">
-                                    <Badge variant="default">Admin</Badge>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(member.created_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Remove Staff Member</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This will remove the staff member's access to your organization. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleRemoveStaff(member.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Remove
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <div className="space-y-3">
+                      {members.map((member) => (
+                        <StaffMemberCard
+                          key={member.id}
+                          member={member}
+                          onUpdateRole={handleUpdateRole}
+                          onRemove={handleRemoveStaff}
+                        />
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
