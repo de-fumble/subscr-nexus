@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -5,7 +6,10 @@ import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
+import BookDemoDialog from "@/components/BookDemoDialog";
+
 const Index = () => {
+  const [showDemoDialog, setShowDemoDialog] = useState(false);
   const features = [{
     icon: BarChart3,
     title: "Analytics Dashboard",
@@ -166,7 +170,12 @@ const Index = () => {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-border hover:border-accent/50 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:bg-accent/5">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full sm:w-auto border-border hover:border-accent/50 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:bg-accent/5"
+                  onClick={() => setShowDemoDialog(true)}
+                >
                   Book a Demo
                 </Button>
               </div>
@@ -191,8 +200,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Content - Dashboard Preview */}
-            <div className="order-1 lg:order-2 animate-fade-in">
+            {/* Right Content - Dashboard Preview (Hidden on smaller screens) */}
+            <div className="hidden lg:block order-1 lg:order-2 animate-fade-in">
               <div className="relative">
                 {/* Glow Effect */}
                 <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-3xl blur-2xl opacity-50" />
@@ -211,6 +220,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Book Demo Dialog */}
+      <BookDemoDialog open={showDemoDialog} onOpenChange={setShowDemoDialog} />
 
       {/* Stats Section - Floating Cards */}
       <section className="py-16 relative">
