@@ -5,141 +5,95 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import logoImage from "@/assets/logo.png";
-
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       setSession(session);
     });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
+    const {
+      data: {
+        subscription
       }
-    );
-
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
     return () => subscription.unsubscribe();
   }, []);
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
-
-  return (
-    <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  return <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-3 transition-transform duration-300 hover:scale-105">
-          <img 
-            src={logoImage} 
-            alt="Recurra Logo" 
-            className="h-12 w-12 object-cover rounded-xl"
-          />
-          <span className="text-xl font-bold text-foreground">Recurra</span>
+          <img src={logoImage} alt="Recurra Logo" className="h-12 w-12 object-cover rounded-xl" />
+          <span className="text-xl font-bold text-foreground font-mono">Recurra</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <Link
-            to="/#features"
-            className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105"
-          >
+          <Link to="/#features" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
             Features
           </Link>
-          <Link
-            to="/#pricing"
-            className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105"
-          >
+          <Link to="/#pricing" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
             Pricing
           </Link>
-          <Link
-            to="/#about"
-            className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105"
-          >
+          <Link to="/#about" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
             About
           </Link>
-          {session ? (
-            <>
+          {session ? <>
               <Link to="/dashboard">
                 <Button variant="ghost" className="transition-all duration-300 hover:scale-105">Dashboard</Button>
               </Link>
               <Button onClick={handleSignOut} variant="outline" className="transition-all duration-300 hover:scale-105">
                 Sign Out
               </Button>
-            </>
-          ) : (
-            <>
+            </> : <>
               <Link to="/auth">
-                <Button variant="ghost" className="transition-all duration-300 hover:scale-105">Sign In</Button>
+                <Button variant="ghost" className="transition-all duration-300 hover:scale-105 font-mono">Sign In</Button>
               </Link>
               <Link to="/auth">
-                <Button className="bg-accent hover:bg-accent/90 transition-all duration-300 hover:scale-105">Get Started</Button>
+                <Button className="bg-accent hover:bg-accent/90 transition-all duration-300 hover:scale-105 font-mono">Get Started</Button>
               </Link>
-            </>
-          )}
+            </>}
         </div>
 
-        <button
-          className="md:hidden"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
-            <Menu className="h-6 w-6 text-foreground" />
-          )}
+        <button className="md:hidden" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+          {isOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
         </button>
       </div>
 
-      {isOpen && (
-        <div className="border-t border-border bg-background md:hidden">
+      {isOpen && <div className="border-t border-border bg-background md:hidden">
           <div className="container mx-auto space-y-4 px-6 py-6">
-            <Link
-              to="/#features"
-              className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link to="/#features" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
               Features
             </Link>
-            <Link
-              to="/#pricing"
-              className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link to="/#pricing" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
               Pricing
             </Link>
-            <Link
-              to="/#about"
-              className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link to="/#about" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
               About
             </Link>
             <div className="flex flex-col gap-2 pt-4">
-              {session ? (
-                <>
+              {session ? <>
                   <Link to="/dashboard" onClick={() => setIsOpen(false)}>
                     <Button variant="ghost" className="w-full">
                       Dashboard
                     </Button>
                   </Link>
-                  <Button
-                    onClick={() => {
-                      handleSignOut();
-                      setIsOpen(false);
-                    }}
-                    variant="outline"
-                    className="w-full"
-                  >
+                  <Button onClick={() => {
+              handleSignOut();
+              setIsOpen(false);
+            }} variant="outline" className="w-full">
                     Sign Out
                   </Button>
-                </>
-              ) : (
-                <>
+                </> : <>
                   <Link to="/auth" onClick={() => setIsOpen(false)}>
                     <Button variant="ghost" className="w-full">
                       Sign In
@@ -150,14 +104,10 @@ const Navbar = () => {
                       Get Started
                     </Button>
                   </Link>
-                </>
-              )}
+                </>}
             </div>
           </div>
-        </div>
-      )}
-    </nav>
-  );
+        </div>}
+    </nav>;
 };
-
 export default Navbar;

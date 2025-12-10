@@ -150,26 +150,26 @@ const Index = () => {
                 <span className="text-sm font-medium text-accent">Trusted by leading institutions</span>
               </div>
               
-              <h1 className="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl animate-fade-in">
-                Subscription Management
-                <span className="block mt-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl animate-fade-in font-mono">Billing Automation
+
+So Simple, So Powerful<span className="block mt-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   So Simple, So Powerful
                 </span>
               </h1>
               
-              <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-xl animate-fade-in">
+              <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-xl animate-fade-in font-mono">
                 The most powerful, customizable and easy to integrate subscription billing software 
                 used by hundreds of businesses worldwide to simplify revenue operations.
               </p>
               
               <div className="mt-8 flex flex-col sm:flex-row gap-4 animate-fade-in">
                 <Link to="/auth">
-                  <Button size="lg" className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20">
+                  <Button size="lg" className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20 font-mono">
                     Get Started Free
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-border hover:border-accent/50 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:bg-accent/5" onClick={() => setShowDemoDialog(true)}>
+                <Button size="lg" variant="outline" onClick={() => setShowDemoDialog(true)} className="w-full sm:w-auto border-border hover:border-accent/50 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:bg-accent/5 font-mono">
                   Book a Demo
                 </Button>
               </div>
@@ -207,7 +207,7 @@ const Index = () => {
                     <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
                     <div className="w-3 h-3 rounded-full bg-green-500/60" />
                   </div>
-                  <img alt="Recurra Dashboard Preview - Analytics and subscription management interface" className="w-full h-auto rounded-lg" src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1765349228/Screenshot_2025-12-10_074046_ci3foy.png" />
+                  <img alt="Recurra Dashboard Preview - Analytics and subscription management interface" src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1765349228/Screenshot_2025-12-10_074046_ci3foy.png" className="w-full h-auto rounded-lg shadow-lg" />
                 </div>
               </div>
             </div>
@@ -241,11 +241,11 @@ const Index = () => {
         
         <div className="container relative mx-auto px-6">
           <div className="max-w-2xl mx-auto mb-16 text-center">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Features</span>
-            <h2 className="mt-4 text-4xl font-bold text-foreground">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Features</span>
+            <h2 className="mt-4 text-4xl font-bold text-foreground font-mono">
               All the Power You Need
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground font-mono">
               Powerful features designed for institutions and businesses
             </p>
           </div>
@@ -275,11 +275,11 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto mb-16 text-center">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Process</span>
-            <h2 className="mt-4 text-4xl font-bold text-foreground">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Process</span>
+            <h2 className="mt-4 text-4xl font-bold text-foreground font-mono">
               How It Works
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground font-mono">
               Get started in three simple steps
             </p>
           </div>
@@ -307,11 +307,11 @@ const Index = () => {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto mb-16 text-center">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Testimonials</span>
-            <h2 className="mt-4 text-4xl font-bold text-foreground">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Testimonials</span>
+            <h2 className="mt-4 text-4xl font-bold text-foreground font-mono">
               Trusted by Businesses Worldwide
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground font-mono">
               See what our customers have to say
             </p>
           </div>
@@ -341,11 +341,11 @@ const Index = () => {
       <section id="pricing" className="py-20">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto mb-16 text-center">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Pricing</span>
-            <h2 className="mt-4 text-4xl font-bold text-foreground">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Pricing</span>
+            <h2 className="mt-4 text-4xl font-bold text-foreground font-mono">
               Simple, Transparent Pricing
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground font-mono">
               Everything you need to grow your subscription business
             </p>
           </div>
@@ -395,21 +395,21 @@ const Index = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/30 via-transparent to-transparent" />
         
         <div className="container relative mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto font-mono">
             Ready to Transform Your Subscription Business?
           </h2>
-          <p className="mt-6 text-lg text-primary-foreground/90 max-w-2xl mx-auto">
+          <p className="mt-6 text-lg text-primary-foreground/90 max-w-2xl mx-auto font-mono">
             Join hundreds of businesses already managing their subscriptions with Recurra. 
             Start your free trial today, no credit card required.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/auth">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl">
+              <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl font-mono">
                 Start Your Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-white/30 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 bg-accent">
+            <Button size="lg" variant="outline" className="border-white/30 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 bg-accent font-mono">
               Contact Sales
             </Button>
           </div>
@@ -425,9 +425,9 @@ const Index = () => {
             <div className="col-span-2">
               <div className="flex items-center gap-3 mb-6">
                 <img src={logoImage} alt="Recurra Logo" className="h-10 w-10 object-cover rounded-xl" />
-                <span className="text-xl font-bold text-foreground">Recurra</span>
+                <span className="text-xl font-bold text-foreground font-mono">Recurra</span>
               </div>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-xs">
+              <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-xs font-mono">
                 The most powerful subscription management platform for modern businesses and institutions.
               </p>
               <div className="flex items-center gap-4">
@@ -445,9 +445,9 @@ const Index = () => {
 
             {/* Product Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Product</h4>
+              <h4 className="font-semibold text-foreground mb-4 font-mono">Product</h4>
               <ul className="space-y-3">
-                {footerLinks.product.map((link, index) => <li key={index}>
+                {footerLinks.product.map((link, index) => <li key={index} className="font-mono">
                     <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       {link.name}
                     </a>
@@ -457,9 +457,9 @@ const Index = () => {
 
             {/* Company Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Company</h4>
+              <h4 className="font-semibold text-foreground mb-4 font-mono">Company</h4>
               <ul className="space-y-3">
-                {footerLinks.company.map((link, index) => <li key={index}>
+                {footerLinks.company.map((link, index) => <li key={index} className="font-mono">
                     <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       {link.name}
                     </a>
@@ -469,9 +469,9 @@ const Index = () => {
 
             {/* Resources Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+              <h4 className="font-semibold text-foreground mb-4 font-mono">Resources</h4>
               <ul className="space-y-3">
-                {footerLinks.resources.map((link, index) => <li key={index}>
+                {footerLinks.resources.map((link, index) => <li key={index} className="font-mono">
                     <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       {link.name}
                     </a>
@@ -481,9 +481,9 @@ const Index = () => {
 
             {/* Legal Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+              <h4 className="font-semibold text-foreground mb-4 font-mono">Legal</h4>
               <ul className="space-y-3">
-                {footerLinks.legal.map((link, index) => <li key={index}>
+                {footerLinks.legal.map((link, index) => <li key={index} className="font-mono">
                     <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       {link.name}
                     </a>
@@ -497,15 +497,15 @@ const Index = () => {
         <div className="border-t border-border">
           <div className="container mx-auto px-6 py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-mono">
                 © {new Date().getFullYear()} Recurra. All rights reserved.
               </p>
               
               {/* Powered by Paystack */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Lock className="h-4 w-4" />
-                <span>Secured & Powered by</span>
-                <span className="font-semibold text-foreground">Paystack</span>
+                <span className="font-mono">Secured & Powered by</span>
+                <span className="font-semibold text-foreground font-mono">Paystack</span>
               </div>
             </div>
           </div>
