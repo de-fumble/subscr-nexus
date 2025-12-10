@@ -150,9 +150,7 @@ const Index = () => {
                 <span className="text-sm font-medium text-accent">Trusted by leading institutions</span>
               </div>
               
-              <h1 className="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl animate-fade-in font-mono">Billing Automation
-
-So Simple, So Powerful<span className="block mt-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl animate-fade-in font-mono">Billing Automation <span className="block mt-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   So Simple, So Powerful
                 </span>
               </h1>
