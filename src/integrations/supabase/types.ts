@@ -138,6 +138,7 @@ export type Database = {
           email: string
           id: string
           is_suspended: boolean | null
+          logo_url: string | null
           org_name: string
           paystack_public_key: string | null
           paystack_secret_key: string | null
@@ -155,6 +156,7 @@ export type Database = {
           email: string
           id?: string
           is_suspended?: boolean | null
+          logo_url?: string | null
           org_name: string
           paystack_public_key?: string | null
           paystack_secret_key?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           email?: string
           id?: string
           is_suspended?: boolean | null
+          logo_url?: string | null
           org_name?: string
           paystack_public_key?: string | null
           paystack_secret_key?: string | null

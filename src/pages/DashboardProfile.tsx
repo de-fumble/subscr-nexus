@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Save, Trash2 } from "lucide-react";
+import { User, Mail, Save, Trash2, Building2, Sparkles } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,10 +20,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
+import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
+import { BackButton } from "@/components/BackButton";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 export default function DashboardProfile() {
   const navigate = useNavigate();
-  const { canAccessSettings, loading: roleLoading } = useOrgRole();
+  const { canAccessSettings, loading: roleLoading, role } = useOrgRole();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -32,8 +35,10 @@ export default function DashboardProfile() {
     id: string;
     org_name: string;
     email: string;
+    logo_url?: string | null;
   } | null>(null);
   const [orgName, setOrgName] = useState("");
+  const [userEmail, setUserEmail] = useState<string | undefined>();
 
   useEffect(() => {
     fetchProfile();
@@ -48,12 +53,14 @@ export default function DashboardProfile() {
         return;
       }
 
+      setUserEmail(user.email);
+
       // First check if user is org owner
       let orgData = null;
 
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email")
+        .select("id, org_name, email, logo_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -70,7 +77,7 @@ export default function DashboardProfile() {
         if (membership) {
           const { data: memberOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email")
+            .select("id, org_name, email, logo_url")
             .eq("id", membership.org_id)
             .maybeSingle();
           
@@ -145,11 +152,25 @@ export default function DashboardProfile() {
     }
   };
 
+  const handleLogoUpload = (url: string) => {
+    setOrganization(prev => prev ? { ...prev, logo_url: url } : null);
+  };
+
   if (loading || roleLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+          <SidebarInset>
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading profile...</p>
+              </div>
+            </div>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
     );
   }
 
@@ -159,97 +180,131 @@ export default function DashboardProfile() {
   }
 
   return (
-    <div className="container max-w-2xl py-8">
-      <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+        <SidebarInset className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+            <SidebarTrigger />
+            <BackButton />
+            <div className="flex-1 flex items-center gap-3">
+              <h1 className="text-xl font-bold text-foreground">Profile Settings</h1>
+            </div>
+          </header>
+          
+          <main className="flex-1 overflow-auto">
+            <div className="container max-w-3xl py-8 px-6">
+              <div className="space-y-6">
+                {/* Profile Card */}
+                <Card className="glass-card border-0 shadow-[var(--shadow-medium)] overflow-hidden">
+                  <div className="h-24 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent" />
+                  <CardHeader className="-mt-12 pb-4">
+                    <div className="flex items-end gap-6">
+                      <ProfilePictureUpload
+                        currentLogoUrl={organization?.logo_url}
+                        orgName={organization?.org_name || ""}
+                        onUploadComplete={handleLogoUpload}
+                      />
+                      <div className="flex-1 pb-2">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-2xl">{organization?.org_name}</CardTitle>
+                          <Sparkles className="h-5 w-5 text-accent" />
+                        </div>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <Building2 className="h-4 w-4" />
+                          Organization Profile
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="org_name" className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          Organization Name
+                        </Label>
+                        <Input
+                          id="org_name"
+                          value={orgName}
+                          onChange={(e) => setOrgName(e.target.value)}
+                          placeholder="Enter organization name"
+                          className="glass-card border-border/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          Email Address
+                        </Label>
+                        <Input
+                          id="email"
+                          value={organization?.email || ""}
+                          disabled
+                          className="bg-muted/50"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Email cannot be changed
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={handleSaveProfile} 
+                      disabled={saving}
+                      className="bg-accent hover:bg-accent/90 gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </Button>
+                  </CardContent>
+                </Card>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  {organization?.org_name?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your organization details</CardDescription>
+                {/* Danger Zone */}
+                <Card className="border-destructive/50 glass-card shadow-[var(--shadow-medium)]">
+                  <CardHeader>
+                    <CardTitle className="text-destructive flex items-center gap-2">
+                      <Trash2 className="h-5 w-5" />
+                      Danger Zone
+                    </CardTitle>
+                    <CardDescription>
+                      Permanently delete your account and all associated data
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={deleting} className="gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          Delete Account
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="glass-card">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your
+                            account and remove all your data including subscription plans,
+                            subscribers, and transaction history from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteAccount}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete Account
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="org_name">
-                <User className="h-4 w-4 inline mr-2" />
-                Organization Name
-              </Label>
-              <Input
-                id="org_name"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                placeholder="Enter organization name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                <Mail className="h-4 w-4 inline mr-2" />
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                value={organization?.email || ""}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">
-                Email cannot be changed
-              </p>
-            </div>
-            <Button onClick={handleSaveProfile} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>
-              Permanently delete your account and all associated data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={deleting}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your
-                    account and remove all your data including subscription plans,
-                    subscribers, and transaction history from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete Account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

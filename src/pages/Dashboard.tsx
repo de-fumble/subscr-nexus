@@ -22,6 +22,7 @@ interface Organization {
   account_number?: string;
   account_name?: string;
   bank_name?: string;
+  logo_url?: string | null;
 }
 
 interface SubscriptionPlan {
