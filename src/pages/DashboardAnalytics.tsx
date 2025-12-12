@@ -8,7 +8,6 @@ import {
   TrendingDown, 
   DollarSign, 
   Users, 
-  Calendar,
   ArrowUpRight,
   ArrowDownRight
 } from "lucide-react";
@@ -27,12 +26,26 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { BackButton } from "@/components/BackButton";
+import { useOrgRole } from "@/hooks/useOrgRole";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 
+interface Organization {
+  id: string;
+  org_name: string;
+  email: string;
+  logo_url?: string | null;
+}
+
 export default function DashboardAnalytics() {
   const navigate = useNavigate();
+  const { role, canAccessSettings } = useOrgRole();
   const [loading, setLoading] = useState(true);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [userEmail, setUserEmail] = useState<string | undefined>();
   const [stats, setStats] = useState({
     totalRevenue: 0,
     revenueGrowth: 0,
@@ -58,16 +71,19 @@ export default function DashboardAnalytics() {
         return;
       }
 
+      setUserEmail(user.email);
+
       // Get organization - check if owner first, then check membership
       let orgId = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id")
+        .select("id, org_name, email, logo_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (ownedOrg) {
         orgId = ownedOrg.id;
+        setOrganization(ownedOrg);
       } else {
         // Check if user is a staff member
         const { data: membership } = await supabase
@@ -78,6 +94,15 @@ export default function DashboardAnalytics() {
 
         if (membership) {
           orgId = membership.org_id;
+          const { data: memberOrg } = await supabase
+            .from("organizations")
+            .select("id, org_name, email, logo_url")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          
+          if (memberOrg) {
+            setOrganization(memberOrg);
+          }
         }
       }
 
@@ -167,18 +192,40 @@ export default function DashboardAnalytics() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+          <SidebarInset>
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading analytics...</p>
+              </div>
+            </div>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="container py-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Analytics</h1>
-        <p className="text-muted-foreground">Track your business performance and growth</p>
-      </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+        <SidebarInset className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+            <SidebarTrigger />
+            <BackButton />
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-foreground">Analytics</h1>
+            </div>
+          </header>
+          
+          <main className="flex-1 overflow-auto">
+            <div className="container py-8 px-6 space-y-8">
+              <div>
+                <p className="text-muted-foreground">Track your business performance and growth</p>
+              </div>
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -328,6 +375,10 @@ export default function DashboardAnalytics() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
-    </div>
+            </div>
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
