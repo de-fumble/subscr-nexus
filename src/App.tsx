@@ -26,6 +26,19 @@ import SuperAdminPayouts from "./pages/SuperAdminPayouts";
 import SuperAdminDeletions from "./pages/SuperAdminDeletions";
 import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
 import SuperAdminLogs from "./pages/SuperAdminLogs";
+// Footer Pages
+import About from "./pages/About";
+import Careers from "./pages/Careers";
+import Press from "./pages/Press";
+import Contact from "./pages/Contact";
+import Blog from "./pages/Blog";
+import HelpCenter from "./pages/HelpCenter";
+import Community from "./pages/Community";
+import Status from "./pages/Status";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+import CookiePolicy from "./pages/CookiePolicy";
+import GDPR from "./pages/GDPR";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +71,19 @@ const App = () => (
           <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
           <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminAppeals /></ProtectedRoute>} />
           <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
+          {/* Footer Pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/press" element={<Press />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/status" element={<Status />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
+          <Route path="/gdpr" element={<GDPR />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

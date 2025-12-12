@@ -7,8 +7,12 @@ import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
+import ContactSalesDialog from "@/components/ContactSalesDialog";
+
 const Index = () => {
   const [showDemoDialog, setShowDemoDialog] = useState(false);
+  const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
+
   const features = [{
     icon: BarChart3,
     title: "Analytics Dashboard",
@@ -80,55 +84,55 @@ const Index = () => {
   const footerLinks = {
     product: [{
       name: "Features",
-      href: "#features"
+      href: "/#features"
     }, {
       name: "Pricing",
-      href: "#pricing"
+      href: "/#pricing"
     }, {
       name: "Integrations",
-      href: "#"
+      href: "/help"
     }, {
       name: "API Documentation",
-      href: "#"
+      href: "/help"
     }],
     company: [{
       name: "About Us",
-      href: "#"
+      href: "/about"
     }, {
       name: "Careers",
-      href: "#"
+      href: "/careers"
     }, {
       name: "Press",
-      href: "#"
+      href: "/press"
     }, {
       name: "Contact",
-      href: "#"
+      href: "/contact"
     }],
     resources: [{
       name: "Blog",
-      href: "#"
+      href: "/blog"
     }, {
       name: "Help Center",
-      href: "#"
+      href: "/help"
     }, {
       name: "Community",
-      href: "#"
+      href: "/community"
     }, {
       name: "Status",
-      href: "#"
+      href: "/status"
     }],
     legal: [{
       name: "Privacy Policy",
-      href: "#"
+      href: "/privacy"
     }, {
       name: "Terms of Service",
-      href: "#"
+      href: "/terms"
     }, {
       name: "Cookie Policy",
-      href: "#"
+      href: "/cookies"
     }, {
       name: "GDPR",
-      href: "#"
+      href: "/gdpr"
     }]
   };
   return <div className="min-h-screen bg-background">
@@ -407,12 +411,15 @@ const Index = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-white/30 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 bg-accent font-mono">
+            <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="border-white/30 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 bg-accent font-mono">
               Contact Sales
             </Button>
           </div>
         </div>
       </section>
+
+      {/* Contact Sales Dialog */}
+      <ContactSalesDialog open={showContactSalesDialog} onOpenChange={setShowContactSalesDialog} />
 
       {/* Enterprise Footer */}
       <footer className="bg-card border-t border-border">
@@ -429,13 +436,13 @@ const Index = () => {
                 The most powerful subscription management platform for modern businesses and institutions.
               </p>
               <div className="flex items-center gap-4">
-                <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors">
+                <button onClick={() => window.location.reload()} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors">
                   <Globe className="h-4 w-4 text-muted-foreground" />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors">
+                </button>
+                <a href="mailto:Recurrra@outlook.com" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                 </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors">
+                <a href="tel:+2348101751349" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                 </a>
               </div>

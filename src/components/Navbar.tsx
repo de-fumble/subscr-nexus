@@ -38,13 +38,13 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <Link to="/#features" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
+          <a href="/#features" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
             Features
-          </Link>
-          <Link to="/#pricing" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
+          </a>
+          <a href="/#pricing" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
             Pricing
-          </Link>
-          <Link to="/#about" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
+          </a>
+          <Link to="/about" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
             About
           </Link>
           {session ? <>
@@ -71,13 +71,13 @@ const Navbar = () => {
 
       {isOpen && <div className="border-t border-border bg-background md:hidden">
           <div className="container mx-auto space-y-4 px-6 py-6">
-            <Link to="/#features" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
+            <a href="/#features" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
               Features
-            </Link>
-            <Link to="/#pricing" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
+            </a>
+            <a href="/#pricing" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
               Pricing
-            </Link>
-            <Link to="/#about" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
+            </a>
+            <Link to="/about" className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" onClick={() => setIsOpen(false)}>
               About
             </Link>
             <div className="flex flex-col gap-2 pt-4">
