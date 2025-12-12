@@ -327,7 +327,7 @@ export default function DashboardStaff() {
 
   if (!canManageStaff) {
     return (
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar organization={organization} />
           <SidebarInset className="flex-1">
@@ -355,7 +355,7 @@ export default function DashboardStaff() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={undefined} canAccessSettings={canManageStaff} />
         <SidebarInset className="flex-1">

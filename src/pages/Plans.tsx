@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Plus, ExternalLink, Archive, Users, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, ExternalLink, Archive, Users, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -18,6 +18,9 @@ import {
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { BackButton } from "@/components/BackButton";
 
 interface Plan {
   id: string;
@@ -32,13 +35,22 @@ interface Plan {
   subscriber_count?: number;
 }
 
+interface Organization {
+  id: string;
+  org_name: string;
+  email: string;
+  logo_url?: string | null;
+}
+
 const Plans = () => {
   const navigate = useNavigate();
-  const { canCreatePlans, canWrite } = useOrgRole();
+  const { canCreatePlans, canWrite, role, canAccessSettings } = useOrgRole();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [userEmail, setUserEmail] = useState<string | undefined>();
 
   useEffect(() => {
     fetchPlans();
@@ -56,16 +68,20 @@ const Plans = () => {
         return;
       }
 
+      setUserEmail(user.email);
+
       // Get organization - check if owner first, then check membership
       let orgId = null;
+      let orgData = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id")
+        .select("id, org_name, email, logo_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (ownedOrg) {
         orgId = ownedOrg.id;
+        orgData = ownedOrg;
       } else {
         // Check if user is a staff member
         const { data: membership } = await supabase
@@ -76,9 +92,17 @@ const Plans = () => {
 
         if (membership) {
           orgId = membership.org_id;
+          const { data: memberOrg } = await supabase
+            .from("organizations")
+            .select("id, org_name, email, logo_url")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          
+          orgData = memberOrg;
         }
       }
 
+      setOrganization(orgData);
       if (!orgId) return;
 
       // Fetch plans for this organization
@@ -152,7 +176,7 @@ const Plans = () => {
   const renderPlanCard = (plan: Plan, index: number) => (
     <Card
       key={plan.id}
-      className="p-6 transition-all duration-300 hover:shadow-lg animate-fade-in"
+      className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] transition-all duration-300 hover:shadow-[var(--shadow-strong)] animate-fade-in"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="mb-4 flex items-start justify-between">
@@ -161,7 +185,7 @@ const Plans = () => {
             {plan.name}
           </h3>
           {plan.category && (
-            <span className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <span className="mt-2 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
               {plan.category}
             </span>
           )}
@@ -219,27 +243,34 @@ const Plans = () => {
     </Card>
   );
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/dashboard")}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Subscription Plans
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Manage your recurring payment plans
-                </p>
+  if (loading) {
+    return (
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+          <SidebarInset>
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading plans...</p>
               </div>
+            </div>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  return (
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+        <SidebarInset className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+            <SidebarTrigger />
+            <BackButton />
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-foreground">Subscription Plans</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -264,92 +295,94 @@ const Plans = () => {
                 </Button>
               )}
             </div>
-          </div>
-        </div>
-      </div>
+          </header>
 
-      <div className="container mx-auto px-6 py-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-          </div>
-        ) : plans.length === 0 ? (
-          <Card className="p-12">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <Plus className="h-8 w-8 text-muted-foreground" />
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-6 py-8">
+              <div className="mb-6">
+                <p className="text-muted-foreground">Manage your recurring payment plans</p>
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-foreground">
-                No plans yet
-              </h3>
-              <p className="mb-6 text-muted-foreground">
-                Create your first subscription plan to start accepting payments
-              </p>
-              {canCreatePlans && (
-                <Button
-                  onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90"
-                >
-                  Create Your First Plan
-                </Button>
-              )}
-            </div>
-          </Card>
-        ) : (
-          <Tabs defaultValue="active" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="active" className="gap-2">
-                Active Plans
-                <Badge variant="secondary" className="ml-1">{activePlans.length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="deleted" className="gap-2">
-                Deleted Plans
-                <Badge variant="secondary" className="ml-1">{deletedPlans.length}</Badge>
-              </TabsTrigger>
-            </TabsList>
 
-            <TabsContent value="active">
-              {activePlans.length === 0 ? (
-                <Card className="p-8">
-                  <div className="text-center text-muted-foreground">
-                    <p>No active plans</p>
+              {plans.length === 0 ? (
+                <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                      <Plus className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold text-foreground">
+                      No plans yet
+                    </h3>
+                    <p className="mb-6 text-muted-foreground">
+                      Create your first subscription plan to start accepting payments
+                    </p>
                     {canCreatePlans && (
                       <Button
                         onClick={() => navigate("/plans/create")}
-                        className="mt-4"
-                        variant="outline"
+                        className="bg-accent hover:bg-accent/90"
                       >
-                        Create a Plan
+                        Create Your First Plan
                       </Button>
                     )}
                   </div>
                 </Card>
               ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {activePlans.map((plan, index) => renderPlanCard(plan, index))}
-                </div>
-              )}
-            </TabsContent>
+                <Tabs defaultValue="active" className="space-y-6">
+                  <TabsList>
+                    <TabsTrigger value="active" className="gap-2">
+                      Active Plans
+                      <Badge variant="secondary" className="ml-1">{activePlans.length}</Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="deleted" className="gap-2">
+                      Deleted Plans
+                      <Badge variant="secondary" className="ml-1">{deletedPlans.length}</Badge>
+                    </TabsTrigger>
+                  </TabsList>
 
-            <TabsContent value="deleted">
-              {deletedPlans.length === 0 ? (
-                <Card className="p-8">
-                  <div className="text-center text-muted-foreground">
-                    <p>No deleted plans</p>
-                  </div>
-                </Card>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {deletedPlans.map((plan, index) => renderPlanCard(plan, index))}
-                </div>
+                  <TabsContent value="active">
+                    {activePlans.length === 0 ? (
+                      <Card className="p-8 glass-card border-0">
+                        <div className="text-center text-muted-foreground">
+                          <p>No active plans</p>
+                          {canCreatePlans && (
+                            <Button
+                              onClick={() => navigate("/plans/create")}
+                              className="mt-4"
+                              variant="outline"
+                            >
+                              Create a Plan
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {activePlans.map((plan, index) => renderPlanCard(plan, index))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="deleted">
+                    {deletedPlans.length === 0 ? (
+                      <Card className="p-8 glass-card border-0">
+                        <div className="text-center text-muted-foreground">
+                          <p>No deleted plans</p>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {deletedPlans.map((plan, index) => renderPlanCard(plan, index))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               )}
-            </TabsContent>
-          </Tabs>
-        )}
+            </div>
+          </main>
+        </SidebarInset>
       </div>
 
       <AlertDialog open={!!planToDelete} onOpenChange={() => setPlanToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="glass-card">
           <AlertDialogHeader>
             <AlertDialogTitle>Archive this plan?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -372,7 +405,7 @@ const Plans = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SidebarProvider>
   );
 };
 
