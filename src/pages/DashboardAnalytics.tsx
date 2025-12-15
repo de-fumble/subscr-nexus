@@ -30,6 +30,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { BackButton } from "@/components/BackButton";
 import { useOrgRole } from "@/hooks/useOrgRole";
+import { AIInsightsCard } from "@/components/AIInsightsCard";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 
@@ -375,6 +376,20 @@ export default function DashboardAnalytics() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      {/* AI Insights */}
+      <AIInsightsCard 
+        analyticsData={{
+          totalRevenue: stats.totalRevenue,
+          revenueGrowth: stats.revenueGrowth,
+          activeSubscribers: stats.activeSubscribers,
+          subscriberGrowth: stats.subscriberGrowth,
+          averageRevenue: stats.averageRevenue,
+          churnRate: stats.churnRate,
+          revenueData,
+          planDistribution,
+        }}
+      />
             </div>
           </main>
         </SidebarInset>
