@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import * as recharts from "recharts";
@@ -13,8 +13,8 @@ import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/com
 import { AppSidebar } from "@/components/AppSidebar";
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
+import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
-
 interface Organization {
   id: string;
   org_name: string;
@@ -23,8 +23,9 @@ interface Organization {
   account_name?: string;
   bank_name?: string;
   logo_url?: string | null;
+  kyc_verified?: boolean;
+  kyc_submitted_at?: string | null;
 }
-
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -235,10 +236,12 @@ const Dashboard = () => {
     {
       title: "Failed Payments",
       value: stats.totalFailedPayments.toString(),
-      icon: TrendingUp,
+      icon: AlertTriangle,
       showChart: false,
       showPieChart: true,
-      showButton: false,
+      showButton: true,
+      buttonText: "Manage",
+      isFailedPayments: true,
     },
   ];
 
@@ -298,6 +301,31 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              {/* KYC Verification Prompt */}
+              {organization && !organization.kyc_verified && (
+                <div className="mb-8 p-4 rounded-xl glass-card border border-amber-500/30 bg-amber-500/5 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                      <FileCheck className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">Complete Your KYC</h3>
+                      <p className="text-sm text-muted-foreground">
+                        We suggest you complete your KYC to use Recurra without certain limits
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/dashboard/profile")}
+                      className="border-amber-500/30 hover:bg-amber-500/10"
+                    >
+                      Complete KYC
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Company Account Section - Only show to owners */}
               {organization && canAccessSettings && (
                 <div className="mb-8 animate-fade-in">
@@ -324,7 +352,7 @@ const Dashboard = () => {
                   <div className="rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 p-3 shadow-lg backdrop-blur-sm">
                     <Icon className="h-6 w-6 text-accent" />
                   </div>
-                  {metric.showButton && (
+                  {metric.showButton && !metric.isFailedPayments && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -333,6 +361,17 @@ const Dashboard = () => {
                     >
                       {metric.buttonText}
                     </Button>
+                  )}
+                  {metric.isFailedPayments && (
+                    <FailedPaymentsDialog>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="glass-card hover-lift border-accent/20"
+                      >
+                        {metric.buttonText}
+                      </Button>
+                    </FailedPaymentsDialog>
                   )}
                 </div>
                 <div className="relative z-10">

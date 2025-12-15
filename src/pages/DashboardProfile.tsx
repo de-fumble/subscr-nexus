@@ -3,10 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Save, Trash2, Building2, Sparkles } from "lucide-react";
+import { User, Mail, Trash2, Building2, Sparkles, Edit3, Clock, CheckCircle2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,21 +25,40 @@ import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
 import { BackButton } from "@/components/BackButton";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { KYCSection } from "@/components/KYCSection";
+import { NameChangeRequestDialog } from "@/components/NameChangeRequestDialog";
+
+interface OrganizationData {
+  id: string;
+  org_name: string;
+  email: string;
+  logo_url?: string | null;
+  business_nature: string | null;
+  business_name: string | null;
+  staff_count: string | null;
+  business_type: string | null;
+  is_registered: boolean;
+  registration_document_url: string | null;
+  monthly_revenue: string | null;
+  kyc_verified: boolean;
+  kyc_submitted_at: string | null;
+}
+
+interface NameChangeRequest {
+  id: string;
+  requested_name: string;
+  status: string;
+  created_at: string;
+}
 
 export default function DashboardProfile() {
   const navigate = useNavigate();
   const { canAccessSettings, loading: roleLoading, role } = useOrgRole();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [organization, setOrganization] = useState<{
-    id: string;
-    org_name: string;
-    email: string;
-    logo_url?: string | null;
-  } | null>(null);
-  const [orgName, setOrgName] = useState("");
+  const [organization, setOrganization] = useState<OrganizationData | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
+  const [pendingNameRequest, setPendingNameRequest] = useState<NameChangeRequest | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -60,7 +80,7 @@ export default function DashboardProfile() {
 
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, logo_url")
+        .select("id, org_name, email, logo_url, business_nature, business_name, staff_count, business_type, is_registered, registration_document_url, monthly_revenue, kyc_verified, kyc_submitted_at")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -77,7 +97,7 @@ export default function DashboardProfile() {
         if (membership) {
           const { data: memberOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, logo_url")
+            .select("id, org_name, email, logo_url, business_nature, business_name, staff_count, business_type, is_registered, registration_document_url, monthly_revenue, kyc_verified, kyc_submitted_at")
             .eq("id", membership.org_id)
             .maybeSingle();
           
@@ -90,38 +110,22 @@ export default function DashboardProfile() {
         return;
       }
 
-      setOrganization(orgData);
-      setOrgName(orgData.org_name);
+      setOrganization(orgData as OrganizationData);
+
+      // Check for pending name change request
+      const { data: nameRequest } = await supabase
+        .from("name_change_requests")
+        .select("id, requested_name, status, created_at")
+        .eq("org_id", orgData.id)
+        .eq("status", "pending")
+        .maybeSingle();
+
+      setPendingNameRequest(nameRequest);
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast.error("Failed to load profile");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    if (!orgName.trim()) {
-      toast.error("Organization name cannot be empty");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("organizations")
-        .update({ org_name: orgName })
-        .eq("id", organization?.id);
-
-      if (error) throw error;
-
-      toast.success("Profile updated successfully");
-      fetchProfile();
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -224,13 +228,33 @@ export default function DashboardProfile() {
                           <User className="h-4 w-4 text-muted-foreground" />
                           Organization Name
                         </Label>
-                        <Input
-                          id="org_name"
-                          value={orgName}
-                          onChange={(e) => setOrgName(e.target.value)}
-                          placeholder="Enter organization name"
-                          className="glass-card border-border/50"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            id="org_name"
+                            value={organization?.org_name || ""}
+                            disabled
+                            className="bg-muted/50 flex-1"
+                          />
+                          {pendingNameRequest ? (
+                            <Badge variant="secondary" className="h-10 px-3 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Pending: {pendingNameRequest.requested_name}
+                            </Badge>
+                          ) : (
+                            <NameChangeRequestDialog
+                              orgId={organization?.id || ""}
+                              currentName={organization?.org_name || ""}
+                            >
+                              <Button variant="outline" className="gap-2">
+                                <Edit3 className="h-4 w-4" />
+                                Request Change
+                              </Button>
+                            </NameChangeRequestDialog>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Name changes require admin approval
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email" className="flex items-center gap-2">
@@ -248,16 +272,27 @@ export default function DashboardProfile() {
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      onClick={handleSaveProfile} 
-                      disabled={saving}
-                      className="bg-accent hover:bg-accent/90 gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
                   </CardContent>
                 </Card>
+
+                {/* KYC Section */}
+                {organization && (
+                  <KYCSection
+                    orgId={organization.id}
+                    kycData={{
+                      business_nature: organization.business_nature,
+                      business_name: organization.business_name,
+                      staff_count: organization.staff_count,
+                      business_type: organization.business_type,
+                      is_registered: organization.is_registered,
+                      registration_document_url: organization.registration_document_url,
+                      monthly_revenue: organization.monthly_revenue,
+                      kyc_verified: organization.kyc_verified,
+                      kyc_submitted_at: organization.kyc_submitted_at,
+                    }}
+                    onUpdate={fetchProfile}
+                  />
+                )}
 
                 {/* Danger Zone */}
                 <Card className="border-destructive/50 glass-card shadow-[var(--shadow-medium)]">

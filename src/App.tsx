@@ -26,6 +26,7 @@ import SuperAdminPayouts from "./pages/SuperAdminPayouts";
 import SuperAdminDeletions from "./pages/SuperAdminDeletions";
 import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
 import SuperAdminLogs from "./pages/SuperAdminLogs";
+import SuperAdminNameChanges from "./pages/SuperAdminNameChanges";
 // Footer Pages
 import About from "./pages/About";
 import Careers from "./pages/Careers";
@@ -71,6 +72,7 @@ const App = () => (
           <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
           <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminAppeals /></ProtectedRoute>} />
           <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
+          <Route path="/superadmin/name-changes" element={<ProtectedRoute><SuperAdminNameChanges /></ProtectedRoute>} />
           {/* Footer Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />

@@ -91,6 +91,56 @@ export type Database = {
           },
         ]
       }
+      name_change_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          current_name: string
+          id: string
+          org_id: string
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          requested_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          current_name: string
+          id?: string
+          org_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          current_name?: string
+          id?: string
+          org_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "name_change_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -134,14 +184,23 @@ export type Database = {
           account_name: string | null
           account_number: string | null
           bank_name: string | null
+          business_name: string | null
+          business_nature: string | null
+          business_type: string | null
           created_at: string
           email: string
           id: string
+          is_registered: boolean | null
           is_suspended: boolean | null
+          kyc_submitted_at: string | null
+          kyc_verified: boolean | null
           logo_url: string | null
+          monthly_revenue: string | null
           org_name: string
           paystack_public_key: string | null
           paystack_secret_key: string | null
+          registration_document_url: string | null
+          staff_count: string | null
           suspended_at: string | null
           suspended_by: string | null
           suspension_reason: string | null
@@ -152,14 +211,23 @@ export type Database = {
           account_name?: string | null
           account_number?: string | null
           bank_name?: string | null
+          business_name?: string | null
+          business_nature?: string | null
+          business_type?: string | null
           created_at?: string
           email: string
           id?: string
+          is_registered?: boolean | null
           is_suspended?: boolean | null
+          kyc_submitted_at?: string | null
+          kyc_verified?: boolean | null
           logo_url?: string | null
+          monthly_revenue?: string | null
           org_name: string
           paystack_public_key?: string | null
           paystack_secret_key?: string | null
+          registration_document_url?: string | null
+          staff_count?: string | null
           suspended_at?: string | null
           suspended_by?: string | null
           suspension_reason?: string | null
@@ -170,14 +238,23 @@ export type Database = {
           account_name?: string | null
           account_number?: string | null
           bank_name?: string | null
+          business_name?: string | null
+          business_nature?: string | null
+          business_type?: string | null
           created_at?: string
           email?: string
           id?: string
+          is_registered?: boolean | null
           is_suspended?: boolean | null
+          kyc_submitted_at?: string | null
+          kyc_verified?: boolean | null
           logo_url?: string | null
+          monthly_revenue?: string | null
           org_name?: string
           paystack_public_key?: string | null
           paystack_secret_key?: string | null
+          registration_document_url?: string | null
+          staff_count?: string | null
           suspended_at?: string | null
           suspended_by?: string | null
           suspension_reason?: string | null
