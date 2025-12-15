@@ -9,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import * as recharts from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
@@ -32,6 +32,22 @@ interface SubscriptionPlan {
   interval: string;
   subscriber_count?: number;
 }
+
+const DashboardHeader = ({ orgName }: { orgName?: string }) => {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  
+  return (
+    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+      <SidebarTrigger />
+      <div className="flex-1 flex items-center gap-3">
+        <h1 className="text-xl font-bold text-foreground">
+          {isCollapsed ? (orgName || "Dashboard") : "Dashboard"}
+        </h1>
+      </div>
+    </header>
+  );
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -251,14 +267,7 @@ const Dashboard = () => {
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            <div className="flex-1 flex items-center gap-3">
-              <h1 className="text-xl font-bold text-foreground">
-                {organization?.org_name || "Dashboard"}
-              </h1>
-            </div>
-          </header>
+          <DashboardHeader orgName={organization?.org_name} />
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-6 py-8">
               <div className="mb-8 flex items-center justify-between animate-slide-in">
