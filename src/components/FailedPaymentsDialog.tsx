@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, RefreshCw, User, CreditCard, Calendar } from "lucide-react";
+import { AlertTriangle, RefreshCw, User, CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface FailedPayment {
@@ -20,10 +20,11 @@ interface FailedPayment {
   customer_name: string | null;
   amount: number;
   plan_name: string;
-  failure_reason: string;
+  failure_reason: string | null;
   failed_at: string;
   retry_count: number;
   last_retry_at: string | null;
+  status: string;
 }
 
 interface FailedPaymentsDialogProps {
@@ -73,6 +74,8 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
           payment_failed_at,
           retry_count,
           last_retry_at,
+          status,
+          failure_reason,
           subscription_plans!inner (
             id,
             name,
@@ -91,10 +94,11 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
         customer_name: sub.customer_name,
         amount: sub.amount,
         plan_name: sub.subscription_plans.name,
-        failure_reason: sub.retry_count >= 3 ? "Maximum retry attempts reached" : "Payment failed - awaiting retry",
+        failure_reason: sub.failure_reason || getDefaultFailureReason(sub.status, sub.retry_count),
         failed_at: sub.payment_failed_at,
         retry_count: sub.retry_count || 0,
         last_retry_at: sub.last_retry_at,
+        status: sub.status,
       }));
 
       setFailedPayments(payments);
@@ -106,17 +110,42 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
     }
   };
 
+  // Helper to determine failure reason based on status and retry count
+  const getDefaultFailureReason = (status: string, retryCount: number): string => {
+    if (status === "cancelled") return "Subscription cancelled by user";
+    if (status === "non_renewing") return "Subscription set to not renew";
+    if (retryCount >= 3) return "Maximum retry attempts reached - Card declined";
+    if (retryCount > 0) return "Payment failed - Insufficient funds or card issue";
+    return "Payment failed - Unknown reason";
+  };
+
   useEffect(() => {
     if (open) {
       fetchFailedPayments();
     }
   }, [open]);
 
-  const getFailureReasonBadge = (reason: string, retryCount: number) => {
-    if (retryCount >= 3) {
-      return <Badge variant="destructive">Max Retries Reached</Badge>;
+  const getStatusBadge = (status: string, retryCount: number) => {
+    if (status === "cancelled") {
+      return <Badge variant="destructive">Cancelled</Badge>;
     }
-    return <Badge variant="secondary">Pending Retry ({retryCount}/3)</Badge>;
+    if (status === "non_renewing") {
+      return <Badge variant="secondary">Non-Renewing</Badge>;
+    }
+    if (retryCount >= 3) {
+      return <Badge variant="destructive">Max Retries</Badge>;
+    }
+    return <Badge variant="outline" className="border-yellow-500 text-yellow-600">Retry {retryCount}/3</Badge>;
+  };
+
+  const getFailureIcon = (reason: string) => {
+    if (reason.toLowerCase().includes("insufficient")) {
+      return <CreditCard className="h-4 w-4 text-destructive" />;
+    }
+    if (reason.toLowerCase().includes("cancelled")) {
+      return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
+    }
+    return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
   };
 
   return (
@@ -129,7 +158,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
             Failed Payments
           </DialogTitle>
           <DialogDescription>
-            View and manage subscribers with failed payment attempts
+            View subscribers with failed payment attempts and the reasons for each failure
           </DialogDescription>
         </DialogHeader>
 
@@ -180,7 +209,20 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
                         <p className="text-sm text-muted-foreground">{payment.email}</p>
                       </div>
                     </div>
-                    {getFailureReasonBadge(payment.failure_reason, payment.retry_count)}
+                    {getStatusBadge(payment.status, payment.retry_count)}
+                  </div>
+
+                  {/* Failure Reason - Highlighted */}
+                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
+                    <div className="flex items-start gap-2">
+                      {getFailureIcon(payment.failure_reason || "")}
+                      <div>
+                        <p className="text-sm font-medium text-destructive">Failure Reason</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {payment.failure_reason || "Unknown error occurred"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">

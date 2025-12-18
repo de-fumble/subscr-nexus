@@ -8,6 +8,8 @@ import SuperAdminAppeals from "./pages/SuperAdminAppeals";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
+import UserDashboard from "./pages/UserDashboard";
 import CreatePlan from "./pages/CreatePlan";
 import Plans from "./pages/Plans";
 import Subscribe from "./pages/Subscribe";
@@ -52,6 +54,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/user-dashboard" element={<UserDashboard />} />
           <Route path="/suspended" element={<SuspendedAccount />} />
           <Route path="/subscribe/:planId" element={<Subscribe />} />
           <Route path="/subscription-callback" element={<SubscriptionCallback />} />
