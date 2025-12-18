@@ -64,6 +64,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
       if (!orgId) return;
 
       // Fetch subscribers with failed payments for this org's plans
+      // Note: failure_reason column may not exist in older schemas
       const { data: subscribers, error } = await supabase
         .from("subscribers")
         .select(`
@@ -75,7 +76,6 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
           retry_count,
           last_retry_at,
           status,
-          failure_reason,
           subscription_plans!inner (
             id,
             name,
@@ -94,7 +94,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
         customer_name: sub.customer_name,
         amount: sub.amount,
         plan_name: sub.subscription_plans.name,
-        failure_reason: sub.failure_reason || getDefaultFailureReason(sub.status, sub.retry_count),
+        failure_reason: getDefaultFailureReason(sub.status, sub.retry_count),
         failed_at: sub.payment_failed_at,
         retry_count: sub.retry_count || 0,
         last_retry_at: sub.last_retry_at,
