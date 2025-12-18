@@ -138,10 +138,11 @@ serve(async (req) => {
       }
     }
 
-    // Handle failed charge - mark for retry
+    // Handle failed charge - mark for retry with failure reason
     if (event.event === "charge.failed" && event.data.customer) {
-      const { reference, amount, customer } = event.data;
-      console.log(`Charge failed for customer ${customer.customer_code}`);
+      const { reference, amount, customer, gateway_response, message } = event.data;
+      const failureReason = gateway_response || message || "Payment declined by bank";
+      console.log(`Charge failed for customer ${customer.customer_code}: ${failureReason}`);
 
       // Find subscriber by customer code
       const { data: subscriber } = await supabase
@@ -151,18 +152,19 @@ serve(async (req) => {
         .single();
 
       if (subscriber) {
-        // Mark payment as failed for retry mechanism
+        // Mark payment as failed for retry mechanism with reason
         const { error: updateError } = await supabase
           .from("subscribers")
           .update({
             payment_failed_at: new Date().toISOString(),
+            failure_reason: failureReason,
           })
           .eq("id", subscriber.id);
 
         if (updateError) {
           console.error("Error marking payment as failed:", updateError);
         } else {
-          console.log(`Payment marked as failed for subscriber ${subscriber.id}, will be retried`);
+          console.log(`Payment marked as failed for subscriber ${subscriber.id}: ${failureReason}`);
         }
 
         // Record failed transaction
