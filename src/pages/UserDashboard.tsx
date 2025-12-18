@@ -17,9 +17,13 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  User
+  User,
+  Menu,
+  X,
+  RotateCcw
 } from "lucide-react";
 import logoImage from "@/assets/logo.png";
+import { RefundRequestDialog } from "@/components/RefundRequestDialog";
 
 interface Organization {
   id: string;
@@ -55,6 +59,7 @@ const UserDashboard = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [searchingOrgs, setSearchingOrgs] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Transaction verification state
   const [transactionRef, setTransactionRef] = useState("");
@@ -201,43 +206,92 @@ const UserDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img 
-              src={logoImage} 
-              alt="Recurra" 
-              className="h-10 w-10 object-cover rounded-xl"
-            />
-            <span className="text-xl font-bold">Recurra</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4" />
-              <span>{user?.email}</span>
+        <div className="container mx-auto px-4 py-4">
+          {/* Desktop Header */}
+          <div className="hidden md:flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img 
+                src={logoImage} 
+                alt="Recurra" 
+                className="h-10 w-10 object-cover rounded-xl"
+              />
+              <span className="text-xl font-bold">Recurra</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+            
+            <div className="flex items-center gap-4">
+              <RefundRequestDialog userEmail={user?.email || ""}>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Request Refund
+                </Button>
+              </RefundRequestDialog>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span className="max-w-[200px] truncate">{user?.email}</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Header */}
+          <div className="flex md:hidden items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img 
+                src={logoImage} 
+                alt="Recurra" 
+                className="h-8 w-8 object-cover rounded-lg"
+              />
+              <span className="text-lg font-bold">Recurra</span>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-2 space-y-3 border-t border-border/50 pt-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
+                <User className="h-4 w-4 shrink-0" />
+                <span className="truncate">{user?.email}</span>
+              </div>
+              <RefundRequestDialog userEmail={user?.email || ""}>
+                <Button variant="outline" size="sm" className="w-full gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Request Refund
+                </Button>
+              </RefundRequestDialog>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="w-full">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 md:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome to Recurra</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome to Recurra</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Search for organizations and subscribe to their plans, or verify your transactions.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
           {/* Organization Search Section */}
           <div className="space-y-6">
-            <Card className="p-6 glass-card">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Card className="p-4 md:p-6 glass-card">
+              <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-accent" />
                 Find Organizations
               </h2>
@@ -265,7 +319,7 @@ const UserDashboard = () => {
                     <button
                       key={org.id}
                       onClick={() => fetchOrgPlans(org)}
-                      className={`w-full p-4 rounded-lg border transition-all text-left ${
+                      className={`w-full p-3 md:p-4 rounded-lg border transition-all text-left ${
                         selectedOrg?.id === org.id
                           ? "border-accent bg-accent/10"
                           : "border-border hover:border-accent/50 hover:bg-muted/50"
@@ -276,16 +330,16 @@ const UserDashboard = () => {
                           <img
                             src={org.logo_url}
                             alt={org.org_name}
-                            className="h-10 w-10 rounded-lg object-cover"
+                            className="h-10 w-10 rounded-lg object-cover shrink-0"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
                             <Building2 className="h-5 w-5 text-accent" />
                           </div>
                         )}
-                        <div>
-                          <p className="font-medium">{org.org_name}</p>
-                          <p className="text-sm text-muted-foreground">{org.email}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{org.org_name}</p>
+                          <p className="text-sm text-muted-foreground truncate">{org.email}</p>
                         </div>
                       </div>
                     </button>
@@ -294,7 +348,7 @@ const UserDashboard = () => {
               )}
 
               {searchQuery && organizations.length === 0 && !searchingOrgs && (
-                <p className="text-center text-muted-foreground py-4">
+                <p className="text-center text-muted-foreground py-4 text-sm">
                   No organizations found matching "{searchQuery}"
                 </p>
               )}
@@ -302,21 +356,21 @@ const UserDashboard = () => {
 
             {/* Plans Section */}
             {selectedOrg && (
-              <Card className="p-6 glass-card">
+              <Card className="p-4 md:p-6 glass-card">
                 <div className="flex items-center gap-3 mb-4">
                   {selectedOrg.logo_url ? (
                     <img
                       src={selectedOrg.logo_url}
                       alt={selectedOrg.org_name}
-                      className="h-12 w-12 rounded-lg object-cover"
+                      className="h-10 md:h-12 w-10 md:w-12 rounded-lg object-cover shrink-0"
                     />
                   ) : (
-                    <div className="h-12 w-12 rounded-lg bg-accent/20 flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-accent" />
+                    <div className="h-10 md:h-12 w-10 md:w-12 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+                      <Building2 className="h-5 md:h-6 w-5 md:w-6 text-accent" />
                     </div>
                   )}
-                  <div>
-                    <h3 className="font-semibold">{selectedOrg.org_name}</h3>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold truncate">{selectedOrg.org_name}</h3>
                     <p className="text-sm text-muted-foreground">Available Plans</p>
                   </div>
                 </div>
@@ -330,28 +384,28 @@ const UserDashboard = () => {
                     {plans.map((plan) => (
                       <div
                         key={plan.id}
-                        className="p-4 rounded-lg border border-border bg-card/50"
+                        className="p-3 md:p-4 rounded-lg border border-border bg-card/50"
                       >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="font-medium">{plan.name}</h4>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0">
+                            <h4 className="font-medium truncate">{plan.name}</h4>
                             {plan.description && (
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {plan.description}
                               </p>
                             )}
                           </div>
-                          <Badge variant="secondary">{plan.interval}</Badge>
+                          <Badge variant="secondary" className="shrink-0">{plan.interval}</Badge>
                         </div>
-                        <div className="flex items-center justify-between mt-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4">
                           <p className="text-lg font-bold">
                             {plan.currency} {plan.price.toLocaleString()}
                             <span className="text-sm font-normal text-muted-foreground">
                               {getIntervalLabel(plan.interval)}
                             </span>
                           </p>
-                          <Link to={`/subscribe/${plan.id}`}>
-                            <Button size="sm" className="gap-2">
+                          <Link to={`/subscribe/${plan.id}`} className="w-full sm:w-auto">
+                            <Button size="sm" className="gap-2 w-full sm:w-auto">
                               <CreditCard className="h-4 w-4" />
                               Subscribe
                               <ExternalLink className="h-3 w-3" />
@@ -362,7 +416,7 @@ const UserDashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-4">
+                  <p className="text-center text-muted-foreground py-4 text-sm">
                     No active plans available
                   </p>
                 )}
@@ -371,9 +425,9 @@ const UserDashboard = () => {
           </div>
 
           {/* Transaction Verification Section */}
-          <div>
-            <Card className="p-6 glass-card">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <div className="space-y-6">
+            <Card className="p-4 md:p-6 glass-card">
+              <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-accent" />
                 Verify Transaction
               </h2>
@@ -407,10 +461,10 @@ const UserDashboard = () => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Reference</p>
-                      <p className="font-mono">{transactionResult.reference}</p>
+                      <p className="font-mono text-xs md:text-sm break-all">{transactionResult.reference}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Amount</p>
@@ -420,7 +474,7 @@ const UserDashboard = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Email</p>
-                      <p>{transactionResult.customer_email}</p>
+                      <p className="truncate">{transactionResult.customer_email}</p>
                     </div>
                     {transactionResult.paid_at && (
                       <div>
@@ -429,7 +483,7 @@ const UserDashboard = () => {
                       </div>
                     )}
                     {transactionResult.plan_name && (
-                      <div className="col-span-2">
+                      <div className="col-span-1 sm:col-span-2">
                         <p className="text-muted-foreground">Plan</p>
                         <p>{transactionResult.plan_name}</p>
                       </div>
@@ -440,7 +494,7 @@ const UserDashboard = () => {
             </Card>
 
             {/* Quick Tips */}
-            <Card className="p-6 glass-card mt-6">
+            <Card className="p-4 md:p-6 glass-card">
               <h3 className="font-semibold mb-3">Quick Tips</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
@@ -454,6 +508,10 @@ const UserDashboard = () => {
                 <li className="flex items-start gap-2">
                   <span className="text-accent">•</span>
                   All payments are securely processed through Paystack.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent">•</span>
+                  Need a refund? Click "Request Refund" to submit a complaint.
                 </li>
               </ul>
             </Card>

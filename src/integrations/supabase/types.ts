@@ -334,12 +334,64 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          custom_complaint: string | null
+          id: string
+          phone_number: string
+          processed_at: string | null
+          processed_by: string | null
+          refund_reason: string
+          status: string
+          transaction_reference: string | null
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          custom_complaint?: string | null
+          id?: string
+          phone_number: string
+          processed_at?: string | null
+          processed_by?: string | null
+          refund_reason: string
+          status?: string
+          transaction_reference?: string | null
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          custom_complaint?: string | null
+          id?: string
+          phone_number?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          refund_reason?: string
+          status?: string
+          transaction_reference?: string | null
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           amount: number
           created_at: string
           customer_name: string | null
           email: string
+          failure_reason: string | null
           id: string
           last_retry_at: string | null
           next_payment_date: string | null
@@ -357,6 +409,7 @@ export type Database = {
           created_at?: string
           customer_name?: string | null
           email: string
+          failure_reason?: string | null
           id?: string
           last_retry_at?: string | null
           next_payment_date?: string | null
@@ -374,6 +427,7 @@ export type Database = {
           created_at?: string
           customer_name?: string | null
           email?: string
+          failure_reason?: string | null
           id?: string
           last_retry_at?: string | null
           next_payment_date?: string | null
