@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_key_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          key_type: string
+          masked_key: string | null
+          org_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          key_type: string
+          masked_key?: string | null
+          org_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          key_type?: string
+          masked_key?: string | null
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -84,6 +125,83 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "deletion_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_verifications: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      licenses: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          org_id: string
+          paystack_reference: string | null
+          plan_type: string
+          purchased_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          org_id: string
+          paystack_reference?: string | null
+          plan_type: string
+          purchased_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          org_id?: string
+          paystack_reference?: string | null
+          plan_type?: string
+          purchased_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -189,6 +307,8 @@ export type Database = {
           business_type: string | null
           created_at: string
           email: string
+          email_verified: boolean | null
+          email_verified_at: string | null
           id: string
           is_registered: boolean | null
           is_suspended: boolean | null
@@ -216,6 +336,8 @@ export type Database = {
           business_type?: string | null
           created_at?: string
           email: string
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           id?: string
           is_registered?: boolean | null
           is_suspended?: boolean | null
@@ -243,6 +365,8 @@ export type Database = {
           business_type?: string | null
           created_at?: string
           email?: string
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           id?: string
           is_registered?: boolean | null
           is_suspended?: boolean | null
@@ -608,7 +732,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      organization_balances: {
+        Row: {
+          available_balance: number | null
+          org_id: string | null
+          total_collected: number | null
+          total_paid_out: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_write_to_org: {
