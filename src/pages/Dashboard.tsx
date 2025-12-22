@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import * as recharts from "recharts";
@@ -15,6 +15,9 @@ import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
+import { BalanceDisplay } from "@/components/BalanceDisplay";
+import { LicenseStatusCard } from "@/components/LicenseStatusCard";
+import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
 interface Organization {
   id: string;
   org_name: string;
@@ -52,7 +55,7 @@ const DashboardHeader = ({ orgName }: { orgName?: string }) => {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { canRequestPayout, canCreatePlans, canAccessSettings, role } = useOrgRole();
+  const { canRequestPayout, canCreatePlans, canAccessSettings, canRequestLicense, role } = useOrgRole();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -68,6 +71,9 @@ const Dashboard = () => {
   const [showSubscriberDialog, setShowSubscriberDialog] = useState(false);
   const [showPayoutDialog, setShowPayoutDialog] = useState(false);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [pendingPayouts, setPendingPayouts] = useState(0);
+  const [totalPaidOut, setTotalPaidOut] = useState(0);
+  const [currentLicense, setCurrentLicense] = useState<any>(null);
   useEffect(() => {
     fetchDashboardData();
 
@@ -201,6 +207,37 @@ const Dashboard = () => {
           totalFailedPayments: totalFailed,
         });
       }
+
+      // Fetch payout data for balance display
+      if (orgData) {
+        const { data: payoutData } = await supabase
+          .from("payout_requests")
+          .select("amount, status")
+          .eq("org_id", orgData.id);
+
+        if (payoutData) {
+          const pending = payoutData
+            .filter((p) => p.status === "pending" || p.status === "approved")
+            .reduce((sum, p) => sum + p.amount, 0);
+          const paidOut = payoutData
+            .filter((p) => p.status === "completed")
+            .reduce((sum, p) => sum + p.amount, 0);
+          setPendingPayouts(pending);
+          setTotalPaidOut(paidOut);
+        }
+
+        // Fetch current license
+        const { data: licenseData } = await supabase
+          .from("licenses")
+          .select("*")
+          .eq("org_id", orgData.id)
+          .eq("status", "active")
+          .order("expires_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        setCurrentLicense(licenseData);
+      }
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load dashboard");
@@ -323,6 +360,37 @@ const Dashboard = () => {
                       Complete KYC
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {/* License Status Card - Only show to owners */}
+              {organization && canRequestLicense && (
+                <div className="mb-8 animate-fade-in">
+                  <div className="flex items-center justify-between mb-4">
+                    <LicenseStatusCard license={currentLicense} />
+                  </div>
+                  {!currentLicense && (
+                    <div className="flex justify-end -mt-2">
+                      <LicenseRequestDialog orgId={organization.id}>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <Key className="h-4 w-4" />
+                          Request License
+                        </Button>
+                      </LicenseRequestDialog>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Balance Display - Only show to owners */}
+              {organization && canAccessSettings && (
+                <div className="mb-8 animate-fade-in">
+                  <BalanceDisplay
+                    totalCollected={stats.totalRevenue}
+                    availableBalance={availableBalance}
+                    pendingPayouts={pendingPayouts}
+                    totalPaidOut={totalPaidOut}
+                  />
                 </div>
               )}
 
