@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, FileText } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TransactionReceiptDialog } from "./TransactionReceiptDialog";
 
 interface TransactionDetails {
   reference: string;
@@ -25,10 +26,21 @@ interface TransactionDetails {
   currency: string;
 }
 
-export function VerifyTransactionCard() {
+interface Organization {
+  org_name: string;
+  email: string;
+  logo_url?: string | null;
+}
+
+interface VerifyTransactionCardProps {
+  organization?: Organization | null;
+}
+
+export function VerifyTransactionCard({ organization }: VerifyTransactionCardProps) {
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(false);
   const [transaction, setTransaction] = useState<TransactionDetails | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const handleVerify = async () => {
     if (!reference.trim()) {
@@ -61,81 +73,106 @@ export function VerifyTransactionCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Verify Transaction</CardTitle>
-        <CardDescription>
-          Enter a transaction reference to view its details
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-2 mb-4">
-          <Input
-            placeholder="Enter transaction reference"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleVerify()}
-          />
-          <Button onClick={handleVerify} disabled={loading}>
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-
-        {transaction && (
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableHead className="w-[200px]">Reference</TableHead>
-                  <TableCell className="font-mono">{transaction.reference}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableHead>Amount</TableHead>
-                  <TableCell>
-                    {transaction.currency} {(transaction.amount / 100).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableCell>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                        transaction.status === "success"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {transaction.status}
-                    </span>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableCell>{transaction.customer_name || "N/A"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableCell>{transaction.customer_email}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableHead>Plan</TableHead>
-                  <TableCell>{transaction.plan || "N/A"}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableHead>Paid At</TableHead>
-                  <TableCell>
-                    {new Date(transaction.paid_at).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Verify Transaction</CardTitle>
+          <CardDescription>
+            Enter a transaction reference to view its details and generate a receipt
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+            <Input
+              placeholder="Enter transaction reference"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+            />
+            <Button onClick={handleVerify} disabled={loading}>
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {transaction && (
+            <div className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableHead className="w-[200px]">Reference</TableHead>
+                      <TableCell className="font-mono">{transaction.reference}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Amount</TableHead>
+                      <TableCell>
+                        {transaction.currency} {(transaction.amount / 100).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Status</TableHead>
+                      <TableCell>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                            transaction.status === "success"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                        >
+                          {transaction.status}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableCell>{transaction.customer_name || "N/A"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableCell>{transaction.customer_email}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Plan</TableHead>
+                      <TableCell>{transaction.plan || "N/A"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead>Paid At</TableHead>
+                      <TableCell>
+                        {new Date(transaction.paid_at).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Generate Receipt Button */}
+              {transaction.status === "success" && (
+                <Button 
+                  onClick={() => setShowReceipt(true)} 
+                  className="w-full gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Generate Receipt
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Receipt Dialog */}
+      {transaction && (
+        <TransactionReceiptDialog
+          open={showReceipt}
+          onOpenChange={setShowReceipt}
+          transaction={transaction}
+          organization={organization}
+        />
+      )}
+    </>
   );
 }
