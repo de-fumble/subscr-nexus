@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Download, AlertTriangle, Trash2 } from "lucide-react";
+import { Sparkles, Loader2, Download, AlertTriangle, Trash2, Upload, FileSpreadsheet, X } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface EphemeralAIDialogProps {
   analyticsData: {
@@ -32,6 +33,12 @@ interface EphemeralAIDialogProps {
     planDistribution: Array<{ name: string; value: number }>;
   };
   children: React.ReactNode;
+}
+
+interface UploadedFile {
+  name: string;
+  data: Record<string, unknown>[];
+  sheetName: string;
 }
 
 const AI_ACTIONS = [
@@ -68,6 +75,48 @@ export function EphemeralAIDialog({ analyticsData, children }: EphemeralAIDialog
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [showWarning, setShowWarning] = useState(true);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+        toast.error(`${file.name} is not a valid Excel/CSV file`);
+        continue;
+      }
+
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        setUploadedFiles(prev => [...prev, {
+          name: file.name,
+          data: jsonData as Record<string, unknown>[],
+          sheetName
+        }]);
+
+        toast.success(`${file.name} uploaded successfully`);
+      } catch (error) {
+        console.error("Error parsing file:", error);
+        toast.error(`Failed to parse ${file.name}`);
+      }
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleAnalyze = async () => {
     if (!selectedAction) {
@@ -80,10 +129,22 @@ export function EphemeralAIDialog({ analyticsData, children }: EphemeralAIDialog
     setResult(null);
 
     try {
+      // Prepare uploaded file data for AI analysis
+      const uploadedData = uploadedFiles.length > 0 
+        ? uploadedFiles.map(f => ({
+            fileName: f.name,
+            sheetName: f.sheetName,
+            rowCount: f.data.length,
+            columns: f.data.length > 0 ? Object.keys(f.data[0]) : [],
+            sampleData: f.data.slice(0, 10) // Send first 10 rows as sample
+          }))
+        : null;
+
       const { data, error } = await supabase.functions.invoke("ephemeral-ai-analysis", {
         body: {
           action: selectedAction,
           analyticsData,
+          uploadedData,
         },
       });
 
@@ -139,6 +200,7 @@ Powered by Recurra
     setResult(null);
     setSelectedAction("");
     setShowWarning(true);
+    setUploadedFiles([]);
   };
 
   const handleClose = (isOpen: boolean) => {
@@ -147,6 +209,7 @@ Powered by Recurra
       setResult(null);
       setSelectedAction("");
       setShowWarning(true);
+      setUploadedFiles([]);
     }
     setOpen(isOpen);
   };
@@ -206,6 +269,62 @@ Powered by Recurra
               </SelectContent>
             </Select>
           </div>
+
+          {/* File Upload Section */}
+          {!result && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Upload Excel/CSV Files (Optional)</label>
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Excel/CSV
+                </Button>
+              </div>
+              
+              {uploadedFiles.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {uploadedFiles.map((file, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-md"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileSpreadsheet className="h-4 w-4 text-primary shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {file.data.length} rows • Sheet: {file.sheetName}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {!result && (
             <Button 
