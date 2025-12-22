@@ -597,7 +597,7 @@ const Dashboard = () => {
         </div>
 
         <div className="mt-12 animate-fade-in" style={{ animationDelay: "500ms" }}>
-          <VerifyTransactionCard />
+          <VerifyTransactionCard organization={organization} />
         </div>
       </div>
 

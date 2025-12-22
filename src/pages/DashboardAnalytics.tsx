@@ -32,6 +32,9 @@ import { BackButton } from "@/components/BackButton";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { AIInsightsCard } from "@/components/AIInsightsCard";
 import { AnalyticsResetDialog } from "@/components/AnalyticsResetDialog";
+import { EphemeralAIDialog } from "@/components/EphemeralAIDialog";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 
@@ -392,6 +395,26 @@ export default function DashboardAnalytics() {
       </Card>
 
       {/* AI Insights */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">AI Insights</h3>
+        <EphemeralAIDialog
+          analyticsData={{
+            totalRevenue: stats.totalRevenue,
+            revenueGrowth: stats.revenueGrowth,
+            activeSubscribers: stats.activeSubscribers,
+            subscriberGrowth: stats.subscriberGrowth,
+            averageRevenue: stats.averageRevenue,
+            churnRate: stats.churnRate,
+            revenueData,
+            planDistribution,
+          }}
+        >
+          <Button variant="outline" className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Advanced AI Analysis
+          </Button>
+        </EphemeralAIDialog>
+      </div>
       <AIInsightsCard 
         analyticsData={{
           totalRevenue: stats.totalRevenue,
