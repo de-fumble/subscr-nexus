@@ -27,6 +27,7 @@ interface KYCSectionProps {
   orgId: string;
   kycData: KYCData;
   onUpdate: () => void;
+  disabled?: boolean;
 }
 
 const BUSINESS_TYPES = [
@@ -59,7 +60,7 @@ const REVENUE_RANGES = [
   { value: "10m+", label: "₦10,000,000+" },
 ];
 
-export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
+export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSectionProps) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -189,6 +190,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
               onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
               placeholder="Enter your business name"
               className="glass-card border-border/50"
+              disabled={disabled}
             />
           </div>
 
@@ -200,6 +202,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
             <Select
               value={formData.business_type}
               onValueChange={(value) => setFormData({ ...formData, business_type: value })}
+              disabled={disabled}
             >
               <SelectTrigger className="glass-card border-border/50">
                 <SelectValue placeholder="Select business type" />
@@ -222,6 +225,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
             <Select
               value={formData.staff_count}
               onValueChange={(value) => setFormData({ ...formData, staff_count: value })}
+              disabled={disabled}
             >
               <SelectTrigger className="glass-card border-border/50">
                 <SelectValue placeholder="Select staff count" />
@@ -244,6 +248,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
             <Select
               value={formData.monthly_revenue}
               onValueChange={(value) => setFormData({ ...formData, monthly_revenue: value })}
+              disabled={disabled}
             >
               <SelectTrigger className="glass-card border-border/50">
                 <SelectValue placeholder="Select revenue range" />
@@ -266,6 +271,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
             onChange={(e) => setFormData({ ...formData, business_nature: e.target.value })}
             placeholder="Briefly describe what your business does and how you plan to use Recurra..."
             className="glass-card border-border/50 min-h-[100px]"
+            disabled={disabled}
           />
         </div>
 
@@ -280,6 +286,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
             <Switch
               checked={formData.is_registered}
               onCheckedChange={(checked) => setFormData({ ...formData, is_registered: checked })}
+              disabled={disabled}
             />
           </div>
 
@@ -293,7 +300,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  disabled={uploading}
+                  disabled={uploading || disabled}
                   onClick={() => document.getElementById("doc-upload")?.click()}
                 >
                   <Upload className="h-4 w-4" />
@@ -320,7 +327,7 @@ export function KYCSection({ orgId, kycData, onUpdate }: KYCSectionProps) {
         <div className="flex justify-end">
           <Button
             onClick={handleSave}
-            disabled={saving || !isComplete}
+            disabled={saving || !isComplete || disabled}
             className="bg-accent hover:bg-accent/90 gap-2"
           >
             {saving ? "Saving..." : "Save KYC Information"}

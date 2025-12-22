@@ -53,7 +53,7 @@ interface NameChangeRequest {
 
 export default function DashboardProfile() {
   const navigate = useNavigate();
-  const { canAccessSettings, loading: roleLoading, role } = useOrgRole();
+  const { canAccessSettings, loading: roleLoading, role, canSubmitKYC } = useOrgRole();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
@@ -291,6 +291,7 @@ export default function DashboardProfile() {
                       kyc_submitted_at: organization.kyc_submitted_at,
                     }}
                     onUpdate={fetchProfile}
+                    disabled={!canSubmitKYC}
                   />
                 )}
 
