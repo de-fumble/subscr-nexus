@@ -117,6 +117,9 @@ const UserDashboard = () => {
 
   const fetchOrgPlans = async (org: Organization) => {
     setSelectedOrg(org);
+    // Clear search results when an organization is selected
+    setOrganizations([]);
+    setSearchQuery("");
     setLoadingPlans(true);
     try {
       const { data, error } = await supabase
