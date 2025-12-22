@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { 
   Loader2, Building2, Users, DollarSign, AlertTriangle, Search, 
-  TrendingUp, Clock, Ban, Scale, RefreshCw, TrendingDown, CreditCard, FileText, Key 
+  TrendingUp, Clock, Ban, Scale, RefreshCw, TrendingDown, CreditCard, FileText, Key, FileCheck 
 } from "lucide-react";
 import {
   Table,
@@ -144,6 +144,10 @@ export default function SuperAdminDashboard() {
           <Button variant="outline" onClick={() => navigate('/superadmin/licenses')}>
             <Key className="h-4 w-4 mr-2" />
             Licenses
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/superadmin/kyc')}>
+            <FileCheck className="h-4 w-4 mr-2" />
+            KYC
           </Button>
         </div>
       </div>

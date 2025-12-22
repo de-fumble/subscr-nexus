@@ -31,6 +31,7 @@ import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
 import SuperAdminLogs from "./pages/SuperAdminLogs";
 import SuperAdminNameChanges from "./pages/SuperAdminNameChanges";
 import SuperAdminLicenses from "./pages/SuperAdminLicenses";
+import SuperAdminKYC from "./pages/SuperAdminKYC";
 // Footer Pages
 import About from "./pages/About";
 import Careers from "./pages/Careers";
@@ -83,6 +84,7 @@ const App = () => (
           <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
           <Route path="/superadmin/name-changes" element={<ProtectedRoute><SuperAdminNameChanges /></ProtectedRoute>} />
           <Route path="/superadmin/licenses" element={<ProtectedRoute><SuperAdminLicenses /></ProtectedRoute>} />
+          <Route path="/superadmin/kyc" element={<ProtectedRoute><SuperAdminKYC /></ProtectedRoute>} />
           {/* Footer Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />

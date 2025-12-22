@@ -31,6 +31,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { BackButton } from "@/components/BackButton";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { AIInsightsCard } from "@/components/AIInsightsCard";
+import { AnalyticsResetDialog } from "@/components/AnalyticsResetDialog";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 
@@ -43,7 +44,7 @@ interface Organization {
 
 export default function DashboardAnalytics() {
   const navigate = useNavigate();
-  const { role, canAccessSettings } = useOrgRole();
+  const { role, canAccessSettings, canResetAnalytics } = useOrgRole();
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
@@ -224,8 +225,21 @@ export default function DashboardAnalytics() {
           
           <main className="flex-1 overflow-auto">
             <div className="container py-8 px-6 space-y-8">
-              <div>
+              <div className="flex items-center justify-between">
                 <p className="text-muted-foreground">Track your business performance and growth</p>
+                {canResetAnalytics && organization && (
+                  <AnalyticsResetDialog
+                    orgId={organization.id}
+                    orgEmail={organization.email}
+                    orgName={organization.org_name}
+                    analyticsData={{
+                      totalRevenue: stats.totalRevenue,
+                      activeSubscribers: stats.activeSubscribers,
+                      revenueData,
+                      planDistribution,
+                    }}
+                  />
+                )}
               </div>
 
       {/* Key Metrics */}
