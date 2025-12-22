@@ -12,6 +12,9 @@ interface OrgRoleResult {
   canRequestPayout: boolean;
   canAccessSettings: boolean;
   canCreatePlans: boolean;
+  canRequestLicense: boolean;
+  canSubmitKYC: boolean;
+  canResetAnalytics: boolean;
   refreshRole: () => Promise<void>;
 }
 
@@ -78,6 +81,11 @@ export const useOrgRole = (): OrgRoleResult => {
   const canRequestPayout = role === 'owner'; // Only owner can request payouts
   const canAccessSettings = role === 'owner'; // Only owner can access bank settings
   const canCreatePlans = role === 'owner' || role === 'admin'; // Staff cannot create plans
+  
+  // New owner-only permissions
+  const canRequestLicense = role === 'owner'; // Only owner can request licenses
+  const canSubmitKYC = role === 'owner'; // Only owner can submit KYC
+  const canResetAnalytics = role === 'owner'; // Only owner can reset analytics
 
   return {
     role,
@@ -88,6 +96,9 @@ export const useOrgRole = (): OrgRoleResult => {
     canRequestPayout,
     canAccessSettings,
     canCreatePlans,
+    canRequestLicense,
+    canSubmitKYC,
+    canResetAnalytics,
     refreshRole: checkRole,
   };
 };
