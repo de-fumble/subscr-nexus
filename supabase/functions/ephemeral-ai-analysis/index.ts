@@ -17,7 +17,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { action, analyticsData } = await req.json();
+    const { action, analyticsData, uploadedData } = await req.json();
 
     if (!action || !analyticsData) {
       return new Response(
@@ -43,6 +43,22 @@ serve(async (req) => {
     };
 
     const systemPrompt = actionPrompts[action] || "Analyze the following business data and provide insights.";
+
+    // Build uploaded data section if files were provided
+    let uploadedDataSection = "";
+    if (uploadedData && Array.isArray(uploadedData) && uploadedData.length > 0) {
+      uploadedDataSection = "\n\nUPLOADED FILE DATA:\n";
+      for (const file of uploadedData) {
+        uploadedDataSection += `\nFile: ${file.fileName} (Sheet: ${file.sheetName})\n`;
+        uploadedDataSection += `Rows: ${file.rowCount}\n`;
+        uploadedDataSection += `Columns: ${file.columns?.join(', ') || 'N/A'}\n`;
+        if (file.sampleData && file.sampleData.length > 0) {
+          uploadedDataSection += `Sample Data (first ${file.sampleData.length} rows):\n`;
+          uploadedDataSection += JSON.stringify(file.sampleData, null, 2) + "\n";
+        }
+      }
+      uploadedDataSection += "\nPlease incorporate this uploaded data into your analysis.";
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -72,7 +88,7 @@ Revenue Trend (last months):
 ${analyticsData.revenueData?.map((d: any) => `- ${d.month}: ₦${d.revenue?.toLocaleString() || 0}`).join('\n') || 'No data'}
 
 Plan Distribution:
-${analyticsData.planDistribution?.map((p: any) => `- ${p.name}: ${p.value} subscribers`).join('\n') || 'No data'}
+${analyticsData.planDistribution?.map((p: any) => `- ${p.name}: ${p.value} subscribers`).join('\n') || 'No data'}${uploadedDataSection}
 
 Provide your analysis:`,
           },
