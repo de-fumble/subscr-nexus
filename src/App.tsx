@@ -15,6 +15,10 @@ import CreatePlan from "./pages/CreatePlan";
 import Plans from "./pages/Plans";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionCallback from "./pages/SubscriptionCallback";
+import OneTimePayments from "./pages/OneTimePayments";
+import CreateOneTimePayment from "./pages/CreateOneTimePayment";
+import Pay from "./pages/Pay";
+import PaymentCallback from "./pages/PaymentCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import DashboardProfile from "./pages/DashboardProfile";
@@ -68,6 +72,11 @@ const App = () => (
           <Route path="/subscription-callback" element={<SubscriptionCallback />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+          <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
+          <Route path="/payments" element={<ProtectedRoute><OneTimePayments /></ProtectedRoute>} />
+          <Route path="/payments/create" element={<ProtectedRoute><CreateOneTimePayment /></ProtectedRoute>} />
+          <Route path="/pay/:paymentId" element={<Pay />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
           <Route path="/dashboard/profile" element={<ProtectedRoute><DashboardProfile /></ProtectedRoute>} />
           <Route path="/dashboard/settings" element={<ProtectedRoute><DashboardSettings /></ProtectedRoute>} />

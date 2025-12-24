@@ -238,7 +238,7 @@ const Subscribe = () => {
                   </div>
                   <p className="mt-3 text-muted-foreground flex items-center gap-2">
                     <Zap className="h-4 w-4 text-primary" />
-                    Billed {plan.interval}ly • Cancel anytime
+                    Billed {plan.interval} • Cancel anytime
                   </p>
                 </div>
               </div>
@@ -251,7 +251,6 @@ const Subscribe = () => {
                 </h3>
                 <ul className="grid sm:grid-cols-2 gap-3">
                   {[
-                    "Full access to all features",
                     "Priority customer support",
                     "Automatic renewal",
                     "Secure payment processing",
