@@ -8,15 +8,12 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import * as recharts from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
-import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
-import { BalanceDisplay } from "@/components/BalanceDisplay";
-import { LicenseStatusCard } from "@/components/LicenseStatusCard";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
 interface Organization {
   id: string;
@@ -338,61 +335,82 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* KYC Verification Prompt */}
-              {organization && !organization.kyc_verified && (
-                <div className="mb-8 p-4 rounded-xl glass-card border border-amber-500/30 bg-amber-500/5 animate-fade-in">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                      <FileCheck className="h-5 w-5 text-amber-500" />
+              {/* Quick Status Section */}
+              <div className="mb-8 grid gap-4 md:grid-cols-3 animate-fade-in">
+                {/* KYC Status Card */}
+                {organization && !organization.kyc_verified && (
+                  <Card className="p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-amber-500">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                        <FileCheck className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm">Complete Your KYC</h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          Unlock full platform access
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate("/dashboard/profile")}
+                        className="shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                      >
+                        Complete
+                      </Button>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">Complete Your KYC</h3>
-                      <p className="text-sm text-muted-foreground">
-                        We suggest you complete your KYC to use Recurra without certain limits
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate("/dashboard/profile")}
-                      className="border-amber-500/30 hover:bg-amber-500/10"
-                    >
-                      Complete KYC
-                    </Button>
-                  </div>
-                </div>
-              )}
+                  </Card>
+                )}
 
-              {/* License Status Card - Only show to owners */}
-              {organization && canRequestLicense && (
-                <div className="mb-8 animate-fade-in">
-                  <div className="flex items-center justify-between mb-4">
-                    <LicenseStatusCard license={currentLicense} />
-                  </div>
-                  {!currentLicense && (
-                    <div className="flex justify-end -mt-2">
-                      <LicenseRequestDialog orgId={organization.id}>
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Key className="h-4 w-4" />
-                          Request License
-                        </Button>
-                      </LicenseRequestDialog>
+                {/* License Status Card */}
+                {organization && canRequestLicense && (
+                  <Card className={`p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 ${currentLicense ? 'border-l-green-500' : 'border-l-muted-foreground'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${currentLicense ? 'bg-green-500/10' : 'bg-muted'}`}>
+                        <Key className={`h-5 w-5 ${currentLicense ? 'text-green-500' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm">
+                          {currentLicense ? 'License Active' : 'No License'}
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {currentLicense 
+                            ? `Expires ${new Date(currentLicense.expires_at).toLocaleDateString()}`
+                            : 'Request a license to get started'}
+                        </p>
+                      </div>
+                      {!currentLicense && (
+                        <LicenseRequestDialog orgId={organization.id}>
+                          <Button variant="ghost" size="sm" className="shrink-0">
+                            Request
+                          </Button>
+                        </LicenseRequestDialog>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
+                  </Card>
+                )}
 
-              {/* Balance Display - Only show to owners */}
-              {organization && canAccessSettings && (
-                <div className="mb-8 animate-fade-in">
-                  <BalanceDisplay
-                    totalCollected={stats.totalRevenue}
-                    availableBalance={availableBalance}
-                    pendingPayouts={pendingPayouts}
-                    totalPaidOut={totalPaidOut}
-                  />
-                </div>
-              )}
+                {/* Balance Overview Card */}
+                {organization && canAccessSettings && (
+                  <Card className="p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-accent">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                        <Wallet className="h-5 w-5 text-accent" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm">Available Balance</h3>
+                        <p className="text-lg font-bold text-green-600">
+                          ₦{availableBalance.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground shrink-0">
+                        <div>Pending: ₦{pendingPayouts.toLocaleString()}</div>
+                        <div>Paid: ₦{totalPaidOut.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+              </div>
 
               {/* Company Account Section - Only show to owners */}
               {organization && canAccessSettings && (
@@ -595,12 +613,7 @@ const Dashboard = () => {
             )}
           </Card>
         </div>
-
-        <div className="mt-12 animate-fade-in" style={{ animationDelay: "500ms" }}>
-          <VerifyTransactionCard organization={organization} />
-        </div>
       </div>
-
             </main>
           </SidebarInset>
         </div>

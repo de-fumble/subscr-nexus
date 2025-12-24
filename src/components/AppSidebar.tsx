@@ -10,7 +10,8 @@ import {
   FileText,
   Shield,
   Lock,
-  Sparkles
+  Sparkles,
+  CheckCircle
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -55,6 +56,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
     { title: "Analytics", icon: TrendingUp, url: "/dashboard/analytics" },
     { title: "Activity Logs", icon: FileText, url: "/dashboard/logs" },
     { title: "Staff", icon: Shield, url: "/dashboard/staff" },
+    { title: "Verify Transaction", icon: CheckCircle, url: "/dashboard/verify" },
   ];
 
   // Only show profile/settings to owners
