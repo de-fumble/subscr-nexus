@@ -259,6 +259,62 @@ export type Database = {
           },
         ]
       }
+      one_time_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          currency: string
+          description: string | null
+          id: string
+          is_paid: boolean
+          name: string
+          org_id: string
+          paid_at: string | null
+          paid_by_email: string | null
+          paid_by_name: string | null
+          paystack_reference: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_paid?: boolean
+          name: string
+          org_id: string
+          paid_at?: string | null
+          paid_by_email?: string | null
+          paid_by_name?: string | null
+          paystack_reference?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_paid?: boolean
+          name?: string
+          org_id?: string
+          paid_at?: string | null
+          paid_by_email?: string | null
+          paid_by_name?: string | null
+          paystack_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "one_time_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string

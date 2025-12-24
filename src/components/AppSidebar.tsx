@@ -11,7 +11,8 @@ import {
   Shield,
   Lock,
   Sparkles,
-  CheckCircle
+  CheckCircle,
+  Banknote
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -52,6 +53,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   const menuItems = [
     { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
     { title: "Plans", icon: CreditCard, url: "/plans" },
+    { title: "One-Time Payments", icon: Banknote, url: "/payments" },
     { title: "Subscribers", icon: Users, url: "/dashboard/subscribers" },
     { title: "Analytics", icon: TrendingUp, url: "/dashboard/analytics" },
     { title: "Activity Logs", icon: FileText, url: "/dashboard/logs" },
