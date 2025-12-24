@@ -3,29 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Users, 
-  ArrowUpRight,
-  ArrowDownRight
-} from "lucide-react";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { TrendingUp, TrendingDown, DollarSign, Users, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BackButton } from "@/components/BackButton";
@@ -35,19 +14,20 @@ import { AnalyticsResetDialog } from "@/components/AnalyticsResetDialog";
 import { EphemeralAIDialog } from "@/components/EphemeralAIDialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
-
 interface Organization {
   id: string;
   org_name: string;
   email: string;
   logo_url?: string | null;
 }
-
 export default function DashboardAnalytics() {
   const navigate = useNavigate();
-  const { role, canAccessSettings, canResetAnalytics } = useOrgRole();
+  const {
+    role,
+    canAccessSettings,
+    canResetAnalytics
+  } = useOrgRole();
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
@@ -57,109 +37,110 @@ export default function DashboardAnalytics() {
     activeSubscribers: 0,
     subscriberGrowth: 0,
     averageRevenue: 0,
-    churnRate: 0,
+    churnRate: 0
   });
-  const [revenueData, setRevenueData] = useState<Array<{ month: string; revenue: number }>>([]);
-  const [planDistribution, setPlanDistribution] = useState<Array<{ name: string; value: number }>>([]);
-  const [subscriberTrend, setSubscriberTrend] = useState<Array<{ month: string; subscribers: number }>>([]);
-
+  const [revenueData, setRevenueData] = useState<Array<{
+    month: string;
+    revenue: number;
+  }>>([]);
+  const [planDistribution, setPlanDistribution] = useState<Array<{
+    name: string;
+    value: number;
+  }>>([]);
+  const [subscriberTrend, setSubscriberTrend] = useState<Array<{
+    month: string;
+    subscribers: number;
+  }>>([]);
   useEffect(() => {
     fetchAnalyticsData();
   }, []);
-
   const fetchAnalyticsData = async () => {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
+      const {
+        data: {
+          user
+        },
+        error: authError
+      } = await supabase.auth.getUser();
       if (authError || !user) {
         navigate("/auth");
         return;
       }
-
       setUserEmail(user.email);
 
       // Get organization - check if owner first, then check membership
       let orgId = null;
-      const { data: ownedOrg } = await supabase
-        .from("organizations")
-        .select("id, org_name, email, logo_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
+      const {
+        data: ownedOrg
+      } = await supabase.from("organizations").select("id, org_name, email, logo_url").eq("user_id", user.id).maybeSingle();
       if (ownedOrg) {
         orgId = ownedOrg.id;
         setOrganization(ownedOrg);
       } else {
         // Check if user is a staff member
-        const { data: membership } = await supabase
-          .from("organization_members")
-          .select("org_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
+        const {
+          data: membership
+        } = await supabase.from("organization_members").select("org_id").eq("user_id", user.id).maybeSingle();
         if (membership) {
           orgId = membership.org_id;
-          const { data: memberOrg } = await supabase
-            .from("organizations")
-            .select("id, org_name, email, logo_url")
-            .eq("id", membership.org_id)
-            .maybeSingle();
-          
+          const {
+            data: memberOrg
+          } = await supabase.from("organizations").select("id, org_name, email, logo_url").eq("id", membership.org_id).maybeSingle();
           if (memberOrg) {
             setOrganization(memberOrg);
           }
         }
       }
-
       if (!orgId) return;
 
       // Fetch real analytics from Paystack
-      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
-        "fetch-paystack-analytics"
-      );
-
+      const {
+        data: analyticsData,
+        error: analyticsError
+      } = await supabase.functions.invoke("fetch-paystack-analytics");
       if (analyticsError) {
         console.error("Analytics error:", analyticsError);
         toast.error("Failed to fetch Paystack analytics");
       }
 
       // Fetch plans for distribution
-      const { data: plans } = await supabase
-        .from("subscription_plans")
-        .select("*")
-        .eq("org_id", orgId);
+      const {
+        data: plans
+      } = await supabase.from("subscription_plans").select("*").eq("org_id", orgId);
 
       // Use Paystack data if available, otherwise fallback to calculated values
       if (analyticsData) {
         // Use plan distribution from edge function (active subscribers by plan)
         if (analyticsData.planDistribution && analyticsData.planDistribution.length > 0) {
-          const planDist = analyticsData.planDistribution.map((p: { name: string; count: number; percentage: number }) => ({
+          const planDist = analyticsData.planDistribution.map((p: {
+            name: string;
+            count: number;
+            percentage: number;
+          }) => ({
             name: p.name,
             value: p.count,
-            percentage: p.percentage,
+            percentage: p.percentage
           }));
           setPlanDistribution(planDist);
         } else if (plans) {
           // Fallback to local database query
-          const planDist = await Promise.all(
-            plans.map(async (plan) => {
-              const { count } = await supabase
-                .from("subscribers")
-                .select("*", { count: "exact", head: true })
-                .eq("plan_id", plan.id)
-                .not("status", "in", "(cancelled,canceled,expired,paused,non-renewing,attention)");
-              
-              return {
-                name: plan.name,
-                value: count || 0,
-              };
-            })
-          );
+          const planDist = await Promise.all(plans.map(async plan => {
+            const {
+              count
+            } = await supabase.from("subscribers").select("*", {
+              count: "exact",
+              head: true
+            }).eq("plan_id", plan.id).not("status", "in", "(cancelled,canceled,expired,paused,non-renewing,attention)");
+            return {
+              name: plan.name,
+              value: count || 0
+            };
+          }));
           setPlanDistribution(planDist.filter(p => p.value > 0));
         }
         const totalRevenue = analyticsData.totalRevenue || 0;
         const activeSubscribers = analyticsData.activeSubscribers || 0;
-        
+
         // Set revenue trend from Paystack data (yearly - 12 months)
         if (analyticsData.revenueTrend) {
           setRevenueData(analyticsData.revenueTrend);
@@ -174,17 +155,14 @@ export default function DashboardAnalytics() {
         const revenueTrendLength = analyticsData.revenueTrend?.length || 0;
         const previousMonthRevenue = analyticsData.revenueTrend?.[revenueTrendLength - 2]?.revenue || 0;
         const currentMonthRevenue = analyticsData.revenueTrend?.[revenueTrendLength - 1]?.revenue || totalRevenue;
-        const revenueGrowth = previousMonthRevenue > 0 
-          ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100)
-          : 0;
-
+        const revenueGrowth = previousMonthRevenue > 0 ? (currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100 : 0;
         setStats({
           totalRevenue,
           revenueGrowth: Math.round(revenueGrowth * 10) / 10,
           activeSubscribers,
           subscriberGrowth: analyticsData.subscriberGrowthRate || 0,
           averageRevenue: analyticsData.arpu || 0,
-          churnRate: analyticsData.churnRate || 0,
+          churnRate: analyticsData.churnRate || 0
         });
       }
     } catch (error) {
@@ -194,10 +172,8 @@ export default function DashboardAnalytics() {
       setLoading(false);
     }
   };
-
   if (loading) {
-    return (
-      <SidebarProvider defaultOpen={true}>
+    return <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -209,12 +185,9 @@ export default function DashboardAnalytics() {
             </div>
           </SidebarInset>
         </div>
-      </SidebarProvider>
-    );
+      </SidebarProvider>;
   }
-
-  return (
-    <SidebarProvider defaultOpen={true}>
+  return <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
@@ -230,19 +203,12 @@ export default function DashboardAnalytics() {
             <div className="container py-8 px-6 space-y-8">
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground">Track your business performance and growth</p>
-                {canResetAnalytics && organization && (
-                  <AnalyticsResetDialog
-                    orgId={organization.id}
-                    orgEmail={organization.email}
-                    orgName={organization.org_name}
-                    analyticsData={{
-                      totalRevenue: stats.totalRevenue,
-                      activeSubscribers: stats.activeSubscribers,
-                      revenueData,
-                      planDistribution,
-                    }}
-                  />
-                )}
+                {canResetAnalytics && organization && <AnalyticsResetDialog orgId={organization.id} orgEmail={organization.email} orgName={organization.org_name} analyticsData={{
+                totalRevenue: stats.totalRevenue,
+                activeSubscribers: stats.activeSubscribers,
+                revenueData,
+                planDistribution
+              }} />}
               </div>
 
       {/* Key Metrics */}
@@ -306,7 +272,7 @@ export default function DashboardAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Revenue Trend</CardTitle>
-            <CardDescription>Monthly revenue over the last 6 months</CardDescription>
+            <CardDescription>Monthly revenue over the last 12 months</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -314,20 +280,14 @@ export default function DashboardAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))" }}
-                />
+                <Tooltip contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }} />
+                <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{
+                        fill: "hsl(var(--primary))"
+                      }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -344,13 +304,11 @@ export default function DashboardAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
+                <Tooltip contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }} />
                 <Bar dataKey="subscribers" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -366,28 +324,18 @@ export default function DashboardAnalytics() {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie
-                data={planDistribution}
-                cx="50%"
-                cy="50%"
-                labelLine={true}
-                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={100}
-                fill="hsl(var(--primary))"
-                dataKey="value"
-              >
-                {planDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
+              <Pie data={planDistribution} cx="50%" cy="50%" labelLine={true} label={({
+                      name,
+                      value,
+                      percent
+                    }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`} outerRadius={100} fill="hsl(var(--primary))" dataKey="value">
+                {planDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-                formatter={(value: number) => [`${value} subscribers`, "Active"]}
-              />
+              <Tooltip contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px"
+                    }} formatter={(value: number) => [`${value} subscribers`, "Active"]} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -397,40 +345,37 @@ export default function DashboardAnalytics() {
       {/* AI Insights */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">AI Insights</h3>
-        <EphemeralAIDialog
-          analyticsData={{
-            totalRevenue: stats.totalRevenue,
-            revenueGrowth: stats.revenueGrowth,
-            activeSubscribers: stats.activeSubscribers,
-            subscriberGrowth: stats.subscriberGrowth,
-            averageRevenue: stats.averageRevenue,
-            churnRate: stats.churnRate,
-            revenueData,
-            planDistribution,
-          }}
-        >
+        <EphemeralAIDialog analyticsData={{
+                totalRevenue: stats.totalRevenue,
+                revenueGrowth: stats.revenueGrowth,
+                activeSubscribers: stats.activeSubscribers,
+                subscriberGrowth: stats.subscriberGrowth,
+                averageRevenue: stats.averageRevenue,
+                churnRate: stats.churnRate,
+                revenueData,
+                planDistribution
+              }}>
           <Button variant="outline" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Advanced AI Analysis
+            ​Extensive AI Analysis
+(import required) 
+    
           </Button>
         </EphemeralAIDialog>
       </div>
-      <AIInsightsCard 
-        analyticsData={{
-          totalRevenue: stats.totalRevenue,
-          revenueGrowth: stats.revenueGrowth,
-          activeSubscribers: stats.activeSubscribers,
-          subscriberGrowth: stats.subscriberGrowth,
-          averageRevenue: stats.averageRevenue,
-          churnRate: stats.churnRate,
-          revenueData,
-          planDistribution,
-        }}
-      />
+      <AIInsightsCard analyticsData={{
+              totalRevenue: stats.totalRevenue,
+              revenueGrowth: stats.revenueGrowth,
+              activeSubscribers: stats.activeSubscribers,
+              subscriberGrowth: stats.subscriberGrowth,
+              averageRevenue: stats.averageRevenue,
+              churnRate: stats.churnRate,
+              revenueData,
+              planDistribution
+            }} />
             </div>
           </main>
         </SidebarInset>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 }
