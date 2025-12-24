@@ -26,7 +26,21 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get PAYSTACK_SECRET_KEY from env or we'll need to find it from the payment
+    // Check if this transaction was already recorded
+    const { data: existingTransaction } = await supabase
+      .from("one_time_payment_transactions")
+      .select("id")
+      .eq("paystack_reference", reference)
+      .single();
+
+    if (existingTransaction) {
+      console.log("Transaction already recorded:", reference);
+      return new Response(
+        JSON.stringify({ success: true, message: "Payment already recorded" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
 
     if (!paystackSecretKey) {
@@ -58,8 +72,9 @@ serve(async (req) => {
 
     const txn = verifyData.data;
     const paymentId = txn.metadata?.payment_id;
-    const customerName = txn.metadata?.customer_name;
-    const customerEmail = txn.customer?.email;
+    const customerName = txn.metadata?.customer_name || "";
+    const customerEmail = txn.customer?.email || "";
+    const amount = txn.amount / 100; // Convert from kobo to naira
 
     if (!paymentId) {
       return new Response(
@@ -68,27 +83,33 @@ serve(async (req) => {
       );
     }
 
-    // Update the one-time payment record
-    const { error: updateError } = await supabase
-      .from("one_time_payments")
-      .update({
-        is_paid: true,
-        paid_at: new Date().toISOString(),
-        paid_by_email: customerEmail,
-        paid_by_name: customerName,
+    // Record the transaction in the new transactions table
+    const { error: insertError } = await supabase
+      .from("one_time_payment_transactions")
+      .insert({
+        payment_id: paymentId,
+        amount: amount,
+        payer_email: customerEmail,
+        payer_name: customerName,
         paystack_reference: reference,
-      })
-      .eq("id", paymentId)
-      .eq("is_paid", false);
+      });
 
-    if (updateError) {
-      console.error("Error updating payment:", updateError);
-      // Payment might already be marked as paid
+    if (insertError) {
+      console.error("Error recording transaction:", insertError);
+      // If it's a duplicate key error, the transaction was already recorded
+      if (insertError.code === "23505") {
+        return new Response(
+          JSON.stringify({ success: true, message: "Payment already recorded" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       return new Response(
-        JSON.stringify({ success: true, message: "Payment already processed" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, message: "Failed to record payment" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("Transaction recorded successfully:", reference);
 
     return new Response(
       JSON.stringify({ success: true, message: "Payment verified and recorded" }),

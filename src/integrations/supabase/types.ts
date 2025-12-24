@@ -259,6 +259,47 @@ export type Database = {
           },
         ]
       }
+      one_time_payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          paid_at: string
+          payer_email: string
+          payer_name: string
+          payment_id: string
+          paystack_reference: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          payer_email: string
+          payer_name: string
+          payment_id: string
+          paystack_reference: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          payer_email?: string
+          payer_name?: string
+          payment_id?: string
+          paystack_reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "one_time_payment_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "one_time_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       one_time_payments: {
         Row: {
           amount: number
