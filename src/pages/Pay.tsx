@@ -140,27 +140,7 @@ const Pay = () => {
     );
   }
 
-  if (payment.is_paid) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-        <div className="glass-card max-w-md rounded-3xl border border-border/50 p-10 text-center backdrop-blur-xl shadow-2xl">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle2 className="h-10 w-10 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Payment Completed</h1>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            This payment has already been completed. Thank you!
-          </p>
-          <Link to="/">
-            <Button variant="outline" className="mt-6 gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Go Back Home
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Removed is_paid check - payment pages are now reusable for multiple payers
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
