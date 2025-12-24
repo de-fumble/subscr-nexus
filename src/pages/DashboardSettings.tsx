@@ -6,19 +6,21 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Key, Save, Eye, EyeOff, Shield } from "lucide-react";
+import { Key, Save, Shield, Lock } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 import { BackButton } from "@/components/BackButton";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { PasswordVerificationDialog } from "@/components/PasswordVerificationDialog";
 
 export default function DashboardSettings() {
   const navigate = useNavigate();
   const { canAccessSettings, loading: roleLoading, role } = useOrgRole();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showKeys, setShowKeys] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [organization, setOrganization] = useState<{
     id: string;
     org_name: string;
@@ -30,6 +32,7 @@ export default function DashboardSettings() {
   const [publicKey, setPublicKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [userEmail, setUserEmail] = useState<string | undefined>();
+  const [hasExistingKeys, setHasExistingKeys] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -82,8 +85,8 @@ export default function DashboardSettings() {
       }
 
       setOrganization(orgData);
-      setPublicKey(orgData.paystack_public_key || "");
-      setSecretKey(orgData.paystack_secret_key || "");
+      setHasExistingKeys(!!(orgData.paystack_public_key && orgData.paystack_secret_key));
+      // Don't load keys into form - they should only be updated, not viewed
     } catch (error) {
       console.error("Error fetching settings:", error);
       toast.error("Failed to load settings");
@@ -110,7 +113,11 @@ export default function DashboardSettings() {
 
       if (error) throw error;
 
-      toast.success("Settings updated successfully");
+      toast.success("API keys updated successfully");
+      setPublicKey("");
+      setSecretKey("");
+      setHasExistingKeys(true);
+      setIsVerified(false);
       fetchSettings();
     } catch (error) {
       console.error("Error updating settings:", error);
@@ -118,6 +125,14 @@ export default function DashboardSettings() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleAccessApiSection = () => {
+    setShowVerificationDialog(true);
+  };
+
+  const handleVerificationSuccess = () => {
+    setIsVerified(true);
   };
 
   if (loading || roleLoading) {
@@ -138,8 +153,8 @@ export default function DashboardSettings() {
     );
   }
 
-  // Show restricted page for non-owners
-  if (!canAccessSettings) {
+  // Show restricted page for non-owners (admin/staff cannot access)
+  if (!canAccessSettings || role === 'admin' || role === 'staff') {
     return <RestrictedPage />;
   }
 
@@ -170,89 +185,113 @@ export default function DashboardSettings() {
                         <Shield className="h-4 w-4 text-muted-foreground" />
                       </CardTitle>
                       <CardDescription>
-                        Configure your Paystack API keys to process payments
+                        {hasExistingKeys 
+                          ? "Your API keys are configured. You can update them below."
+                          : "Configure your Paystack API keys to process payments"
+                        }
                       </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="public_key">Public Key</Label>
-                      <div className="relative">
-                        <Input
-                          id="public_key"
-                          type={showKeys ? "text" : "password"}
-                          value={publicKey}
-                          onChange={(e) => setPublicKey(e.target.value)}
-                          placeholder="pk_test_..."
-                          className="glass-card border-border/50"
-                        />
+                  {!isVerified ? (
+                    // Locked state - require password verification
+                    <div className="text-center py-8">
+                      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl glass-card shadow-lg">
+                        <Lock className="h-10 w-10 text-muted-foreground" />
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="secret_key">Secret Key</Label>
-                      <div className="relative">
-                        <Input
-                          id="secret_key"
-                          type={showKeys ? "text" : "password"}
-                          value={secretKey}
-                          onChange={(e) => setSecretKey(e.target.value)}
-                          placeholder="sk_test_..."
-                          className="glass-card border-border/50"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowKeys(!showKeys)}
-                      className="gap-2"
-                    >
-                      {showKeys ? (
-                        <>
-                          <EyeOff className="h-4 w-4" />
-                          Hide Keys
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4" />
-                          Show Keys
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      onClick={handleSaveSettings} 
-                      disabled={saving}
-                      className="bg-accent hover:bg-accent/90 gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      Save Settings
-                    </Button>
-                  </div>
-                  
-                  <div className="p-4 glass-card rounded-xl border-accent/20">
-                    <p className="text-sm text-muted-foreground">
-                      Get your Paystack API keys from your{" "}
-                      <a
-                        href="https://dashboard.paystack.com/#/settings/developers"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent hover:underline font-medium"
+                      <h3 className="text-lg font-semibold mb-2">Password Required</h3>
+                      <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+                        For security, please verify your identity to access and update API keys.
+                      </p>
+                      <Button 
+                        onClick={handleAccessApiSection}
+                        className="bg-accent hover:bg-accent/90 gap-2"
                       >
-                        Paystack Dashboard
-                      </a>
-                    </p>
-                  </div>
+                        <Lock className="h-4 w-4" />
+                        Verify to Access
+                      </Button>
+                    </div>
+                  ) : (
+                    // Unlocked state - show update form
+                    <>
+                      {hasExistingKeys && (
+                        <div className="p-4 glass-card rounded-xl border-green-500/20 bg-green-500/5">
+                          <div className="flex items-center gap-2 text-green-600">
+                            <Shield className="h-4 w-4" />
+                            <span className="text-sm font-medium">API keys are configured</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Enter new keys below to update your existing configuration.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="public_key">New Public Key</Label>
+                          <Input
+                            id="public_key"
+                            type="password"
+                            value={publicKey}
+                            onChange={(e) => setPublicKey(e.target.value)}
+                            placeholder="pk_test_..."
+                            className="glass-card border-border/50"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="secret_key">New Secret Key</Label>
+                          <Input
+                            id="secret_key"
+                            type="password"
+                            value={secretKey}
+                            onChange={(e) => setSecretKey(e.target.value)}
+                            placeholder="sk_test_..."
+                            className="glass-card border-border/50"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          onClick={handleSaveSettings} 
+                          disabled={saving || !publicKey.trim() || !secretKey.trim()}
+                          className="bg-accent hover:bg-accent/90 gap-2"
+                        >
+                          <Save className="h-4 w-4" />
+                          {hasExistingKeys ? "Update Keys" : "Save Keys"}
+                        </Button>
+                      </div>
+                      
+                      <div className="p-4 glass-card rounded-xl border-accent/20">
+                        <p className="text-sm text-muted-foreground">
+                          Get your Paystack API keys from your{" "}
+                          <a
+                            href="https://dashboard.paystack.com/#/settings/developers"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent hover:underline font-medium"
+                          >
+                            Paystack Dashboard
+                          </a>
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </main>
         </SidebarInset>
       </div>
+      
+      <PasswordVerificationDialog
+        open={showVerificationDialog}
+        onOpenChange={setShowVerificationDialog}
+        onVerified={handleVerificationSuccess}
+        title="Access API Keys"
+        description="Verify your password to access sensitive settings"
+      />
     </SidebarProvider>
   );
 }
