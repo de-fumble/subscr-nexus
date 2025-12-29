@@ -7,20 +7,20 @@ import { Copy, QrCode, ExternalLink, Check } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 
-interface StorefrontLinkCardProps {
+interface PlansHubLinkCardProps {
   orgId: string;
   orgName: string;
 }
 
-export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) => {
+export const PlansHubLinkCard = ({ orgId, orgName }: PlansHubLinkCardProps) => {
   const [copied, setCopied] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
 
-  const storeUrl = `${window.location.origin}/store/${orgId}`;
+  const plansHubUrl = `${window.location.origin}/plans-hub/${orgId}`;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(storeUrl);
+      await navigator.clipboard.writeText(plansHubUrl);
       setCopied(true);
       toast.success("Link copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
@@ -29,12 +29,12 @@ export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) 
     }
   };
 
-  const handleOpenStore = () => {
-    window.open(storeUrl, "_blank");
+  const handleOpenPlansHub = () => {
+    window.open(plansHubUrl, "_blank");
   };
 
   const handleDownloadQR = () => {
-    const svg = document.getElementById("store-qr-code");
+    const svg = document.getElementById("plans-hub-qr-code");
     if (!svg) return;
 
     const svgData = new XMLSerializer().serializeToString(svg);
@@ -49,7 +49,7 @@ export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) 
       const pngFile = canvas.toDataURL("image/png");
       
       const downloadLink = document.createElement("a");
-      downloadLink.download = `${orgName.replace(/\s+/g, "-").toLowerCase()}-store-qr.png`;
+      downloadLink.download = `${orgName.replace(/\s+/g, "-").toLowerCase()}-plans-hub-qr.png`;
       downloadLink.href = pngFile;
       downloadLink.click();
     };
@@ -63,7 +63,7 @@ export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) 
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <ExternalLink className="h-5 w-5 text-accent" />
-          Your Store Link
+          Your Plans Hub Link
         </CardTitle>
         <CardDescription>
           Share this link with your customers to view your plans and payments
@@ -72,7 +72,7 @@ export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) 
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Input
-            value={storeUrl}
+            value={plansHubUrl}
             readOnly
             className="bg-muted/50 font-mono text-sm"
           />
@@ -94,10 +94,10 @@ export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) 
           <Button
             variant="outline"
             className="flex-1 gap-2"
-            onClick={handleOpenStore}
+            onClick={handleOpenPlansHub}
           >
             <ExternalLink className="h-4 w-4" />
-            Open Store
+            Open Plans Hub
           </Button>
 
           <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
@@ -109,20 +109,20 @@ export const StorefrontLinkCard = ({ orgId, orgName }: StorefrontLinkCardProps) 
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle className="text-center">Store QR Code</DialogTitle>
+                <DialogTitle className="text-center">Plans Hub QR Code</DialogTitle>
               </DialogHeader>
               <div className="flex flex-col items-center space-y-6 py-6">
                 <div className="p-4 bg-white rounded-xl shadow-lg">
                   <QRCodeSVG
-                    id="store-qr-code"
-                    value={storeUrl}
+                    id="plans-hub-qr-code"
+                    value={plansHubUrl}
                     size={200}
                     level="H"
                     includeMargin
                   />
                 </div>
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  Scan this QR code to visit {orgName}'s store
+                  Scan this QR code to visit {orgName}'s Plans Hub
                 </p>
                 <div className="flex gap-2 w-full">
                   <Button
