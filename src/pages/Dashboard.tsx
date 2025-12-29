@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, ArrowUp, ArrowDown } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, ArrowUp, ArrowDown, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
@@ -15,6 +15,9 @@ import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
 import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Organization {
   id: string;
@@ -34,6 +37,23 @@ interface SubscriptionPlan {
   price: number;
   interval: string;
   subscriber_count?: number;
+}
+
+interface RecentTransaction {
+  id: string;
+  reference: string;
+  payer_name: string;
+  plan_name: string;
+  amount: number;
+  status: string;
+  paid_at: string;
+  type: 'subscription' | 'one-time';
+}
+
+interface RevenueByPlan {
+  name: string;
+  value: number;
+  color: string;
 }
 
 const DashboardHeader = ({ orgName }: { orgName?: string }) => {
@@ -84,6 +104,34 @@ const CircularProgress = ({ percentage, color }: { percentage: number; color: st
   );
 };
 
+// Mini pie chart for failed payments breakdown
+const MiniPieChart = ({ data }: { data: { name: string; value: number; color: string }[] }) => {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  if (total === 0) return null;
+  
+  return (
+    <div className="relative h-14 w-14">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={15}
+            outerRadius={25}
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { canRequestPayout, canCreatePlans, canAccessSettings, canRequestLicense, role } = useOrgRole();
@@ -95,7 +143,10 @@ const Dashboard = () => {
     totalRevenue: 0,
     recurringRevenue: 0,
     activeSubscribers: 0,
+    totalSubscribers: 0,
     totalFailedPayments: 0,
+    abandonedCheckouts: 0,
+    failedPayments: 0,
   });
   const [chartData, setChartData] = useState<Array<{ plan: string; revenue: number }>>([]);
   const [failedPaymentsData, setFailedPaymentsData] = useState<Array<{ name: string; value: number }>>([]);
@@ -106,22 +157,26 @@ const Dashboard = () => {
   const [totalPaidOut, setTotalPaidOut] = useState(0);
   const [currentLicense, setCurrentLicense] = useState<any>(null);
   const [chartPeriod, setChartPeriod] = useState<'7D' | '30D' | '90D'>('7D');
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [revenueByPlan, setRevenueByPlan] = useState<RevenueByPlan[]>([]);
+  const [timeSeriesData, setTimeSeriesData] = useState<Array<{ date: string; value: number }>>([]);
+  const [editTotalDialog, setEditTotalDialog] = useState(false);
+  const [newTotalSubscribers, setNewTotalSubscribers] = useState("");
 
-  // Generate time-series data for the line chart
-  const timeSeriesData = [
-    { month: 'Jan', value: 3200000 },
-    { month: 'Feb', value: 3450000 },
-    { month: 'Mar', value: 3800000 },
-    { month: 'Apr', value: 4100000 },
-    { month: 'May', value: 4250000 },
-    { month: 'Jun', value: 4400000 },
+  const CHART_COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(221, 83%, 53%)',
+    'hsl(262, 83%, 58%)',
+    'hsl(330, 81%, 60%)',
   ];
 
-  // Revenue distribution data
-  const revenueDistribution = [
-    { name: 'Schools', value: 60, color: 'hsl(var(--chart-1))' },
-    { name: 'Churches', value: 30, color: 'hsl(var(--chart-2))' },
-    { name: 'Coops', value: 10, color: 'hsl(var(--chart-3))' },
+  const failedPaymentsPieData = [
+    { name: 'Abandoned', value: stats.abandonedCheckouts, color: 'hsl(45, 93%, 47%)' },
+    { name: 'Failed', value: stats.failedPayments, color: 'hsl(0, 84%, 60%)' },
   ];
 
   useEffect(() => {
@@ -146,6 +201,100 @@ const Dashboard = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    if (organization) {
+      fetchTimeSeriesData();
+    }
+  }, [organization, chartPeriod]);
+
+  const fetchTimeSeriesData = async () => {
+    if (!organization) return;
+
+    const now = new Date();
+    let startDate = new Date();
+    
+    if (chartPeriod === '7D') {
+      startDate.setDate(now.getDate() - 7);
+    } else if (chartPeriod === '30D') {
+      startDate.setDate(now.getDate() - 30);
+    } else {
+      startDate.setDate(now.getDate() - 90);
+    }
+
+    // Fetch subscription transactions
+    const { data: planIds } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("org_id", organization.id);
+
+    const planIdList = planIds?.map(p => p.id) || [];
+
+    let subscriptionTransactions: any[] = [];
+    if (planIdList.length > 0) {
+      const { data: subscribers } = await supabase
+        .from("subscribers")
+        .select("id")
+        .in("plan_id", planIdList);
+      
+      const subscriberIds = subscribers?.map(s => s.id) || [];
+      
+      if (subscriberIds.length > 0) {
+        const { data: txns } = await supabase
+          .from("transactions")
+          .select("amount, paid_at")
+          .in("subscriber_id", subscriberIds)
+          .eq("status", "success")
+          .gte("paid_at", startDate.toISOString())
+          .order("paid_at", { ascending: true });
+        
+        subscriptionTransactions = txns || [];
+      }
+    }
+
+    // Fetch one-time payment transactions
+    const { data: otpIds } = await supabase
+      .from("one_time_payments")
+      .select("id")
+      .eq("org_id", organization.id);
+
+    const otpIdList = otpIds?.map(p => p.id) || [];
+    
+    let oneTimeTransactions: any[] = [];
+    if (otpIdList.length > 0) {
+      const { data: otpTxns } = await supabase
+        .from("one_time_payment_transactions")
+        .select("amount, paid_at")
+        .in("payment_id", otpIdList)
+        .gte("paid_at", startDate.toISOString())
+        .order("paid_at", { ascending: true });
+      
+      oneTimeTransactions = otpTxns || [];
+    }
+
+    // Combine and group by date
+    const allTransactions = [
+      ...subscriptionTransactions.map(t => ({ amount: Number(t.amount), paid_at: t.paid_at })),
+      ...oneTimeTransactions.map(t => ({ amount: Number(t.amount), paid_at: t.paid_at })),
+    ];
+
+    const grouped: Record<string, number> = {};
+    allTransactions.forEach(txn => {
+      const date = new Date(txn.paid_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      grouped[date] = (grouped[date] || 0) + txn.amount;
+    });
+
+    // Fill in missing dates
+    const result: Array<{ date: string; value: number }> = [];
+    const current = new Date(startDate);
+    while (current <= now) {
+      const dateKey = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      result.push({ date: dateKey, value: grouped[dateKey] || 0 });
+      current.setDate(current.getDate() + 1);
+    }
+
+    setTimeSeriesData(result);
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -194,6 +343,7 @@ const Dashboard = () => {
 
       setOrganization(orgData);
 
+      // Fetch plans with subscriber counts
       const { data: plansData, error: plansError } = await supabase
         .from("subscription_plans")
         .select("*")
@@ -218,37 +368,116 @@ const Dashboard = () => {
           })
         );
         setPlans(plansWithCounts);
-      }
 
-      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
-        "fetch-paystack-analytics"
-      );
+        // Calculate revenue by plan
+        const revenueData: RevenueByPlan[] = [];
+        let totalRevenueAmount = 0;
+        
+        for (let i = 0; i < plansWithCounts.length; i++) {
+          const plan = plansWithCounts[i];
+          
+          // Get subscribers for this plan
+          const { data: subs } = await supabase
+            .from("subscribers")
+            .select("id")
+            .eq("plan_id", plan.id);
+          
+          const subIds = subs?.map(s => s.id) || [];
+          
+          let planRevenue = 0;
+          if (subIds.length > 0) {
+            const { data: txns } = await supabase
+              .from("transactions")
+              .select("amount")
+              .in("subscriber_id", subIds)
+              .eq("status", "success");
+            
+            planRevenue = txns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+          }
+          
+          if (planRevenue > 0) {
+            revenueData.push({
+              name: plan.name,
+              value: planRevenue,
+              color: CHART_COLORS[i % CHART_COLORS.length],
+            });
+            totalRevenueAmount += planRevenue;
+          }
+        }
 
-      if (analyticsError) {
-        console.error("Error fetching analytics:", analyticsError);
-        toast.error("Failed to load analytics data");
-      } else if (analyticsData) {
-        const chart = analyticsData.chartData || [];
-        setChartData(chart);
-        const failedData = analyticsData.failedPaymentsData || [];
-        setFailedPaymentsData(failedData);
-        const totalFromPlans = chart.reduce((sum: number, item: { revenue: number }) => sum + (item.revenue || 0), 0);
-        const totalFailed = failedData.reduce((sum: number, item: { value: number }) => sum + (item.value || 0), 0);
+        // Add one-time payments revenue
+        const { data: otpPayments } = await supabase
+          .from("one_time_payments")
+          .select("id")
+          .eq("org_id", orgData.id);
         
-        const platformFee = 1500;
-        const transactionCount = analyticsData.transactionCount || 0;
-        const totalPlatformFees = transactionCount * platformFee;
-        const calculatedBalance = Math.max(0, totalFromPlans - totalPlatformFees);
-        setAvailableBalance(calculatedBalance);
+        const otpIds = otpPayments?.map(p => p.id) || [];
         
+        if (otpIds.length > 0) {
+          const { data: otpTxns } = await supabase
+            .from("one_time_payment_transactions")
+            .select("amount")
+            .in("payment_id", otpIds);
+          
+          const otpRevenue = otpTxns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+          
+          if (otpRevenue > 0) {
+            revenueData.push({
+              name: 'One-Time Payments',
+              value: otpRevenue,
+              color: CHART_COLORS[revenueData.length % CHART_COLORS.length],
+            });
+            totalRevenueAmount += otpRevenue;
+          }
+        }
+
+        setRevenueByPlan(revenueData);
+        
+        // Calculate total and active subscribers
+        const totalActiveSubscribers = plansWithCounts.reduce((sum, p) => sum + (p.subscriber_count || 0), 0);
+        
+        // Get total subscribers count (including inactive)
+        const planIds = plansWithCounts.map(p => p.id);
+        let totalSubsCount = 0;
+        if (planIds.length > 0) {
+          const { count } = await supabase
+            .from("subscribers")
+            .select("*", { count: "exact", head: true })
+            .in("plan_id", planIds);
+          totalSubsCount = count || 0;
+        }
+
+        // Fetch failed payments data from analytics
+        const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
+          "fetch-paystack-analytics"
+        );
+
+        let abandonedCount = 0;
+        let failedCount = 0;
+        
+        if (!analyticsError && analyticsData) {
+          const failedData = analyticsData.failedPaymentsData || [];
+          abandonedCount = failedData.find((d: any) => d.name === 'Abandoned Checkouts')?.value || 0;
+          failedCount = failedData.find((d: any) => d.name === 'Failed Payments')?.value || 0;
+          setFailedPaymentsData(failedData);
+          setChartData(analyticsData.chartData || []);
+        }
+
         setStats({
-          totalRevenue: totalFromPlans,
-          recurringRevenue: analyticsData.recurringRevenue || 0,
-          activeSubscribers: analyticsData.activeSubscribers || 0,
-          totalFailedPayments: totalFailed,
+          totalRevenue: totalRevenueAmount,
+          recurringRevenue: 0,
+          activeSubscribers: totalActiveSubscribers,
+          totalSubscribers: totalSubsCount,
+          totalFailedPayments: abandonedCount + failedCount,
+          abandonedCheckouts: abandonedCount,
+          failedPayments: failedCount,
         });
+
+        // Fetch recent transactions
+        await fetchRecentTransactions(orgData.id, plansWithCounts);
       }
 
+      // Fetch balance and payouts
       if (orgData) {
         const { data: payoutData } = await supabase
           .from("payout_requests")
@@ -284,6 +513,98 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  const fetchRecentTransactions = async (orgId: string, plansWithCounts: SubscriptionPlan[]) => {
+    const transactions: RecentTransaction[] = [];
+
+    // Fetch subscription transactions
+    const planIds = plansWithCounts.map(p => p.id);
+    
+    if (planIds.length > 0) {
+      const { data: subscribers } = await supabase
+        .from("subscribers")
+        .select("id, customer_name, plan_id")
+        .in("plan_id", planIds);
+      
+      const subscriberMap = new Map(subscribers?.map(s => [s.id, s]) || []);
+      const planMap = new Map(plansWithCounts.map(p => [p.id, p.name]));
+      
+      const subscriberIds = subscribers?.map(s => s.id) || [];
+      
+      if (subscriberIds.length > 0) {
+        const { data: txns } = await supabase
+          .from("transactions")
+          .select("*")
+          .in("subscriber_id", subscriberIds)
+          .order("paid_at", { ascending: false })
+          .limit(10);
+        
+        txns?.forEach(txn => {
+          const sub = subscriberMap.get(txn.subscriber_id);
+          transactions.push({
+            id: txn.id,
+            reference: txn.paystack_reference?.substring(0, 10) || 'N/A',
+            payer_name: sub?.customer_name || 'Unknown',
+            plan_name: planMap.get(sub?.plan_id || '') || 'Unknown Plan',
+            amount: Number(txn.amount),
+            status: txn.status,
+            paid_at: txn.paid_at || txn.created_at,
+            type: 'subscription',
+          });
+        });
+      }
+    }
+
+    // Fetch one-time payment transactions
+    const { data: otpPayments } = await supabase
+      .from("one_time_payments")
+      .select("id, name")
+      .eq("org_id", orgId);
+    
+    const otpIds = otpPayments?.map(p => p.id) || [];
+    const otpMap = new Map(otpPayments?.map(p => [p.id, p.name]) || []);
+    
+    if (otpIds.length > 0) {
+      const { data: otpTxns } = await supabase
+        .from("one_time_payment_transactions")
+        .select("*")
+        .in("payment_id", otpIds)
+        .order("paid_at", { ascending: false })
+        .limit(10);
+      
+      otpTxns?.forEach(txn => {
+        transactions.push({
+          id: txn.id,
+          reference: txn.paystack_reference?.substring(0, 10) || 'N/A',
+          payer_name: txn.payer_name,
+          plan_name: otpMap.get(txn.payment_id) || 'One-Time Payment',
+          amount: Number(txn.amount),
+          status: 'success',
+          paid_at: txn.paid_at,
+          type: 'one-time',
+        });
+      });
+    }
+
+    // Sort by date and take top 10
+    transactions.sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime());
+    setRecentTransactions(transactions.slice(0, 10));
+  };
+
+  const handleUpdateTotalSubscribers = async () => {
+    const total = parseInt(newTotalSubscribers);
+    if (isNaN(total) || total < 0) {
+      toast.error("Please enter a valid number");
+      return;
+    }
+    
+    setStats(prev => ({ ...prev, totalSubscribers: total }));
+    setEditTotalDialog(false);
+    setNewTotalSubscribers("");
+    toast.success("Total subscribers updated");
+  };
+
+  const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
 
@@ -321,17 +642,17 @@ const Dashboard = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Total Revenue (MTD)</span>
+                        <span className="text-sm text-muted-foreground">Total Revenue</span>
                         <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
                           Export
                         </Button>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
-                        ₦{stats.totalRevenue > 0 ? (stats.totalRevenue / 1000000).toFixed(1) + 'M' : '0'}
+                        ₦{stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}
                       </p>
                       <div className="flex items-center gap-1 text-green-600 text-sm">
                         <ArrowUp className="h-3 w-3" />
-                        <span>12.5% vs last month</span>
+                        <span>Live data</span>
                       </div>
                     </div>
                     <CircularProgress percentage={75} color="hsl(142, 76%, 36%)" />
@@ -356,9 +677,38 @@ const Dashboard = () => {
                       <p className="text-3xl font-bold text-foreground mb-2">
                         {stats.activeSubscribers.toLocaleString()}
                       </p>
-                      <span className="text-sm text-muted-foreground">of 2,000 total</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">of {stats.totalSubscribers.toLocaleString()} total</span>
+                        <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                              <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[350px]">
+                            <DialogHeader>
+                              <DialogTitle>Edit Total Subscribers</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="total">Total Subscribers Count</Label>
+                                <Input
+                                  id="total"
+                                  type="number"
+                                  placeholder="Enter total subscribers"
+                                  value={newTotalSubscribers}
+                                  onChange={(e) => setNewTotalSubscribers(e.target.value)}
+                                />
+                              </div>
+                              <Button onClick={handleUpdateTotalSubscribers} className="w-full">
+                                Update
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
-                    <CircularProgress percentage={60} color="hsl(35, 92%, 50%)" />
+                    <CircularProgress percentage={stats.totalSubscribers > 0 ? Math.round((stats.activeSubscribers / stats.totalSubscribers) * 100) : 0} color="hsl(35, 92%, 50%)" />
                   </div>
                 </Card>
 
@@ -375,14 +725,20 @@ const Dashboard = () => {
                         </FailedPaymentsDialog>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
-                        {stats.totalFailedPayments || 28}
+                        {stats.totalFailedPayments}
                       </p>
-                      <div className="flex items-center gap-1 text-destructive text-sm">
-                        <ArrowDown className="h-3 w-3" />
-                        <span>5.2% vs last month</span>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <div className="h-2 w-2 rounded-full bg-amber-500" />
+                          Abandoned: {stats.abandonedCheckouts}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="h-2 w-2 rounded-full bg-destructive" />
+                          Failed: {stats.failedPayments}
+                        </span>
                       </div>
                     </div>
-                    <CircularProgress percentage={85} color="hsl(0, 84%, 60%)" />
+                    <MiniPieChart data={failedPaymentsPieData} />
                   </div>
                 </Card>
 
@@ -402,14 +758,14 @@ const Dashboard = () => {
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">May 15</span>
-                        <span className="font-semibold">₦850K</span>
+                        <span className="text-sm text-muted-foreground">Pending</span>
+                        <span className="font-semibold">₦{pendingPayouts.toLocaleString()}</span>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Pending</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">May 22</span>
-                        <span className="font-semibold">₦300K</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Pending</span>
+                        <span className="text-sm text-muted-foreground">Paid Out</span>
+                        <span className="font-semibold">₦{totalPaidOut.toLocaleString()}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Complete</span>
                       </div>
                     </div>
                   </div>
@@ -437,75 +793,90 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={timeSeriesData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis 
-                          dataKey="month" 
-                          stroke="hsl(var(--muted-foreground))"
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis 
-                          stroke="hsl(var(--muted-foreground))"
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => `₦${(value / 1000000).toFixed(1)}M`}
-                        />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px"
-                          }}
-                          formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="hsl(var(--primary))" 
-                          strokeWidth={2}
-                          dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    {timeSeriesData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={timeSeriesData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="hsl(var(--muted-foreground))"
+                            tick={{ fontSize: 10 }}
+                            interval="preserveStartEnd"
+                          />
+                          <YAxis 
+                            stroke="hsl(var(--muted-foreground))"
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(value) => value > 0 ? `₦${(value / 1000).toFixed(0)}K` : '₦0'}
+                          />
+                          <Tooltip 
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px"
+                            }}
+                            formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="value" 
+                            stroke="hsl(var(--primary))" 
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        No transaction data available for this period
+                      </div>
+                    )}
                   </div>
                 </Card>
 
-                {/* Revenue Distribution - Takes 1/3 */}
+                {/* Revenue Distribution by Plan - Takes 1/3 */}
                 <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-foreground">Revenue Distribution</h3>
-                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-                      By Type
-                    </Button>
+                    <h3 className="text-lg font-bold text-foreground">Revenue by Plan</h3>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="relative h-40 w-40 mb-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={revenueDistribution}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={70}
-                            paddingAngle={2}
-                            dataKey="value"
-                          >
-                            {revenueDistribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xl font-bold">₦4.2M</span>
-                      </div>
+                      {revenueByPlan.length > 0 ? (
+                        <>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={revenueByPlan}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={50}
+                                outerRadius={70}
+                                paddingAngle={2}
+                                dataKey="value"
+                              >
+                                {revenueByPlan.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm text-center">
+                          No revenue data yet
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-2 w-full">
-                      {revenueDistribution.map((item, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="text-sm text-muted-foreground">{item.name} ({item.value}%)</span>
+                    <div className="space-y-2 w-full max-h-32 overflow-y-auto">
+                      {revenueByPlan.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                            <span className="text-sm text-muted-foreground truncate">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-medium">₦{item.value.toLocaleString()}</span>
                         </div>
                       ))}
                     </div>
@@ -532,34 +903,53 @@ const Dashboard = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">ID</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">MEMBER</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">REF</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PAYER</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TYPE</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">ACTIONS</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">DATE</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-border/50 hover:bg-muted/30">
-                        <td className="py-4 px-4 text-sm font-mono">TX-789456</td>
-                        <td className="py-4 px-4 text-sm">John Doe</td>
-                        <td className="py-4 px-4 text-sm">Monthly</td>
-                        <td className="py-4 px-4 text-sm font-medium">₦25,000</td>
-                        <td className="py-4 px-4">
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Success</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Download className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+                      {recentTransactions.length > 0 ? (
+                        recentTransactions.map((txn) => (
+                          <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/30">
+                            <td className="py-4 px-4 text-sm font-mono">{txn.reference}</td>
+                            <td className="py-4 px-4 text-sm">{txn.payer_name}</td>
+                            <td className="py-4 px-4 text-sm">{txn.plan_name}</td>
+                            <td className="py-4 px-4 text-sm font-medium">₦{txn.amount.toLocaleString()}</td>
+                            <td className="py-4 px-4">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                txn.type === 'subscription' 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'bg-purple-100 text-purple-700'
+                              }`}>
+                                {txn.type === 'subscription' ? 'Subscription' : 'One-Time'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                txn.status === 'success' 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                {txn.status === 'success' ? 'Success' : 'Failed'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-muted-foreground">
+                              {new Date(txn.paid_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                            No recent transactions
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
