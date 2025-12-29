@@ -32,7 +32,7 @@ interface OneTimePayment {
   currency: string;
 }
 
-const Store = () => {
+const PlansHub = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -43,11 +43,11 @@ const Store = () => {
 
   useEffect(() => {
     if (orgId) {
-      fetchStoreData();
+      fetchPlansHubData();
     }
   }, [orgId]);
 
-  const fetchStoreData = async () => {
+  const fetchPlansHubData = async () => {
     try {
       // Fetch organization
       const { data: orgData, error: orgError } = await supabase
@@ -83,8 +83,8 @@ const Store = () => {
 
       setOneTimePayments(paymentsData || []);
     } catch (err) {
-      console.error("Error fetching store data:", err);
-      setError("Failed to load store");
+      console.error("Error fetching Plans Hub data:", err);
+      setError("Failed to load Plans Hub");
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ const Store = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading store...</p>
+          <p className="text-muted-foreground">Loading Plans Hub...</p>
         </div>
       </div>
     );
@@ -125,9 +125,9 @@ const Store = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-destructive">Store Not Found</CardTitle>
+            <CardTitle className="text-destructive">Plans Hub Not Found</CardTitle>
             <CardDescription>
-              {error || "This organization's store could not be found."}
+              {error || "This organization's Plans Hub could not be found."}
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
@@ -327,4 +327,4 @@ const Store = () => {
   );
 };
 
-export default Store;
+export default PlansHub;

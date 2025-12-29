@@ -15,7 +15,7 @@ import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
-import { StorefrontLinkCard } from "@/components/StorefrontLinkCard";
+import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 interface Organization {
   id: string;
   org_name: string;
@@ -413,10 +413,10 @@ const Dashboard = () => {
                 )}
               </div>
 
-              {/* Storefront Link Card */}
+              {/* Plans Hub Link Card */}
               {organization && (
                 <div className="mb-8 animate-fade-in">
-                  <StorefrontLinkCard 
+                  <PlansHubLinkCard 
                     orgId={organization.id} 
                     orgName={organization.org_name}
                   />
