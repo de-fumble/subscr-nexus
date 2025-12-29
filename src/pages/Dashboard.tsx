@@ -447,26 +447,54 @@ const Dashboard = () => {
           totalSubsCount = count || 0;
         }
 
-        // Fetch failed payments data from analytics
+        // Fetch live data from Paystack analytics
         const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
           "fetch-paystack-analytics"
         );
 
         let abandonedCount = 0;
         let failedCount = 0;
+        let paystackTotalRevenue = totalRevenueAmount;
+        let paystackActiveSubscribers = totalActiveSubscribers;
         
         if (!analyticsError && analyticsData) {
+          console.log("Paystack analytics data:", analyticsData);
+          
+          // Use Paystack data for overview section
+          paystackTotalRevenue = analyticsData.totalRevenue || totalRevenueAmount;
+          paystackActiveSubscribers = analyticsData.activeSubscribers || totalActiveSubscribers;
+          
+          // Failed payments breakdown
           const failedData = analyticsData.failedPaymentsData || [];
-          abandonedCount = failedData.find((d: any) => d.name === 'Abandoned Checkouts')?.value || 0;
+          abandonedCount = failedData.find((d: any) => d.name === 'Abandoned Checkout')?.value || 0;
           failedCount = failedData.find((d: any) => d.name === 'Failed Payments')?.value || 0;
           setFailedPaymentsData(failedData);
-          setChartData(analyticsData.chartData || []);
+          
+          // Revenue by plan from Paystack
+          const paystackChartData = analyticsData.chartData || [];
+          if (paystackChartData.length > 0) {
+            const revenueData: RevenueByPlan[] = paystackChartData.map((item: any, index: number) => ({
+              name: item.plan,
+              value: item.revenue,
+              color: CHART_COLORS[index % CHART_COLORS.length],
+            }));
+            setRevenueByPlan(revenueData);
+          }
+          
+          // Revenue trend for time series chart
+          const revenueTrend = analyticsData.revenueTrend || [];
+          if (revenueTrend.length > 0) {
+            setTimeSeriesData(revenueTrend.map((item: any) => ({
+              date: item.month,
+              value: item.revenue,
+            })));
+          }
         }
 
         setStats({
-          totalRevenue: totalRevenueAmount,
-          recurringRevenue: 0,
-          activeSubscribers: totalActiveSubscribers,
+          totalRevenue: paystackTotalRevenue,
+          recurringRevenue: analyticsData?.recurringRevenue || 0,
+          activeSubscribers: paystackActiveSubscribers,
           totalSubscribers: totalSubsCount,
           totalFailedPayments: abandonedCount + failedCount,
           abandonedCheckouts: abandonedCount,
