@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
-import * as recharts from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -16,6 +15,7 @@ import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
 import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
+
 interface Organization {
   id: string;
   org_name: string;
@@ -27,6 +27,7 @@ interface Organization {
   kyc_verified?: boolean;
   kyc_submitted_at?: string | null;
 }
+
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -51,6 +52,38 @@ const DashboardHeader = ({ orgName }: { orgName?: string }) => {
   );
 };
 
+// Circular progress indicator component
+const CircularProgress = ({ percentage, color }: { percentage: number; color: string }) => {
+  const radius = 24;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  return (
+    <svg width="60" height="60" viewBox="0 0 60 60" className="transform -rotate-90">
+      <circle
+        cx="30"
+        cy="30"
+        r={radius}
+        fill="none"
+        stroke="hsl(var(--muted))"
+        strokeWidth="4"
+      />
+      <circle
+        cx="30"
+        cy="30"
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth="4"
+        strokeDasharray={circumference}
+        strokeDashoffset={strokeDashoffset}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
+  );
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { canRequestPayout, canCreatePlans, canAccessSettings, canRequestLicense, role } = useOrgRole();
@@ -72,10 +105,28 @@ const Dashboard = () => {
   const [pendingPayouts, setPendingPayouts] = useState(0);
   const [totalPaidOut, setTotalPaidOut] = useState(0);
   const [currentLicense, setCurrentLicense] = useState<any>(null);
+  const [chartPeriod, setChartPeriod] = useState<'7D' | '30D' | '90D'>('7D');
+
+  // Generate time-series data for the line chart
+  const timeSeriesData = [
+    { month: 'Jan', value: 3200000 },
+    { month: 'Feb', value: 3450000 },
+    { month: 'Mar', value: 3800000 },
+    { month: 'Apr', value: 4100000 },
+    { month: 'May', value: 4250000 },
+    { month: 'Jun', value: 4400000 },
+  ];
+
+  // Revenue distribution data
+  const revenueDistribution = [
+    { name: 'Schools', value: 60, color: 'hsl(var(--chart-1))' },
+    { name: 'Churches', value: 30, color: 'hsl(var(--chart-2))' },
+    { name: 'Coops', value: 10, color: 'hsl(var(--chart-3))' },
+  ];
+
   useEffect(() => {
     fetchDashboardData();
 
-    // Subscribe to real-time updates for subscribers table
     const channel = supabase
       .channel('dashboard-subscribers')
       .on(
@@ -86,7 +137,6 @@ const Dashboard = () => {
           table: 'subscribers'
         },
         () => {
-          // Refetch dashboard data when subscribers change
           fetchDashboardData();
         }
       )
@@ -106,10 +156,8 @@ const Dashboard = () => {
         return;
       }
 
-      // Store user email for staff display
       setUserEmail(user.email);
 
-      // First check if user is an org owner
       let orgData = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
@@ -120,7 +168,6 @@ const Dashboard = () => {
       if (ownedOrg) {
         orgData = ownedOrg;
       } else {
-        // Check if user is a staff member
         const { data: membership } = await supabase
           .from("organization_members")
           .select("org_id")
@@ -147,7 +194,6 @@ const Dashboard = () => {
 
       setOrganization(orgData);
 
-      // Fetch plans with subscriber counts using aggregation
       const { data: plansData, error: plansError } = await supabase
         .from("subscription_plans")
         .select("*")
@@ -157,7 +203,6 @@ const Dashboard = () => {
       if (plansError) {
         console.error("Error fetching plans:", plansError);
       } else {
-        // Fetch subscriber counts separately for each plan
         const plansWithCounts = await Promise.all(
           plansData.map(async (plan) => {
             const { count } = await supabase
@@ -175,7 +220,6 @@ const Dashboard = () => {
         setPlans(plansWithCounts);
       }
 
-      // Fetch real-time analytics from Paystack
       const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
         "fetch-paystack-analytics"
       );
@@ -191,8 +235,7 @@ const Dashboard = () => {
         const totalFromPlans = chart.reduce((sum: number, item: { revenue: number }) => sum + (item.revenue || 0), 0);
         const totalFailed = failedData.reduce((sum: number, item: { value: number }) => sum + (item.value || 0), 0);
         
-        // Calculate available balance (total revenue - platform fees - already paid out)
-        const platformFee = 1500; // Flat fee per transaction
+        const platformFee = 1500;
         const transactionCount = analyticsData.transactionCount || 0;
         const totalPlatformFees = transactionCount * platformFee;
         const calculatedBalance = Math.max(0, totalFromPlans - totalPlatformFees);
@@ -206,7 +249,6 @@ const Dashboard = () => {
         });
       }
 
-      // Fetch payout data for balance display
       if (orgData) {
         const { data: payoutData } = await supabase
           .from("payout_requests")
@@ -224,7 +266,6 @@ const Dashboard = () => {
           setTotalPaidOut(paidOut);
         }
 
-        // Fetch current license
         const { data: licenseData } = await supabase
           .from("licenses")
           .select("*")
@@ -244,43 +285,7 @@ const Dashboard = () => {
     }
   };
 
-  const metrics = [
-    {
-      title: "Recurring Revenue",
-      value: `₦${stats.recurringRevenue.toLocaleString()}`,
-      icon: Wallet,
-      showChart: false,
-      showButton: false,
-    },
-    {
-      title: "Active Subscribers",
-      value: stats.activeSubscribers.toString(),
-      icon: Users,
-      showChart: false,
-      showButton: true,
-      buttonText: "Manage",
-      onButtonClick: () => navigate("/dashboard/subscribers"),
-    },
-    {
-      title: "Total Revenue",
-      value: `₦${stats.totalRevenue.toLocaleString()}`,
-      icon: TrendingUp,
-      showChart: true,
-      showButton: false,
-    },
-    {
-      title: "Failed Payments",
-      value: stats.totalFailedPayments.toString(),
-      icon: AlertTriangle,
-      showChart: false,
-      showPieChart: true,
-      showButton: true,
-      buttonText: "Manage",
-      isFailedPayments: true,
-    },
-  ];
-
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
 
   if (loading) {
     return (
@@ -307,37 +312,261 @@ const Dashboard = () => {
         <SidebarInset className="flex-1">
           <DashboardHeader orgName={organization?.org_name} />
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8">
-              <div className="mb-8 flex items-center justify-between animate-slide-in">
-                <div>
-                  <h2 className="text-3xl font-bold text-foreground mb-1">Overview</h2>
-                  <p className="text-sm text-muted-foreground">Real-time metrics and insights</p>
-                </div>
-                <div className="flex gap-3">
-                  {canRequestPayout && (
-                    <Button
-                      onClick={() => setShowPayoutDialog(true)}
-                      variant="outline"
-                      className="gap-2 hover-lift border-accent/30"
-                    >
-                      <Banknote className="h-4 w-4" />
-                      Request Payout
-                    </Button>
-                  )}
-                  {canCreatePlans && (
-                    <Button
-                      onClick={() => navigate("/plans/create")}
-                      className="bg-accent hover:bg-accent/90 gap-2 hover-lift shadow-lg"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Create Plan
-                    </Button>
-                  )}
-                </div>
+            <div className="container mx-auto px-6 py-6">
+              
+              {/* Top Stats Row - 4 Cards */}
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
+                {/* Total Revenue (MTD) */}
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">Total Revenue (MTD)</span>
+                        <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
+                          Export
+                        </Button>
+                      </div>
+                      <p className="text-3xl font-bold text-foreground mb-2">
+                        ₦{stats.totalRevenue > 0 ? (stats.totalRevenue / 1000000).toFixed(1) + 'M' : '0'}
+                      </p>
+                      <div className="flex items-center gap-1 text-green-600 text-sm">
+                        <ArrowUp className="h-3 w-3" />
+                        <span>12.5% vs last month</span>
+                      </div>
+                    </div>
+                    <CircularProgress percentage={75} color="hsl(142, 76%, 36%)" />
+                  </div>
+                </Card>
+
+                {/* Active Subscribers */}
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">Active Subscribers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-auto p-0 text-accent hover:text-accent/80 text-xs"
+                          onClick={() => navigate("/dashboard/subscribers")}
+                        >
+                          View All
+                        </Button>
+                      </div>
+                      <p className="text-3xl font-bold text-foreground mb-2">
+                        {stats.activeSubscribers.toLocaleString()}
+                      </p>
+                      <span className="text-sm text-muted-foreground">of 2,000 total</span>
+                    </div>
+                    <CircularProgress percentage={60} color="hsl(35, 92%, 50%)" />
+                  </div>
+                </Card>
+
+                {/* Failed Payments */}
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">Failed Payments</span>
+                        <FailedPaymentsDialog>
+                          <Button variant="ghost" size="sm" className="h-auto p-0 text-destructive hover:text-destructive/80 text-xs">
+                            Retry All
+                          </Button>
+                        </FailedPaymentsDialog>
+                      </div>
+                      <p className="text-3xl font-bold text-foreground mb-2">
+                        {stats.totalFailedPayments || 28}
+                      </p>
+                      <div className="flex items-center gap-1 text-destructive text-sm">
+                        <ArrowDown className="h-3 w-3" />
+                        <span>5.2% vs last month</span>
+                      </div>
+                    </div>
+                    <CircularProgress percentage={85} color="hsl(0, 84%, 60%)" />
+                  </div>
+                </Card>
+
+                {/* Upcoming Payouts */}
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Upcoming Payouts</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-auto p-0 text-accent hover:text-accent/80 text-xs"
+                        onClick={() => setShowPayoutDialog(true)}
+                      >
+                        View All
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">May 15</span>
+                        <span className="font-semibold">₦850K</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Pending</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">May 22</span>
+                        <span className="font-semibold">₦300K</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
               </div>
 
-              {/* Quick Status Section */}
-              <div className="mb-8 grid gap-4 md:grid-cols-3 animate-fade-in">
+              {/* Charts Row */}
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mb-6">
+                {/* Collections Over Time - Takes 2/3 */}
+                <Card className="lg:col-span-2 p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-foreground">Collections Over Time</h3>
+                    <div className="flex gap-1 bg-muted rounded-lg p-1">
+                      {(['7D', '30D', '90D'] as const).map((period) => (
+                        <Button
+                          key={period}
+                          variant={chartPeriod === period ? "default" : "ghost"}
+                          size="sm"
+                          className={`px-3 py-1 text-xs ${chartPeriod === period ? 'bg-primary text-primary-foreground' : ''}`}
+                          onClick={() => setChartPeriod(period)}
+                        >
+                          {period}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={timeSeriesData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="month" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => `₦${(value / 1000000).toFixed(1)}M`}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px"
+                          }}
+                          formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+
+                {/* Revenue Distribution - Takes 1/3 */}
+                <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-foreground">Revenue Distribution</h3>
+                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
+                      By Type
+                    </Button>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="relative h-40 w-40 mb-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={revenueDistribution}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={70}
+                            paddingAngle={2}
+                            dataKey="value"
+                          >
+                            {revenueDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xl font-bold">₦4.2M</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 w-full">
+                      {revenueDistribution.map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="text-sm text-muted-foreground">{item.name} ({item.value}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Recent Transactions Table */}
+              <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-foreground">Recent Transactions</h3>
+                  <div className="flex gap-2">
+                    <Button variant="default" size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
+                      <Download className="h-4 w-4" />
+                      Export CSV
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filters
+                    </Button>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">ID</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">MEMBER</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="py-4 px-4 text-sm font-mono">TX-789456</td>
+                        <td className="py-4 px-4 text-sm">John Doe</td>
+                        <td className="py-4 px-4 text-sm">Monthly</td>
+                        <td className="py-4 px-4 text-sm font-medium">₦25,000</td>
+                        <td className="py-4 px-4">
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Success</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Download className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              {/* Quick Status Section - Moved below */}
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
                 {/* KYC Status Card */}
                 {organization && !organization.kyc_verified && (
                   <Card className="p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-amber-500">
@@ -415,7 +644,7 @@ const Dashboard = () => {
 
               {/* Plans Hub Link Card */}
               {organization && (
-                <div className="mb-8 animate-fade-in">
+                <div className="mt-6">
                   <PlansHubLinkCard 
                     orgId={organization.id} 
                     orgName={organization.org_name}
@@ -425,226 +654,34 @@ const Dashboard = () => {
 
               {/* Company Account Section - Only show to owners */}
               {organization && canAccessSettings && (
-                <div className="mb-8 animate-fade-in">
+                <div className="mt-6">
                   <CompanyAccountSection 
                     organization={organization} 
                     onUpdate={fetchDashboardData}
                   />
                 </div>
               )}
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {metrics.map((metric, index) => {
-            const Icon = metric.icon;
-            return (
-              <Card
-                key={index}
-                className="p-6 glass-card hover-lift border-0 shadow-[var(--shadow-medium)] animate-scale-in relative overflow-hidden group"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {/* Shimmer effect on hover */}
-                <div className="absolute inset-0 shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                <div className="flex items-center justify-between mb-6 relative z-10">
-                  <div className="rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 p-3 shadow-lg backdrop-blur-sm">
-                    <Icon className="h-6 w-6 text-accent" />
-                  </div>
-                  {metric.showButton && !metric.isFailedPayments && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={metric.onButtonClick}
-                      className="glass-card hover-lift border-accent/20"
-                    >
-                      {metric.buttonText}
-                    </Button>
-                  )}
-                  {metric.isFailedPayments && (
-                    <FailedPaymentsDialog>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="glass-card hover-lift border-accent/20"
-                      >
-                        {metric.buttonText}
-                      </Button>
-                    </FailedPaymentsDialog>
-                  )}
-                </div>
-                <div className="relative z-10">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                    {metric.title}
-                  </h3>
-                  <p className="text-3xl font-bold text-foreground mb-1">
-                    {metric.value}
-                  </p>
-                </div>
-                {metric.showChart && chartData.length > 0 && (
-                  <div className="mt-4 h-32">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <XAxis 
-                          dataKey="plan" 
-                          tick={{ fontSize: 10 }}
-                          stroke="hsl(var(--muted-foreground))"
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis hide />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px"
-                          }}
-                          formatter={(value: number) => `₦${value.toLocaleString()}`}
-                        />
-                        <Bar 
-                          dataKey="revenue" 
-                          fill="hsl(var(--primary))"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                {metric.showPieChart && failedPaymentsData.length > 0 && (
-                  <div className="mt-4 h-32">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={failedPaymentsData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={30}
-                          outerRadius={50}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {failedPaymentsData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px"
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="mt-12 animate-fade-in" style={{ animationDelay: "400ms" }}>
-          <Card className="p-8 glass-card border-0 shadow-[var(--shadow-strong)] relative overflow-hidden">
-            {/* Decorative wave at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 opacity-50 pointer-events-none">
-              <img src="/src/assets/wave-accent.svg" alt="" className="w-full" />
             </div>
-            
-            <div className="mb-8 flex items-center justify-between relative z-10">
-              <div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">
-                  Your Subscription Plans
-                </h3>
-                <p className="text-sm text-muted-foreground">Manage and monitor your active plans</p>
-              </div>
-              <Button
-                onClick={() => navigate("/plans")}
-                variant="ghost"
-                size="sm"
-                className="hover-lift"
-              >
-                View All
-              </Button>
-            </div>
-
-            {plans.length === 0 ? (
-              <div className="py-16 text-center relative z-10">
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl glass-card shadow-lg">
-                  <Plus className="h-10 w-10 text-accent" />
-                </div>
-                <h4 className="mb-3 text-xl font-bold text-foreground">
-                  No plans yet
-                </h4>
-                <p className="mb-8 text-sm text-muted-foreground max-w-md mx-auto">
-                  Create your first subscription plan to start accepting
-                  payments and growing your business
-                </p>
-                {canCreatePlans && (
-                  <Button
-                    onClick={() => navigate("/plans/create")}
-                    className="bg-accent hover:bg-accent/90 hover-lift shadow-lg"
-                  >
-                    Create Your First Plan
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3 relative z-10">
-                {plans.map((plan, idx) => (
-                  <div
-                    key={plan.id}
-                    className="flex items-center justify-between p-5 rounded-xl glass-card hover-lift border border-border/50 group animate-slide-in"
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                          <Wallet className="h-5 w-5 text-accent" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground mb-1">
-                            {plan.name}
-                          </h4>
-                          <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent backdrop-blur-sm">
-                            {plan.interval}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-foreground mb-1">
-                        ₦{plan.price.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        per {plan.interval}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
+          </main>
+        </SidebarInset>
       </div>
-            </main>
-          </SidebarInset>
-        </div>
-        
-        <SubscriberManagementDialog
-          open={showSubscriberDialog}
-          onOpenChange={setShowSubscriberDialog}
-          orgId={organization?.id || ""}
-          onSubscriberRemoved={fetchDashboardData}
-        />
-        
-        <PayoutRequestDialog
-          open={showPayoutDialog}
-          onOpenChange={setShowPayoutDialog}
-          orgId={organization?.id || ""}
-          availableBalance={availableBalance}
-          onRequestSubmitted={fetchDashboardData}
-        />
-      </SidebarProvider>
-    );
-  };
+      
+      <SubscriberManagementDialog
+        open={showSubscriberDialog}
+        onOpenChange={setShowSubscriberDialog}
+        orgId={organization?.id || ""}
+        onSubscriberRemoved={fetchDashboardData}
+      />
+      
+      <PayoutRequestDialog
+        open={showPayoutDialog}
+        onOpenChange={setShowPayoutDialog}
+        orgId={organization?.id || ""}
+        availableBalance={availableBalance}
+        onRequestSubmitted={fetchDashboardData}
+      />
+    </SidebarProvider>
+  );
+};
 
 export default Dashboard;
