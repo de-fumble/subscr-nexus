@@ -51,6 +51,7 @@ import Terms from "./pages/Terms";
 import CookiePolicy from "./pages/CookiePolicy";
 import GDPR from "./pages/GDPR";
 import VerifyEmail from "./pages/VerifyEmail";
+import Store from "./pages/Store";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
           <Route path="/payments/create" element={<ProtectedRoute><CreateOneTimePayment /></ProtectedRoute>} />
           <Route path="/pay/:paymentId" element={<Pay />} />
           <Route path="/payment/callback" element={<PaymentCallback />} />
+          <Route path="/store/:orgId" element={<Store />} />
           <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
           <Route path="/dashboard/profile" element={<ProtectedRoute><DashboardProfile /></ProtectedRoute>} />
           <Route path="/dashboard/settings" element={<ProtectedRoute><DashboardSettings /></ProtectedRoute>} />

@@ -15,6 +15,7 @@ import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
+import { StorefrontLinkCard } from "@/components/StorefrontLinkCard";
 interface Organization {
   id: string;
   org_name: string;
@@ -411,6 +412,16 @@ const Dashboard = () => {
                   </Card>
                 )}
               </div>
+
+              {/* Storefront Link Card */}
+              {organization && (
+                <div className="mb-8 animate-fade-in">
+                  <StorefrontLinkCard 
+                    orgId={organization.id} 
+                    orgName={organization.org_name}
+                  />
+                </div>
+              )}
 
               {/* Company Account Section - Only show to owners */}
               {organization && canAccessSettings && (
