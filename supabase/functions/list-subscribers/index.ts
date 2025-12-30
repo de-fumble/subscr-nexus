@@ -20,6 +20,17 @@ serve(async (req) => {
       );
     }
 
+    // Parse request body for optional planId filter
+    let planId: string | null = null;
+    let includeFailedPayments = false;
+    try {
+      const body = await req.json();
+      planId = body?.planId || null;
+      includeFailedPayments = body?.includeFailedPayments || false;
+    } catch {
+      // No body or invalid JSON, that's fine
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -80,11 +91,17 @@ serve(async (req) => {
     }
 
     // Get organization's subscription plan codes and names
-    const { data: plans, error: plansError } = await supabase
+    let plansQuery = supabase
       .from("subscription_plans")
-      .select("name, paystack_plan_code")
-      .eq("org_id", org.id)
-      .eq("is_active", true);
+      .select("id, name, paystack_plan_code")
+      .eq("org_id", org.id);
+    
+    // If planId is provided, filter to just that plan
+    if (planId) {
+      plansQuery = plansQuery.eq("id", planId);
+    }
+
+    const { data: plans, error: plansError } = await plansQuery;
 
     if (plansError) {
       return new Response(
@@ -95,6 +112,7 @@ serve(async (req) => {
 
     const planCodes = new Set((plans || []).map((p: any) => p.paystack_plan_code).filter(Boolean));
     const planNameByCode = new Map((plans || []).map((p: any) => [p.paystack_plan_code, p.name]));
+    const planIdByCode = new Map((plans || []).map((p: any) => [p.paystack_plan_code, p.id]));
 
     // Fetch subscriptions from Paystack (first page; can be extended to paginate if needed)
     const subscriptionsResponse = await fetch(
@@ -131,17 +149,44 @@ serve(async (req) => {
         id: sub.subscription_code,
         email: customer.email || "",
         customer_name: fullName,
-        amount: typeof sub.amount === "number" ? sub.amount / 100 : (plan.amount ?? 0),
+        amount: typeof sub.amount === "number" ? sub.amount : (plan.amount ?? 0),
         status: sub.status || "",
         paystack_subscription_code: sub.subscription_code,
         paystack_customer_code: customer.customer_code || "",
         plan_name: planNameByCode.get(plan.plan_code) || plan.name || "Unknown",
+        plan_id: planIdByCode.get(plan.plan_code) || null,
+        plan_code: plan.plan_code,
+        next_payment_date: sub.next_payment_date || null,
         created_at: sub.createdAt || sub.created_at || new Date().toISOString(),
       };
     });
 
+    // Fetch failed payments if requested
+    let failedPayments: any[] = [];
+    if (includeFailedPayments && planId) {
+      // Get subscribers from DB with failed status for this plan
+      const { data: dbFailedSubs } = await supabase
+        .from("subscribers")
+        .select("*")
+        .eq("plan_id", planId)
+        .eq("status", "failed");
+      
+      failedPayments = (dbFailedSubs || []).map((sub: any) => ({
+        id: sub.id,
+        email: sub.email,
+        customer_name: sub.customer_name || "N/A",
+        amount: sub.amount,
+        status: sub.status,
+        failure_reason: sub.failure_reason,
+        payment_failed_at: sub.payment_failed_at,
+        retry_count: sub.retry_count,
+        last_retry_at: sub.last_retry_at,
+        paystack_subscription_code: sub.paystack_subscription_code,
+      }));
+    }
+
     return new Response(
-      JSON.stringify({ subscribers }),
+      JSON.stringify({ subscribers, failedPayments }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
