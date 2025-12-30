@@ -612,13 +612,26 @@ serve(async (req) => {
     const periodStartSubscribers = monthlySubscriberData[monthKeys[0]]?.start || activeSubscriptions;
 
     // Calculate ARPU (industry standard)
-    // ARPU = Total revenue / Average number of active subscribers
-    const monthlyActiveAvg = monthKeys.reduce((sum, key) => {
-      const data = monthlySubscriberData[key];
-      return sum + (data.start + data.end) / 2;
-    }, 0) / monthKeys.length;
+    // ARPU = Total revenue in selected period ÷ Average number of active subscribers during that same period
+    // For accurate ARPU, we calculate it per-month then average, OR use current active subscribers
+    // Method: Sum of (monthly revenue / monthly avg subscribers) / number of months with data
     
-    const arpu = monthlyActiveAvg > 0 ? totalRevenue / monthlyActiveAvg : 0;
+    let monthsWithData = 0;
+    let sumMonthlyArpu = 0;
+    
+    monthKeys.forEach((monthKey) => {
+      const monthRevenue = monthlyRevenue[monthKey] || 0;
+      const data = monthlySubscriberData[monthKey];
+      const monthlyAvgSubs = (data.start + data.end) / 2;
+      
+      if (monthRevenue > 0 && monthlyAvgSubs > 0) {
+        sumMonthlyArpu += monthRevenue / monthlyAvgSubs;
+        monthsWithData++;
+      }
+    });
+    
+    // Average ARPU across months with actual data
+    const arpu = monthsWithData > 0 ? sumMonthlyArpu / monthsWithData : (activeSubscriptions > 0 ? totalRevenue / activeSubscriptions : 0);
 
     // Calculate subscriber growth rate (current month vs previous)
     const prevMonthKey = monthKeys[monthKeys.length - 2];
