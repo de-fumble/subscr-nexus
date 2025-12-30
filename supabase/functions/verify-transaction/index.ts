@@ -108,14 +108,41 @@ serve(async (req) => {
     }
 
     const txn = verifyData.data;
+    
+    // Determine the plan name - check various sources
+    let planName = "N/A";
+    if (txn.plan?.name) {
+      planName = txn.plan.name;
+    } else if (txn.metadata?.plan_name) {
+      planName = txn.metadata.plan_name;
+    } else if (txn.metadata?.custom_fields) {
+      // Check custom fields for plan info
+      const planField = txn.metadata.custom_fields.find((f: { variable_name: string }) => 
+        f.variable_name === "plan_name" || f.variable_name === "plan"
+      );
+      if (planField?.value) {
+        planName = planField.value;
+      }
+    }
+    
+    // Check if it's a one-time payment (no subscription/plan code)
+    const isOneTimePayment = !txn.plan && !txn.plan_object && 
+      (txn.metadata?.payment_type === "one_time" || 
+       txn.metadata?.type === "one_time_payment" ||
+       (!txn.authorization?.reusable && !txn.plan));
+    
+    if (isOneTimePayment && planName === "N/A") {
+      planName = "One Time Payment";
+    }
+
     const transaction = {
       reference: txn.reference,
       amount: txn.amount,
       status: txn.status,
       customer_email: txn.customer?.email || "N/A",
-      customer_name: txn.customer?.customer_code || txn.metadata?.customer_name || "N/A",
+      customer_name: txn.metadata?.customer_name || txn.customer?.first_name || txn.customer?.customer_code || "N/A",
       paid_at: txn.paid_at || txn.transaction_date,
-      plan: txn.plan?.name || txn.metadata?.plan_name || "N/A",
+      plan: planName,
       currency: txn.currency,
     };
 
