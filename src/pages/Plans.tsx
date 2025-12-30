@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, ExternalLink, Archive, Users, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, ExternalLink, Archive, Users, RefreshCw, Loader2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { BackButton } from "@/components/BackButton";
 import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
+import { PlanManagementDialog } from "@/components/PlanManagementDialog";
 
 interface Plan {
   id: string;
@@ -50,6 +51,7 @@ const Plans = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
+  const [planToManage, setPlanToManage] = useState<Plan | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
 
@@ -220,6 +222,16 @@ const Plans = () => {
       </div>
 
       <div className="space-y-2">
+        {plan.is_active && (
+          <Button
+            onClick={() => setPlanToManage(plan)}
+            variant="default"
+            className="w-full gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Manage Plan
+          </Button>
+        )}
         <Button
           onClick={() => copySubscriptionLink(plan.id)}
           variant="outline"
@@ -416,6 +428,15 @@ const Plans = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {planToManage && (
+        <PlanManagementDialog
+          open={!!planToManage}
+          onOpenChange={(open) => !open && setPlanToManage(null)}
+          plan={planToManage}
+          onSubscriberRemoved={() => fetchPlans(true)}
+        />
+      )}
     </SidebarProvider>
   );
 };
