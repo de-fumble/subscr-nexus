@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, ArrowUp, ArrowDown, Edit2 } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, ArrowUp, ArrowDown, Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import * as XLSX from "xlsx";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -151,6 +152,7 @@ const Dashboard = () => {
   }>>([]);
   const [editTotalDialog, setEditTotalDialog] = useState(false);
   const [newTotalSubscribers, setNewTotalSubscribers] = useState("");
+  const [exportingRevenue, setExportingRevenue] = useState(false);
   const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)', 'hsl(330, 81%, 60%)'];
   const failedPaymentsPieData = [{
     name: 'Abandoned',
@@ -546,6 +548,168 @@ const Dashboard = () => {
     setNewTotalSubscribers("");
     toast.success("Total subscribers updated");
   };
+
+  const handleExportRevenue = async () => {
+    if (!organization) {
+      toast.error("Organization not found");
+      return;
+    }
+
+    setExportingRevenue(true);
+    try {
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      const startDate = new Date(currentYear, 0, 1); // January 1st of current year
+      const endDate = new Date(); // Current date
+
+      // Fetch subscription transactions
+      const { data: planIds } = await supabase
+        .from("subscription_plans")
+        .select("id, name")
+        .eq("org_id", organization.id);
+
+      const planIdList = planIds?.map(p => p.id) || [];
+      const planNameMap = new Map(planIds?.map(p => [p.id, p.name]) || []);
+
+      let subscriptionTransactions: any[] = [];
+      if (planIdList.length > 0) {
+        const { data: subscribers } = await supabase
+          .from("subscribers")
+          .select("id, plan_id, customer_name, email")
+          .in("plan_id", planIdList);
+
+        const subscriberIds = subscribers?.map(s => s.id) || [];
+        const subscriberMap = new Map(subscribers?.map(s => [s.id, s]) || []);
+
+        if (subscriberIds.length > 0) {
+          const { data: txns } = await supabase
+            .from("transactions")
+            .select("amount, paid_at, subscriber_id, paystack_reference, status")
+            .in("subscriber_id", subscriberIds)
+            .eq("status", "success")
+            .gte("paid_at", startDate.toISOString())
+            .lte("paid_at", endDate.toISOString())
+            .order("paid_at", { ascending: true });
+
+          subscriptionTransactions = (txns || []).map(t => {
+            const subscriber = subscriberMap.get(t.subscriber_id);
+            return {
+              ...t,
+              type: "Subscription",
+              plan_name: subscriber ? planNameMap.get(subscriber.plan_id) : "Unknown",
+              customer_name: subscriber?.customer_name || "Unknown",
+              email: subscriber?.email || "Unknown",
+            };
+          });
+        }
+      }
+
+      // Fetch one-time payment transactions
+      const { data: otpPayments } = await supabase
+        .from("one_time_payments")
+        .select("id, name")
+        .eq("org_id", organization.id);
+
+      const otpIdList = otpPayments?.map(p => p.id) || [];
+      const otpNameMap = new Map(otpPayments?.map(p => [p.id, p.name]) || []);
+
+      let oneTimeTransactions: any[] = [];
+      if (otpIdList.length > 0) {
+        const { data: otpTxns } = await supabase
+          .from("one_time_payment_transactions")
+          .select("amount, paid_at, payment_id, paystack_reference, payer_name, payer_email")
+          .in("payment_id", otpIdList)
+          .gte("paid_at", startDate.toISOString())
+          .lte("paid_at", endDate.toISOString())
+          .order("paid_at", { ascending: true });
+
+        oneTimeTransactions = (otpTxns || []).map(t => ({
+          ...t,
+          type: "One Time Payment",
+          plan_name: otpNameMap.get(t.payment_id) || "One Time Payment",
+          customer_name: t.payer_name || "Unknown",
+          email: t.payer_email || "Unknown",
+          status: "success",
+        }));
+      }
+
+      // Combine all transactions
+      const allTransactions = [...subscriptionTransactions, ...oneTimeTransactions];
+
+      // Group by month for summary
+      const monthlyRevenue: { [key: string]: { month: string; revenue: number; transactions: number } } = {};
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+      // Initialize all months from January to current month
+      for (let i = 0; i <= currentMonth; i++) {
+        const monthKey = `${currentYear}-${String(i + 1).padStart(2, "0")}`;
+        monthlyRevenue[monthKey] = {
+          month: `${monthNames[i]} ${currentYear}`,
+          revenue: 0,
+          transactions: 0,
+        };
+      }
+
+      // Aggregate transactions by month
+      allTransactions.forEach(txn => {
+        const txnDate = new Date(txn.paid_at);
+        const monthKey = `${txnDate.getFullYear()}-${String(txnDate.getMonth() + 1).padStart(2, "0")}`;
+        if (monthlyRevenue[monthKey]) {
+          monthlyRevenue[monthKey].revenue += Number(txn.amount);
+          monthlyRevenue[monthKey].transactions += 1;
+        }
+      });
+
+      // Create Excel workbook
+      const wb = XLSX.utils.book_new();
+
+      // Monthly Summary sheet
+      const summaryData = Object.values(monthlyRevenue).map(m => ({
+        "Month": m.month,
+        "Total Revenue (₦)": m.revenue.toLocaleString(),
+        "Number of Transactions": m.transactions,
+      }));
+
+      // Add totals row
+      const totalRevenue = Object.values(monthlyRevenue).reduce((sum, m) => sum + m.revenue, 0);
+      const totalTransactions = Object.values(monthlyRevenue).reduce((sum, m) => sum + m.transactions, 0);
+      summaryData.push({
+        "Month": "TOTAL",
+        "Total Revenue (₦)": totalRevenue.toLocaleString(),
+        "Number of Transactions": totalTransactions,
+      });
+
+      const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, summarySheet, "Monthly Summary");
+
+      // Detailed Transactions sheet
+      const detailedData = allTransactions.map(txn => ({
+        "Date": new Date(txn.paid_at).toLocaleDateString(),
+        "Time": new Date(txn.paid_at).toLocaleTimeString(),
+        "Customer Name": txn.customer_name,
+        "Email": txn.email,
+        "Type": txn.type,
+        "Plan/Payment Name": txn.plan_name,
+        "Amount (₦)": Number(txn.amount).toLocaleString(),
+        "Reference": txn.paystack_reference || "N/A",
+        "Status": txn.status || "success",
+      }));
+
+      const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
+      XLSX.utils.book_append_sheet(wb, detailedSheet, "All Transactions");
+
+      // Generate and download file
+      const fileName = `${organization.org_name}_Revenue_Report_Jan-${monthNames[currentMonth]}_${currentYear}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success("Revenue report exported successfully");
+    } catch (error) {
+      console.error("Error exporting revenue:", error);
+      toast.error("Failed to export revenue report");
+    } finally {
+      setExportingRevenue(false);
+    }
+  };
   const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   if (loading) {
@@ -579,8 +743,24 @@ const Dashboard = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">Total Revenue</span>
-                        <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
-                          Export
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-auto p-0 text-accent hover:text-accent/80 text-xs gap-1"
+                          onClick={handleExportRevenue}
+                          disabled={exportingRevenue}
+                        >
+                          {exportingRevenue ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Exporting...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-3 w-3" />
+                              Export
+                            </>
+                          )}
                         </Button>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
