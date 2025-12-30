@@ -35,7 +35,7 @@ serve(async (req) => {
       // No body or invalid JSON is fine for default action
     }
 
-    const { action } = requestBody;
+    const { action, orgId: requestedOrgId } = requestBody;
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -46,32 +46,64 @@ serve(async (req) => {
       );
     }
 
-    // Get organization - first check if user is owner, then check membership
+    // Get organization based on requested orgId or user's default org
     let org = null;
-    const { data: ownedOrg } = await supabase
-      .from("organizations")
-      .select("id, paystack_secret_key")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (ownedOrg) {
-      org = ownedOrg;
-    } else {
-      // Check if user is a staff member
-      const { data: membership } = await supabase
-        .from("organization_members")
-        .select("org_id")
+    
+    if (requestedOrgId) {
+      // Verify user has access to the requested org
+      const { data: requestedOrg } = await supabase
+        .from("organizations")
+        .select("id, paystack_secret_key, user_id")
+        .eq("id", requestedOrgId)
+        .maybeSingle();
+      
+      if (requestedOrg) {
+        // Check if user is the owner
+        if (requestedOrg.user_id === user.id) {
+          org = requestedOrg;
+        } else {
+          // Check if user is a staff member of this org
+          const { data: membership } = await supabase
+            .from("organization_members")
+            .select("org_id")
+            .eq("user_id", user.id)
+            .eq("org_id", requestedOrgId)
+            .maybeSingle();
+          
+          if (membership) {
+            org = requestedOrg;
+          }
+        }
+      }
+    }
+    
+    // Fall back to user's default org if no valid requested org
+    if (!org) {
+      const { data: ownedOrg } = await supabase
+        .from("organizations")
+        .select("id, paystack_secret_key")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (membership) {
-        const { data: staffOrg } = await supabase
-          .from("organizations")
-          .select("id, paystack_secret_key")
-          .eq("id", membership.org_id)
+      if (ownedOrg) {
+        org = ownedOrg;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", user.id)
           .maybeSingle();
-        
-        org = staffOrg;
+
+        if (membership) {
+          const { data: staffOrg } = await supabase
+            .from("organizations")
+            .select("id, paystack_secret_key")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          
+          org = staffOrg;
+        }
       }
     }
 
