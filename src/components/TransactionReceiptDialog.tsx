@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Download, Printer, CheckCircle2 } from "lucide-react";
+import { Download, Printer, CheckCircle2, Loader2 } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFReceiptDocument } from "./PDFReceiptDocument";
 import logoImage from "@/assets/logo.png";
 
 interface TransactionDetails {
@@ -83,41 +85,8 @@ export function TransactionReceiptDialog({
     printWindow.print();
   };
 
-  const handleDownload = () => {
-    // Create a simple text receipt
-    const receipt = `
-PAYMENT RECEIPT
-===============
-
-Reference: ${transaction.reference}
-Date: ${new Date(transaction.paid_at).toLocaleString()}
-Status: ${transaction.status.toUpperCase()}
-
-Customer Details:
-Name: ${transaction.customer_name || "N/A"}
-Email: ${transaction.customer_email}
-
-Payment Details:
-Amount: ${transaction.currency} ${(transaction.amount / 100).toLocaleString()}
-Plan: ${transaction.plan || "N/A"}
-
-Organization: ${organization?.org_name || "Recurra"}
-
----
-This is an automatically generated receipt.
-Powered by Recurra
-    `.trim();
-
-    const blob = new Blob([receipt], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `receipt-${transaction.reference}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+  // Format amount - handle both kobo and naira formats
+  const displayAmount = transaction.amount > 1000 ? transaction.amount / 100 : transaction.amount;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,7 +120,7 @@ Powered by Recurra
           <div className="amount-row bg-muted/50 p-4 rounded-xl text-center">
             <p className="amount-label text-xs text-muted-foreground uppercase tracking-wider">Amount Paid</p>
             <p className="amount text-2xl font-bold">
-              {transaction.currency} {(transaction.amount / 100).toLocaleString()}
+              {transaction.currency} {displayAmount.toLocaleString()}
             </p>
           </div>
 
@@ -205,10 +174,36 @@ Powered by Recurra
             <Printer className="h-4 w-4" />
             Print
           </Button>
-          <Button className="flex-1 gap-2" onClick={handleDownload}>
-            <Download className="h-4 w-4" />
-            Download
-          </Button>
+          <PDFDownloadLink
+            document={
+              <PDFReceiptDocument
+                reference={transaction.reference}
+                amount={displayAmount}
+                currency={transaction.currency}
+                status={transaction.status}
+                customerName={transaction.customer_name}
+                customerEmail={transaction.customer_email}
+                paidAt={transaction.paid_at}
+                plan={transaction.plan}
+                organizationName={organization?.org_name || "Recurra"}
+                organizationEmail={organization?.email}
+                organizationLogo={organization?.logo_url}
+              />
+            }
+            fileName={`receipt-${transaction.reference}.pdf`}
+            className="flex-1"
+          >
+            {({ loading }) => (
+              <Button className="w-full gap-2" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Download PDF
+              </Button>
+            )}
+          </PDFDownloadLink>
         </div>
       </DialogContent>
     </Dialog>

@@ -20,10 +20,14 @@ import {
   User,
   Menu,
   X,
-  RotateCcw
+  RotateCcw,
+  FileText,
+  Download
 } from "lucide-react";
 import logoImage from "@/assets/logo.png";
 import { RefundRequestDialog } from "@/components/RefundRequestDialog";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFReceiptDocument } from "@/components/PDFReceiptDocument";
 
 interface Organization {
   id: string;
@@ -46,8 +50,10 @@ interface TransactionResult {
   amount: number;
   status: string;
   customer_email: string;
+  customer_name?: string;
   paid_at: string | null;
   plan_name?: string;
+  currency?: string;
 }
 
 const UserDashboard = () => {
@@ -160,8 +166,10 @@ const UserDashboard = () => {
           amount: data.transaction.amount / 100,
           status: data.transaction.status,
           customer_email: data.transaction.customer_email || "N/A",
+          customer_name: data.transaction.customer_name || "N/A",
           paid_at: data.transaction.paid_at,
           plan_name: data.transaction.plan,
+          currency: data.transaction.currency || "NGN",
         });
       } else {
         toast.error(data.message || data.error || "Transaction not found");
@@ -492,6 +500,40 @@ const UserDashboard = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* PDF Receipt Download Button */}
+                  {transactionResult.status === "success" && transactionResult.paid_at && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <PDFDownloadLink
+                        document={
+                          <PDFReceiptDocument
+                            reference={transactionResult.reference}
+                            amount={transactionResult.amount}
+                            currency={transactionResult.currency || "NGN"}
+                            status={transactionResult.status}
+                            customerName={transactionResult.customer_name || "N/A"}
+                            customerEmail={transactionResult.customer_email}
+                            paidAt={transactionResult.paid_at}
+                            plan={transactionResult.plan_name || "N/A"}
+                            organizationName="Recurra"
+                          />
+                        }
+                        fileName={`receipt-${transactionResult.reference}.pdf`}
+                        className="w-full"
+                      >
+                        {({ loading }) => (
+                          <Button className="w-full gap-2" disabled={loading}>
+                            {loading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                            Download PDF Receipt
+                          </Button>
+                        )}
+                      </PDFDownloadLink>
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
