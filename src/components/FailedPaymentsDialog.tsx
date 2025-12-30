@@ -25,6 +25,7 @@ interface FailedPayment {
   retry_count: number;
   last_retry_at: string | null;
   status: string;
+  reference: string;
 }
 
 interface FailedPaymentsDialogProps {
@@ -42,63 +43,61 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get organization
-      let orgId = null;
+      // Get organization with Paystack keys
+      let org = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id")
+        .select("id, paystack_secret_key")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (ownedOrg) {
-        orgId = ownedOrg.id;
+        org = ownedOrg;
       } else {
         const { data: membership } = await supabase
           .from("organization_members")
           .select("org_id")
           .eq("user_id", user.id)
           .maybeSingle();
-        if (membership) orgId = membership.org_id;
+        if (membership) {
+          const { data: memberOrg } = await supabase
+            .from("organizations")
+            .select("id, paystack_secret_key")
+            .eq("id", membership.org_id)
+            .maybeSingle();
+          org = memberOrg;
+        }
       }
 
-      if (!orgId) return;
+      if (!org?.paystack_secret_key) {
+        toast.error("Paystack keys not configured");
+        return;
+      }
 
-      // Fetch subscribers with failed payments for this org's plans
-      // Note: failure_reason column may not exist in older schemas
-      const { data: subscribers, error } = await supabase
-        .from("subscribers")
-        .select(`
-          id,
-          email,
-          customer_name,
-          amount,
-          payment_failed_at,
-          retry_count,
-          last_retry_at,
-          status,
-          subscription_plans!inner (
-            id,
-            name,
-            org_id
-          )
-        `)
-        .eq("subscription_plans.org_id", orgId)
-        .not("payment_failed_at", "is", null)
-        .order("payment_failed_at", { ascending: false });
+      // Fetch failed transactions directly from Paystack
+      const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: { 
+          orgId: org.id, 
+          action: "failed_transactions" 
+        },
+      });
 
       if (error) throw error;
 
-      const payments: FailedPayment[] = (subscribers || []).map((sub: any) => ({
-        id: sub.id,
-        email: sub.email,
-        customer_name: sub.customer_name,
-        amount: sub.amount,
-        plan_name: sub.subscription_plans.name,
-        failure_reason: getDefaultFailureReason(sub.status, sub.retry_count),
-        failed_at: sub.payment_failed_at,
-        retry_count: sub.retry_count || 0,
-        last_retry_at: sub.last_retry_at,
-        status: sub.status,
+      const payments: FailedPayment[] = (data?.failedTransactions || []).map((txn: any) => ({
+        id: txn.id?.toString() || txn.reference,
+        email: txn.customer?.email || "Unknown",
+        customer_name: txn.customer?.first_name 
+          ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim()
+          : txn.metadata?.customer_name || null,
+        amount: txn.amount / 100, // Convert from kobo to naira
+        plan_name: txn.plan?.name || txn.metadata?.plan_name || "One Time Payment",
+        failure_reason: txn.gateway_response || txn.message || getDefaultFailureReason(txn.status, 0),
+        failed_at: txn.created_at || txn.transaction_date,
+        retry_count: 0,
+        last_retry_at: null,
+        status: txn.status,
+        reference: txn.reference,
       }));
 
       setFailedPayments(payments);
@@ -110,8 +109,10 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
     }
   };
 
-  // Helper to determine failure reason based on status and retry count
+  // Helper to determine failure reason based on status
   const getDefaultFailureReason = (status: string, retryCount: number): string => {
+    if (status === "abandoned") return "Customer abandoned checkout";
+    if (status === "failed") return "Payment failed - Card declined or insufficient funds";
     if (status === "cancelled") return "Subscription cancelled by user";
     if (status === "non_renewing") return "Subscription set to not renew";
     if (retryCount >= 3) return "Maximum retry attempts reached - Card declined";
@@ -126,6 +127,12 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
   }, [open]);
 
   const getStatusBadge = (status: string, retryCount: number) => {
+    if (status === "abandoned") {
+      return <Badge variant="secondary">Abandoned</Badge>;
+    }
+    if (status === "failed") {
+      return <Badge variant="destructive">Failed</Badge>;
+    }
     if (status === "cancelled") {
       return <Badge variant="destructive">Cancelled</Badge>;
     }
@@ -136,7 +143,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
       return <Badge variant="destructive">Max Retries</Badge>;
     }
     return <Badge variant="outline" className="border-yellow-500 text-yellow-600">Retry {retryCount}/3</Badge>;
-  };
+  }
 
   const getFailureIcon = (reason: string) => {
     if (reason.toLowerCase().includes("insufficient")) {
