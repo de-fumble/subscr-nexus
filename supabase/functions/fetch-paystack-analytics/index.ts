@@ -288,22 +288,48 @@ serve(async (req) => {
       const enrichedFailedTransactions = failedTransactions.map((txn: any) => {
         let planName = null;
         
-        // Try to find plan from subscription
-        if (txn.customer) {
+        // 1. Try to get plan name directly from transaction's plan object
+        if (txn.plan?.name) {
+          planName = txn.plan.name;
+        }
+        
+        // 2. Try plan_object if exists
+        if (!planName && txn.plan_object?.name) {
+          planName = txn.plan_object.name;
+        }
+        
+        // 3. Try to match plan_code from transaction to org plans
+        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+        if (!planName && txnPlanCode && planCodeToName[txnPlanCode]) {
+          planName = planCodeToName[txnPlanCode];
+        }
+        
+        // 4. Try to find plan from subscription using subscription_code
+        if (!planName && txn.subscription_code) {
+          const matchingSub = orgSubscriptions.find(
+            (sub: any) => sub.subscription_code === txn.subscription_code
+          );
+          if (matchingSub?.plan?.name) {
+            planName = matchingSub.plan.name;
+          }
+        }
+        
+        // 5. Try to find plan from subscription using customer_code
+        if (!planName && txn.customer?.customer_code) {
           const customerSub = orgSubscriptions.find(
             (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
           );
-          if (customerSub?.plan) {
+          if (customerSub?.plan?.name) {
             planName = customerSub.plan.name;
           }
         }
         
-        // Try metadata
+        // 6. Try metadata for plan_name
         if (!planName && txn.metadata?.plan_name) {
           planName = txn.metadata.plan_name;
         }
         
-        // Try custom_fields
+        // 7. Try custom_fields for plan_id and match to org plans
         if (!planName && txn.metadata?.custom_fields) {
           const planField = txn.metadata.custom_fields.find(
             (f: any) => f.variable_name === "plan_id"
@@ -314,9 +340,21 @@ serve(async (req) => {
           }
         }
         
+        // 8. Check if it's a one-time payment by metadata or lack of subscription
+        const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
+          txn.metadata?.payment_id ||
+          (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
+        
+        if (!planName && isOneTimePayment) {
+          planName = "One-Time Payment";
+        }
+        
+        // Log for debugging
+        console.log(`Transaction ${txn.reference}: planName=${planName}, plan_code=${txnPlanCode}, subscription_code=${txn.subscription_code}`);
+        
         return {
           ...txn,
-          plan: txn.plan || (planName ? { name: planName } : null),
+          plan: { name: planName || "Unknown Plan" },
         };
       });
       
