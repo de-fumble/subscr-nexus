@@ -154,17 +154,17 @@ const UserDashboard = () => {
 
       if (error) throw error;
 
-      if (data.status === "success") {
+      if (data.transaction) {
         setTransactionResult({
-          reference: data.data.reference,
-          amount: data.data.amount / 100,
-          status: data.data.status,
-          customer_email: data.data.customer?.email || "N/A",
-          paid_at: data.data.paid_at,
-          plan_name: data.data.plan?.name,
+          reference: data.transaction.reference,
+          amount: data.transaction.amount / 100,
+          status: data.transaction.status,
+          customer_email: data.transaction.customer_email || "N/A",
+          paid_at: data.transaction.paid_at,
+          plan_name: data.transaction.plan,
         });
       } else {
-        toast.error(data.message || "Transaction not found");
+        toast.error(data.message || data.error || "Transaction not found");
       }
     } catch (error: any) {
       console.error("Error verifying transaction:", error);

@@ -45,6 +45,7 @@ serve(async (req) => {
 
     // Get organization - check if owner first, then staff
     let org = null;
+    let paystackSecretKey = null;
     
     const { data: ownedOrg } = await supabase
       .from("organizations")
@@ -54,6 +55,7 @@ serve(async (req) => {
 
     if (ownedOrg) {
       org = ownedOrg;
+      paystackSecretKey = org.paystack_secret_key;
     } else {
       // Check if user is a staff member
       const { data: membership } = await supabase
@@ -69,17 +71,15 @@ serve(async (req) => {
           .eq("id", membership.org_id)
           .single();
         org = staffOrg;
+        paystackSecretKey = org?.paystack_secret_key;
       }
     }
 
-    if (!org) {
-      return new Response(
-        JSON.stringify({ error: "Organization not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // For regular users (not org owners/staff), use the platform's Paystack key
+    if (!paystackSecretKey) {
+      paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
     }
-
-    const paystackSecretKey = org.paystack_secret_key || Deno.env.get("PAYSTACK_SECRET_KEY");
+    
     if (!paystackSecretKey) {
       return new Response(
         JSON.stringify({ error: "Paystack not configured" }),
