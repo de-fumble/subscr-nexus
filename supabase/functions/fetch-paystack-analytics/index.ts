@@ -129,13 +129,37 @@ serve(async (req) => {
       .eq("org_id", org.id);
 
     const orgPlanCodes = new Set(orgPlans?.map(p => p.paystack_plan_code) || []);
+    const orgPlanIds = new Set(orgPlans?.map(p => p.id) || []);
     const planCodeToName: { [key: string]: string } = {};
     orgPlans?.forEach(p => {
       planCodeToName[p.paystack_plan_code] = p.name;
     });
 
+    // Get organization's one-time payments for filtering
+    const { data: orgOneTimePayments } = await supabase
+      .from("one_time_payments")
+      .select("id, paystack_reference")
+      .eq("org_id", org.id);
+    
+    const orgOtpIds = new Set(orgOneTimePayments?.map(p => p.id) || []);
+    const orgOtpReferences = new Set(
+      orgOneTimePayments?.filter(p => p.paystack_reference).map(p => p.paystack_reference) || []
+    );
+
+    // Get one-time payment transaction references
+    const { data: orgOtpTransactions } = await supabase
+      .from("one_time_payment_transactions")
+      .select("paystack_reference, payment_id")
+      .in("payment_id", Array.from(orgOtpIds));
+    
+    const orgOtpTxnReferences = new Set(
+      orgOtpTransactions?.map(t => t.paystack_reference) || []
+    );
+
     console.log("Fetching Paystack data for organization:", org.id);
     console.log("Organization plan codes:", Array.from(orgPlanCodes));
+    console.log("Organization plan IDs:", Array.from(orgPlanIds));
+    console.log("Organization OTP IDs:", Array.from(orgOtpIds));
     console.log("Action:", action || "default");
 
     // Fetch all transactions from Paystack with pagination
@@ -203,33 +227,54 @@ serve(async (req) => {
       orgSubscriptions.map((sub: any) => sub.subscription_code).filter(Boolean)
     );
 
-    // Get customer codes from organization's subscriptions
-    const orgCustomerCodes = new Set(
-      orgSubscriptions.map((sub: any) => sub.customer?.customer_code).filter(Boolean)
-    );
-
-    // Filter transactions to only include those related to organization's plans
-    // Be strict: transaction must be linked to org's subscription or have org plan metadata
+    // Filter transactions to only include those STRICTLY related to this organization
+    // This is the key fix - be very strict about what belongs to this org
     const orgTransactions = allTransactions.filter((txn: any) => {
-      // Check if transaction has subscription code matching org's subscriptions
-      const hasOrgSubscription = txn.subscription_code && orgSubscriptionCodes.has(txn.subscription_code);
+      // 1. Check if transaction has subscription code matching org's subscriptions
+      if (txn.subscription_code && orgSubscriptionCodes.has(txn.subscription_code)) {
+        return true;
+      }
       
-      // Check if transaction has plan metadata matching org plans (by local plan ID)
-      const hasPlanMetadata = txn.metadata?.plan_id && 
-        orgPlans?.some(p => p.id === txn.metadata.plan_id);
+      // 2. Check if transaction reference matches org's one-time payment references
+      if (txn.reference && orgOtpReferences.has(txn.reference)) {
+        return true;
+      }
       
-      // Check if transaction has custom_fields with plan_id matching org plans
-      const hasCustomFieldPlan = txn.metadata?.custom_fields?.some(
-        (field: any) => field.variable_name === "plan_id" && 
-          orgPlans?.some(p => p.id === field.value)
-      );
+      // 3. Check if transaction reference matches org's OTP transaction references
+      if (txn.reference && orgOtpTxnReferences.has(txn.reference)) {
+        return true;
+      }
+      
+      // 4. Check if transaction has payment_id metadata matching org's OTP IDs
+      if (txn.metadata?.payment_id && orgOtpIds.has(txn.metadata.payment_id)) {
+        return true;
+      }
+      
+      // 5. Check if transaction has plan_id metadata matching org plans (by local plan ID)
+      if (txn.metadata?.plan_id && orgPlanIds.has(txn.metadata.plan_id)) {
+        return true;
+      }
+      
+      // 6. Check if transaction has custom_fields with plan_id matching org plans
+      if (txn.metadata?.custom_fields) {
+        const planField = txn.metadata.custom_fields.find(
+          (field: any) => field.variable_name === "plan_id"
+        );
+        if (planField?.value && orgPlanIds.has(planField.value)) {
+          return true;
+        }
+      }
+      
+      // 7. Check if transaction plan directly matches org's plan codes
+      const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+      if (txnPlanCode && orgPlanCodes.has(txnPlanCode)) {
+        return true;
+      }
 
-      // Check if customer is ONLY subscribed to this org's plans (stricter check)
-      const isOrgOnlyCustomer = txn.customer && orgCustomerCodes.has(txn.customer.customer_code);
-
-      // Prioritize subscription-based matching, fall back to metadata/customer matching
-      return hasOrgSubscription || hasPlanMetadata || hasCustomFieldPlan || isOrgOnlyCustomer;
+      return false;
     });
+    
+    console.log("Filtered organization transactions:", orgTransactions.length);
 
     // Handle failed_transactions action - return failed/abandoned transactions
     if (action === "failed_transactions") {
