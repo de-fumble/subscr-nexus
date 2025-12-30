@@ -6,13 +6,16 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Key, Save, Shield, Lock } from "lucide-react";
+import { Key, Save, Shield, Lock, FileCheck, Building2 } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 import { BackButton } from "@/components/BackButton";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { PasswordVerificationDialog } from "@/components/PasswordVerificationDialog";
+import { CompanyAccountSection } from "@/components/CompanyAccountSection";
+import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
+import { KYCSection } from "@/components/KYCSection";
 
 export default function DashboardSettings() {
   const navigate = useNavigate();
@@ -28,7 +31,13 @@ export default function DashboardSettings() {
     paystack_public_key: string | null;
     paystack_secret_key: string | null;
     logo_url?: string | null;
+    kyc_verified?: boolean;
+    kyc_submitted_at?: string | null;
+    account_number?: string | null;
+    account_name?: string | null;
+    bank_name?: string | null;
   } | null>(null);
+  const [currentLicense, setCurrentLicense] = useState<any>(null);
   const [publicKey, setPublicKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [userEmail, setUserEmail] = useState<string | undefined>();
@@ -54,7 +63,7 @@ export default function DashboardSettings() {
 
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url")
+        .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -71,7 +80,7 @@ export default function DashboardSettings() {
         if (membership) {
           const { data: memberOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url")
+            .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name")
             .eq("id", membership.org_id)
             .maybeSingle();
           
@@ -86,6 +95,21 @@ export default function DashboardSettings() {
 
       setOrganization(orgData);
       setHasExistingKeys(!!(orgData.paystack_public_key && orgData.paystack_secret_key));
+      
+      // Fetch current license
+      if (orgData) {
+        const { data: licenseData } = await supabase
+          .from("licenses")
+          .select("*")
+          .eq("org_id", orgData.id)
+          .eq("status", "active")
+          .gte("expires_at", new Date().toISOString())
+          .order("expires_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        setCurrentLicense(licenseData);
+      }
       // Don't load keys into form - they should only be updated, not viewed
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -280,6 +304,73 @@ export default function DashboardSettings() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* KYC Status Card */}
+              {organization && !organization.kyc_verified && (
+                <Card className="mt-6 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-amber-500">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                        <FileCheck className="h-6 w-6 text-amber-500" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">Complete Your KYC</CardTitle>
+                        <CardDescription>
+                          {organization.kyc_submitted_at 
+                            ? "Your KYC is pending review" 
+                            : "Unlock full platform access by completing your KYC verification"}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        onClick={() => navigate("/dashboard/profile")}
+                        className="bg-amber-500 hover:bg-amber-600"
+                      >
+                        {organization.kyc_submitted_at ? "View Status" : "Complete KYC"}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {/* License Status Card */}
+              {organization && (
+                <Card className={`mt-6 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 ${currentLicense ? 'border-l-green-500' : 'border-l-muted'}`}>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${currentLicense ? 'bg-green-500/10' : 'bg-muted'}`}>
+                        <Key className={`h-6 w-6 ${currentLicense ? 'text-green-500' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">
+                          {currentLicense ? 'License Active' : 'No Active License'}
+                        </CardTitle>
+                        <CardDescription>
+                          {currentLicense 
+                            ? `Your ${currentLicense.plan_type} license expires on ${new Date(currentLicense.expires_at).toLocaleDateString()}`
+                            : 'Request a license to unlock premium features'}
+                        </CardDescription>
+                      </div>
+                      {!currentLicense && (
+                        <LicenseRequestDialog orgId={organization.id}>
+                          <Button variant="outline">
+                            Request License
+                          </Button>
+                        </LicenseRequestDialog>
+                      )}
+                    </div>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {/* Company Bank Account Section */}
+              {organization && (
+                <div className="mt-6">
+                  <CompanyAccountSection 
+                    organization={organization} 
+                    onUpdate={fetchSettings}
+                  />
+                </div>
+              )}
             </div>
           </main>
         </SidebarInset>

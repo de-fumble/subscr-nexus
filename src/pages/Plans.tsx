@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BackButton } from "@/components/BackButton";
+import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 
 interface Plan {
   id: string;
@@ -302,6 +303,16 @@ const Plans = () => {
               <div className="mb-6">
                 <p className="text-muted-foreground">Manage your recurring payment plans</p>
               </div>
+
+              {/* Plans Hub Link Card */}
+              {organization && (
+                <div className="mb-6">
+                  <PlansHubLinkCard 
+                    orgId={organization.id} 
+                    orgName={organization.org_name}
+                  />
+                </div>
+              )}
 
               {plans.length === 0 ? (
                 <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
