@@ -27,6 +27,16 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Parse request body
+    let requestBody: { orgId?: string; action?: string } = {};
+    try {
+      requestBody = await req.json();
+    } catch {
+      // No body or invalid JSON is fine for default action
+    }
+
+    const { action } = requestBody;
+
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -94,6 +104,7 @@ serve(async (req) => {
 
     console.log("Fetching Paystack data for organization:", org.id);
     console.log("Organization plan codes:", Array.from(orgPlanCodes));
+    console.log("Action:", action || "default");
 
     // Fetch all transactions from Paystack with pagination
     let allTransactions: any[] = [];
@@ -187,6 +198,60 @@ serve(async (req) => {
       // Prioritize subscription-based matching, fall back to metadata/customer matching
       return hasOrgSubscription || hasPlanMetadata || hasCustomFieldPlan || isOrgOnlyCustomer;
     });
+
+    // Handle failed_transactions action - return failed/abandoned transactions
+    if (action === "failed_transactions") {
+      const failedTransactions = orgTransactions.filter(
+        (txn: any) => txn.status === "failed" || txn.status === "abandoned"
+      );
+      
+      console.log("Failed transactions found:", failedTransactions.length);
+      
+      // Enrich with plan names
+      const enrichedFailedTransactions = failedTransactions.map((txn: any) => {
+        let planName = null;
+        
+        // Try to find plan from subscription
+        if (txn.customer) {
+          const customerSub = orgSubscriptions.find(
+            (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
+          );
+          if (customerSub?.plan) {
+            planName = customerSub.plan.name;
+          }
+        }
+        
+        // Try metadata
+        if (!planName && txn.metadata?.plan_name) {
+          planName = txn.metadata.plan_name;
+        }
+        
+        // Try custom_fields
+        if (!planName && txn.metadata?.custom_fields) {
+          const planField = txn.metadata.custom_fields.find(
+            (f: any) => f.variable_name === "plan_id"
+          );
+          if (planField) {
+            const plan = orgPlans?.find(p => p.id === planField.value);
+            if (plan) planName = plan.name;
+          }
+        }
+        
+        return {
+          ...txn,
+          plan: txn.plan || (planName ? { name: planName } : null),
+        };
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          failedTransactions: enrichedFailedTransactions,
+          totalFailed: failedTransactions.filter((t: any) => t.status === "failed").length,
+          totalAbandoned: failedTransactions.filter((t: any) => t.status === "abandoned").length,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log("Organization transactions:", orgTransactions.length);
 
