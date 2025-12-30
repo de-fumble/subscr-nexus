@@ -285,6 +285,79 @@ serve(async (req) => {
       );
     }
 
+    // Handle export_transactions action - return all successful transactions for export
+    if (action === "export_transactions") {
+      const successfulTransactions = orgTransactions.filter(
+        (txn: any) => txn.status === "success"
+      );
+      
+      console.log("Successful transactions for export:", successfulTransactions.length);
+      
+      // Enrich with plan names and format for export
+      const enrichedTransactions = successfulTransactions.map((txn: any) => {
+        let planName = null;
+        let customerName = txn.customer?.first_name 
+          ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim()
+          : null;
+        let email = txn.customer?.email || null;
+        
+        // Try to find plan from subscription
+        if (txn.customer) {
+          const customerSub = orgSubscriptions.find(
+            (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
+          );
+          if (customerSub?.plan) {
+            planName = customerSub.plan.name;
+          }
+        }
+        
+        // Try metadata for plan name
+        if (!planName && txn.metadata?.plan_name) {
+          planName = txn.metadata.plan_name;
+        }
+        
+        // Try custom_fields for plan
+        if (!planName && txn.metadata?.custom_fields) {
+          const planField = txn.metadata.custom_fields.find(
+            (f: any) => f.variable_name === "plan_id"
+          );
+          if (planField) {
+            const plan = orgPlans?.find(p => p.id === planField.value);
+            if (plan) planName = plan.name;
+          }
+        }
+        
+        // Try metadata for customer name
+        if (!customerName && txn.metadata?.customer_name) {
+          customerName = txn.metadata.customer_name;
+        }
+        
+        // Determine transaction type
+        const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
+          (!txn.subscription_code && !txn.plan);
+        
+        return {
+          paid_at: txn.paid_at || txn.created_at,
+          created_at: txn.created_at,
+          customer_name: customerName || "Unknown",
+          email: email || "Unknown",
+          type: isOneTimePayment ? "One Time Payment" : "Subscription",
+          plan_name: planName || (isOneTimePayment ? "One Time Payment" : "Unknown Plan"),
+          amount: txn.amount / 100, // Convert from kobo to naira
+          reference: txn.reference,
+          status: txn.status,
+        };
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          transactions: enrichedTransactions,
+          totalTransactions: enrichedTransactions.length,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("Organization transactions:", orgTransactions.length);
 
     // Calculate revenue from successful payments only

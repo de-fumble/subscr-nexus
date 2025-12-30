@@ -559,86 +559,26 @@ const Dashboard = () => {
     try {
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth();
-      const startDate = new Date(currentYear, 0, 1); // January 1st of current year
-      const endDate = new Date(); // Current date
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-      // Fetch subscription transactions
-      const { data: planIds } = await supabase
-        .from("subscription_plans")
-        .select("id, name")
-        .eq("org_id", organization.id);
+      // Fetch transaction data from Paystack via edge function
+      const { data: paystackData, error: paystackError } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: { 
+          orgId: organization.id, 
+          action: "export_transactions" 
+        },
+      });
 
-      const planIdList = planIds?.map(p => p.id) || [];
-      const planNameMap = new Map(planIds?.map(p => [p.id, p.name]) || []);
-
-      let subscriptionTransactions: any[] = [];
-      if (planIdList.length > 0) {
-        const { data: subscribers } = await supabase
-          .from("subscribers")
-          .select("id, plan_id, customer_name, email")
-          .in("plan_id", planIdList);
-
-        const subscriberIds = subscribers?.map(s => s.id) || [];
-        const subscriberMap = new Map(subscribers?.map(s => [s.id, s]) || []);
-
-        if (subscriberIds.length > 0) {
-          const { data: txns } = await supabase
-            .from("transactions")
-            .select("amount, paid_at, subscriber_id, paystack_reference, status")
-            .in("subscriber_id", subscriberIds)
-            .eq("status", "success")
-            .gte("paid_at", startDate.toISOString())
-            .lte("paid_at", endDate.toISOString())
-            .order("paid_at", { ascending: true });
-
-          subscriptionTransactions = (txns || []).map(t => {
-            const subscriber = subscriberMap.get(t.subscriber_id);
-            return {
-              ...t,
-              type: "Subscription",
-              plan_name: subscriber ? planNameMap.get(subscriber.plan_id) : "Unknown",
-              customer_name: subscriber?.customer_name || "Unknown",
-              email: subscriber?.email || "Unknown",
-            };
-          });
-        }
+      if (paystackError) {
+        console.error("Paystack error:", paystackError);
+        throw paystackError;
       }
 
-      // Fetch one-time payment transactions
-      const { data: otpPayments } = await supabase
-        .from("one_time_payments")
-        .select("id, name")
-        .eq("org_id", organization.id);
-
-      const otpIdList = otpPayments?.map(p => p.id) || [];
-      const otpNameMap = new Map(otpPayments?.map(p => [p.id, p.name]) || []);
-
-      let oneTimeTransactions: any[] = [];
-      if (otpIdList.length > 0) {
-        const { data: otpTxns } = await supabase
-          .from("one_time_payment_transactions")
-          .select("amount, paid_at, payment_id, paystack_reference, payer_name, payer_email")
-          .in("payment_id", otpIdList)
-          .gte("paid_at", startDate.toISOString())
-          .lte("paid_at", endDate.toISOString())
-          .order("paid_at", { ascending: true });
-
-        oneTimeTransactions = (otpTxns || []).map(t => ({
-          ...t,
-          type: "One Time Payment",
-          plan_name: otpNameMap.get(t.payment_id) || "One Time Payment",
-          customer_name: t.payer_name || "Unknown",
-          email: t.payer_email || "Unknown",
-          status: "success",
-        }));
-      }
-
-      // Combine all transactions
-      const allTransactions = [...subscriptionTransactions, ...oneTimeTransactions];
+      const allTransactions = paystackData?.transactions || [];
+      console.log("Fetched transactions for export:", allTransactions.length);
 
       // Group by month for summary
       const monthlyRevenue: { [key: string]: { month: string; revenue: number; transactions: number } } = {};
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
       // Initialize all months from January to current month
       for (let i = 0; i <= currentMonth; i++) {
@@ -651,12 +591,17 @@ const Dashboard = () => {
       }
 
       // Aggregate transactions by month
-      allTransactions.forEach(txn => {
-        const txnDate = new Date(txn.paid_at);
-        const monthKey = `${txnDate.getFullYear()}-${String(txnDate.getMonth() + 1).padStart(2, "0")}`;
-        if (monthlyRevenue[monthKey]) {
-          monthlyRevenue[monthKey].revenue += Number(txn.amount);
-          monthlyRevenue[monthKey].transactions += 1;
+      allTransactions.forEach((txn: any) => {
+        const txnDate = new Date(txn.paid_at || txn.created_at);
+        const txnYear = txnDate.getFullYear();
+        
+        // Only include transactions from current year
+        if (txnYear === currentYear) {
+          const monthKey = `${txnYear}-${String(txnDate.getMonth() + 1).padStart(2, "0")}`;
+          if (monthlyRevenue[monthKey]) {
+            monthlyRevenue[monthKey].revenue += Number(txn.amount);
+            monthlyRevenue[monthKey].transactions += 1;
+          }
         }
       });
 
@@ -682,18 +627,37 @@ const Dashboard = () => {
       const summarySheet = XLSX.utils.json_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(wb, summarySheet, "Monthly Summary");
 
-      // Detailed Transactions sheet
-      const detailedData = allTransactions.map(txn => ({
-        "Date": new Date(txn.paid_at).toLocaleDateString(),
-        "Time": new Date(txn.paid_at).toLocaleTimeString(),
-        "Customer Name": txn.customer_name,
-        "Email": txn.email,
-        "Type": txn.type,
-        "Plan/Payment Name": txn.plan_name,
+      // Detailed Transactions sheet - filter for current year
+      const currentYearTransactions = allTransactions.filter((txn: any) => {
+        const txnDate = new Date(txn.paid_at || txn.created_at);
+        return txnDate.getFullYear() === currentYear;
+      });
+
+      const detailedData = currentYearTransactions.map((txn: any) => ({
+        "Date": new Date(txn.paid_at || txn.created_at).toLocaleDateString(),
+        "Time": new Date(txn.paid_at || txn.created_at).toLocaleTimeString(),
+        "Customer Name": txn.customer_name || "Unknown",
+        "Email": txn.email || "Unknown",
+        "Type": txn.type || "Subscription",
+        "Plan/Payment Name": txn.plan_name || "Unknown",
         "Amount (₦)": Number(txn.amount).toLocaleString(),
-        "Reference": txn.paystack_reference || "N/A",
+        "Reference": txn.reference || "N/A",
         "Status": txn.status || "success",
       }));
+
+      if (detailedData.length === 0) {
+        detailedData.push({
+          "Date": "No transactions found",
+          "Time": "",
+          "Customer Name": "",
+          "Email": "",
+          "Type": "",
+          "Plan/Payment Name": "",
+          "Amount (₦)": "",
+          "Reference": "",
+          "Status": "",
+        });
+      }
 
       const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
       XLSX.utils.book_append_sheet(wb, detailedSheet, "All Transactions");
