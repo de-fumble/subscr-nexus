@@ -109,12 +109,25 @@ serve(async (req) => {
 
     const txn = verifyData.data;
     
+    // Log full transaction data for debugging
+    console.log("Full Paystack transaction data:", JSON.stringify(txn, null, 2));
+    
     // Determine the plan name - check various sources
     let planName = "N/A";
+    
+    // Check plan object first
     if (txn.plan?.name) {
       planName = txn.plan.name;
+      console.log("Plan name from txn.plan.name:", planName);
+    } else if (txn.plan_object?.name) {
+      planName = txn.plan_object.name;
+      console.log("Plan name from txn.plan_object.name:", planName);
     } else if (txn.metadata?.plan_name) {
       planName = txn.metadata.plan_name;
+      console.log("Plan name from metadata.plan_name:", planName);
+    } else if (txn.metadata?.planName) {
+      planName = txn.metadata.planName;
+      console.log("Plan name from metadata.planName:", planName);
     } else if (txn.metadata?.custom_fields) {
       // Check custom fields for plan info
       const planField = txn.metadata.custom_fields.find((f: { variable_name: string }) => 
@@ -122,18 +135,66 @@ serve(async (req) => {
       );
       if (planField?.value) {
         planName = planField.value;
+        console.log("Plan name from custom_fields:", planName);
+      }
+    }
+    
+    // If still no plan name and there's a plan_code, try to fetch from our database
+    const planCode = txn.plan?.plan_code || txn.plan_object?.plan_code || txn.metadata?.plan_code;
+    if (planName === "N/A" && planCode) {
+      console.log("Fetching plan from database with code:", planCode);
+      
+      // Use service role to query subscription_plans table
+      const serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      
+      const { data: planData } = await serviceClient
+        .from("subscription_plans")
+        .select("name")
+        .eq("paystack_plan_code", planCode)
+        .maybeSingle();
+      
+      if (planData?.name) {
+        planName = planData.name;
+        console.log("Plan name from database:", planName);
       }
     }
     
     // Check if it's a one-time payment (no subscription/plan code)
-    const isOneTimePayment = !txn.plan && !txn.plan_object && 
+    const isOneTimePayment = !txn.plan && !txn.plan_object && !planCode &&
       (txn.metadata?.payment_type === "one_time" || 
        txn.metadata?.type === "one_time_payment" ||
+       txn.metadata?.payment_id || // one-time payments have payment_id in metadata
        (!txn.authorization?.reusable && !txn.plan));
     
     if (isOneTimePayment && planName === "N/A") {
-      planName = "One Time Payment";
+      // Try to get the one-time payment name from our database
+      if (txn.metadata?.payment_id) {
+        const serviceClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+        
+        const { data: paymentData } = await serviceClient
+          .from("one_time_payments")
+          .select("name")
+          .eq("id", txn.metadata.payment_id)
+          .maybeSingle();
+        
+        if (paymentData?.name) {
+          planName = paymentData.name;
+          console.log("Plan name from one_time_payments:", planName);
+        } else {
+          planName = "One Time Payment";
+        }
+      } else {
+        planName = "One Time Payment";
+      }
     }
+    
+    console.log("Final plan name:", planName);
 
     const transaction = {
       reference: txn.reference,
