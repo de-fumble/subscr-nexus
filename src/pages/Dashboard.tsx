@@ -9,12 +9,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
-import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
-import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -983,102 +980,6 @@ const Dashboard = () => {
                 </div>
               </Card>
 
-              {/* Quick Status Section - Moved below */}
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {/* KYC Status Card */}
-                {organization && !organization.kyc_verified && (
-                  <Card className="p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-amber-500">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                        <FileCheck className="h-5 w-5 text-amber-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground text-sm">Complete Your KYC</h3>
-                        <p className="text-xs text-muted-foreground truncate">
-                          Unlock full platform access
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate("/dashboard/profile")}
-                        className="shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
-                      >
-                        Complete
-                      </Button>
-                    </div>
-                  </Card>
-                )}
-
-                {/* License Status Card */}
-                {organization && canRequestLicense && (
-                  <Card className={`p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 ${currentLicense ? 'border-l-green-500' : 'border-l-muted-foreground'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${currentLicense ? 'bg-green-500/10' : 'bg-muted'}`}>
-                        <Key className={`h-5 w-5 ${currentLicense ? 'text-green-500' : 'text-muted-foreground'}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground text-sm">
-                          {currentLicense ? 'License Active' : 'No License'}
-                        </h3>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {currentLicense 
-                            ? `Expires ${new Date(currentLicense.expires_at).toLocaleDateString()}`
-                            : 'Request a license to get started'}
-                        </p>
-                      </div>
-                      {!currentLicense && (
-                        <LicenseRequestDialog orgId={organization.id}>
-                          <Button variant="ghost" size="sm" className="shrink-0">
-                            Request
-                          </Button>
-                        </LicenseRequestDialog>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                {/* Balance Overview Card */}
-                {organization && canAccessSettings && (
-                  <Card className="p-4 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-accent">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                        <Wallet className="h-5 w-5 text-accent" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground text-sm">Available Balance</h3>
-                        <p className="text-lg font-bold text-green-600">
-                          ₦{availableBalance.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground shrink-0">
-                        <div>Pending: ₦{pendingPayouts.toLocaleString()}</div>
-                        <div>Paid: ₦{totalPaidOut.toLocaleString()}</div>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-              </div>
-
-              {/* Plans Hub Link Card */}
-              {organization && (
-                <div className="mt-6">
-                  <PlansHubLinkCard 
-                    orgId={organization.id} 
-                    orgName={organization.org_name}
-                  />
-                </div>
-              )}
-
-              {/* Company Account Section - Only show to owners */}
-              {organization && canAccessSettings && (
-                <div className="mt-6">
-                  <CompanyAccountSection 
-                    organization={organization} 
-                    onUpdate={fetchDashboardData}
-                  />
-                </div>
-              )}
             </div>
           </main>
         </SidebarInset>
