@@ -143,13 +143,17 @@ serve(async (req) => {
       const customer = sub.customer || {};
       const plan = sub.plan || {};
       const fullName = [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "N/A";
+      
+      // Paystack returns amounts in kobo, convert to naira by dividing by 100
+      const amountInKobo = typeof sub.amount === "number" ? sub.amount : (plan.amount ?? 0);
+      const amountInNaira = amountInKobo / 100;
 
       return {
         // Use subscription_code as a stable id for UI purposes
         id: sub.subscription_code,
         email: customer.email || "",
         customer_name: fullName,
-        amount: typeof sub.amount === "number" ? sub.amount : (plan.amount ?? 0),
+        amount: amountInNaira,
         status: sub.status || "",
         paystack_subscription_code: sub.subscription_code,
         paystack_customer_code: customer.customer_code || "",
