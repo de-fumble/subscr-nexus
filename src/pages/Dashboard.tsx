@@ -557,17 +557,36 @@ const Dashboard = () => {
 
     setExportingRevenue(true);
     try {
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth();
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const now = new Date();
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
 
-      // Fetch transaction data from Paystack via edge function
-      const { data: paystackData, error: paystackError } = await supabase.functions.invoke("fetch-paystack-analytics", {
-        body: { 
-          orgId: organization.id, 
-          action: "export_transactions" 
-        },
-      });
+      // Export window: last 12 months (including current month)
+      const windowStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      const windowEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      // Fetch transaction data from Paystack via backend function
+      const { data: paystackData, error: paystackError } = await supabase.functions.invoke(
+        "fetch-paystack-analytics",
+        {
+          body: {
+            orgId: organization.id,
+            action: "export_transactions",
+          },
+        }
+      );
 
       if (paystackError) {
         console.error("Paystack error:", paystackError);
@@ -577,31 +596,35 @@ const Dashboard = () => {
       const allTransactions = paystackData?.transactions || [];
       console.log("Fetched transactions for export:", allTransactions.length);
 
-      // Group by month for summary
-      const monthlyRevenue: { [key: string]: { month: string; revenue: number; transactions: number } } = {};
+      // Keep only transactions in the last 12 months window
+      const windowTransactions = allTransactions.filter((txn: any) => {
+        const txnDate = new Date(txn.paid_at || txn.created_at);
+        return txnDate >= windowStart && txnDate < windowEnd;
+      });
 
-      // Initialize all months from January to current month
-      for (let i = 0; i <= currentMonth; i++) {
-        const monthKey = `${currentYear}-${String(i + 1).padStart(2, "0")}`;
-        monthlyRevenue[monthKey] = {
-          month: `${monthNames[i]} ${currentYear}`,
+      // Group by month for summary
+      const monthlyRevenue: {
+        [key: string]: { month: string; revenue: number; transactions: number };
+      } = {};
+
+      // Initialize months for the last 12 months window
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthlyRevenue[key] = {
+          month: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
           revenue: 0,
           transactions: 0,
         };
       }
 
       // Aggregate transactions by month
-      allTransactions.forEach((txn: any) => {
+      windowTransactions.forEach((txn: any) => {
         const txnDate = new Date(txn.paid_at || txn.created_at);
-        const txnYear = txnDate.getFullYear();
-        
-        // Only include transactions from current year
-        if (txnYear === currentYear) {
-          const monthKey = `${txnYear}-${String(txnDate.getMonth() + 1).padStart(2, "0")}`;
-          if (monthlyRevenue[monthKey]) {
-            monthlyRevenue[monthKey].revenue += Number(txn.amount);
-            monthlyRevenue[monthKey].transactions += 1;
-          }
+        const key = `${txnDate.getFullYear()}-${String(txnDate.getMonth() + 1).padStart(2, "0")}`;
+        if (monthlyRevenue[key]) {
+          monthlyRevenue[key].revenue += Number(txn.amount);
+          monthlyRevenue[key].transactions += 1;
         }
       });
 
@@ -609,53 +632,54 @@ const Dashboard = () => {
       const wb = XLSX.utils.book_new();
 
       // Monthly Summary sheet
-      const summaryData = Object.values(monthlyRevenue).map(m => ({
-        "Month": m.month,
-        "Total Revenue (₦)": m.revenue.toLocaleString(),
+      const summaryData = Object.values(monthlyRevenue).map((m) => ({
+        Month: m.month,
+        "Total Revenue (₦)": m.revenue,
         "Number of Transactions": m.transactions,
       }));
 
       // Add totals row
       const totalRevenue = Object.values(monthlyRevenue).reduce((sum, m) => sum + m.revenue, 0);
-      const totalTransactions = Object.values(monthlyRevenue).reduce((sum, m) => sum + m.transactions, 0);
+      const totalTransactions = Object.values(monthlyRevenue).reduce(
+        (sum, m) => sum + m.transactions,
+        0
+      );
       summaryData.push({
-        "Month": "TOTAL",
-        "Total Revenue (₦)": totalRevenue.toLocaleString(),
+        Month: "TOTAL",
+        "Total Revenue (₦)": totalRevenue,
         "Number of Transactions": totalTransactions,
       });
 
       const summarySheet = XLSX.utils.json_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(wb, summarySheet, "Monthly Summary");
 
-      // Detailed Transactions sheet - filter for current year
-      const currentYearTransactions = allTransactions.filter((txn: any) => {
-        const txnDate = new Date(txn.paid_at || txn.created_at);
-        return txnDate.getFullYear() === currentYear;
+      // Detailed Transactions sheet
+      const detailedData = windowTransactions.map((txn: any) => {
+        const dt = new Date(txn.paid_at || txn.created_at);
+        return {
+          Date: dt.toLocaleDateString(),
+          Time: dt.toLocaleTimeString(),
+          "Customer Name": txn.customer_name || "Unknown",
+          Email: txn.email || "Unknown",
+          Type: txn.type || "Subscription",
+          "Plan/Payment Name": txn.plan_name || "Unknown",
+          "Amount (₦)": Number(txn.amount),
+          Reference: txn.reference || "N/A",
+          Status: txn.status || "success",
+        };
       });
-
-      const detailedData = currentYearTransactions.map((txn: any) => ({
-        "Date": new Date(txn.paid_at || txn.created_at).toLocaleDateString(),
-        "Time": new Date(txn.paid_at || txn.created_at).toLocaleTimeString(),
-        "Customer Name": txn.customer_name || "Unknown",
-        "Email": txn.email || "Unknown",
-        "Type": txn.type || "Subscription",
-        "Plan/Payment Name": txn.plan_name || "Unknown",
-        "Amount (₦)": Number(txn.amount).toLocaleString(),
-        "Reference": txn.reference || "N/A",
-        "Status": txn.status || "success",
-      }));
 
       if (detailedData.length === 0) {
         detailedData.push({
-          "Date": "No transactions found",
-          "Time": "",
+          Date: "No transactions found",
+          Time: "",
           "Customer Name": "",
-          "Email": "",
-          "Type": "",
+          Email: "",
+          Type: "",
           "Plan/Payment Name": "",
           "Amount (₦)": "",
-          "Reference": "",
-          "Status": "",
+          Reference: "",
+          Status: "",
         });
       }
 
@@ -663,7 +687,9 @@ const Dashboard = () => {
       XLSX.utils.book_append_sheet(wb, detailedSheet, "All Transactions");
 
       // Generate and download file
-      const fileName = `${organization.org_name}_Revenue_Report_Jan-${monthNames[currentMonth]}_${currentYear}.xlsx`;
+      const startLabel = `${monthNames[windowStart.getMonth()]}_${windowStart.getFullYear()}`;
+      const endLabel = `${monthNames[now.getMonth()]}_${now.getFullYear()}`;
+      const fileName = `${organization.org_name}_Revenue_Report_${startLabel}-to-${endLabel}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
       toast.success("Revenue report exported successfully");
