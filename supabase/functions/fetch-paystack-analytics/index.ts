@@ -370,22 +370,105 @@ serve(async (req) => {
 
     // Handle export_transactions action - return all successful transactions for export
     if (action === "export_transactions") {
-      const successfulTransactions = orgTransactions.filter(
+      console.log("Processing export_transactions action for org:", org.id);
+      
+      // Get successful Paystack transactions
+      const successfulPaystackTransactions = orgTransactions.filter(
         (txn: any) => txn.status === "success"
       );
       
-      console.log("Successful transactions for export:", successfulTransactions.length);
+      console.log("Successful Paystack transactions for export:", successfulPaystackTransactions.length);
       
-      // Enrich with plan names and format for export
-      const enrichedTransactions = successfulTransactions.map((txn: any) => {
+      // Also fetch transactions from local Supabase database for completeness
+      const planIds = orgPlans?.map(p => p.id) || [];
+      let localSubscriptionTransactions: any[] = [];
+      let localOtpTransactions: any[] = [];
+      
+      // Fetch local subscription transactions
+      if (planIds.length > 0) {
+        const { data: subscribers } = await supabase
+          .from("subscribers")
+          .select("id, email, customer_name, plan_id")
+          .in("plan_id", planIds);
+        
+        const subscriberIds = subscribers?.map(s => s.id) || [];
+        const subscriberMap = new Map(subscribers?.map(s => [s.id, s]) || []);
+        
+        if (subscriberIds.length > 0) {
+          const { data: txns } = await supabase
+            .from("transactions")
+            .select("*")
+            .in("subscriber_id", subscriberIds)
+            .eq("status", "success");
+          
+          localSubscriptionTransactions = (txns || []).map(txn => {
+            const subscriber = subscriberMap.get(txn.subscriber_id);
+            const plan = orgPlans?.find(p => p.id === subscriber?.plan_id);
+            return {
+              paid_at: txn.paid_at || txn.created_at,
+              created_at: txn.created_at,
+              customer_name: subscriber?.customer_name || "Unknown",
+              email: subscriber?.email || "Unknown",
+              type: "Subscription",
+              plan_name: plan?.name || "Unknown Plan",
+              amount: Number(txn.amount),
+              reference: txn.paystack_reference || "N/A",
+              status: txn.status,
+              source: "local",
+            };
+          });
+        }
+      }
+      
+      console.log("Local subscription transactions:", localSubscriptionTransactions.length);
+      
+      // Fetch local one-time payment transactions
+      const { data: otpPayments } = await supabase
+        .from("one_time_payments")
+        .select("id, name")
+        .eq("org_id", org.id);
+      
+      const otpPaymentIds = otpPayments?.map(p => p.id) || [];
+      const otpPaymentMap = new Map(otpPayments?.map(p => [p.id, p.name]) || []);
+      
+      if (otpPaymentIds.length > 0) {
+        const { data: otpTxns } = await supabase
+          .from("one_time_payment_transactions")
+          .select("*")
+          .in("payment_id", otpPaymentIds);
+        
+        localOtpTransactions = (otpTxns || []).map(txn => ({
+          paid_at: txn.paid_at || txn.created_at,
+          created_at: txn.created_at,
+          customer_name: txn.payer_name || "Unknown",
+          email: txn.payer_email || "Unknown",
+          type: "One-Time Payment",
+          plan_name: otpPaymentMap.get(txn.payment_id) || "One-Time Payment",
+          amount: Number(txn.amount),
+          reference: txn.paystack_reference || "N/A",
+          status: "success",
+          source: "local",
+        }));
+      }
+      
+      console.log("Local OTP transactions:", localOtpTransactions.length);
+      
+      // Enrich Paystack transactions with plan names and format for export
+      const enrichedPaystackTransactions = successfulPaystackTransactions.map((txn: any) => {
         let planName = null;
         let customerName = txn.customer?.first_name 
           ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim()
           : null;
         let email = txn.customer?.email || null;
         
+        // Try to match plan_code from transaction
+        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+        if (txnPlanCode && planCodeToName[txnPlanCode]) {
+          planName = planCodeToName[txnPlanCode];
+        }
+        
         // Try to find plan from subscription
-        if (txn.customer) {
+        if (!planName && txn.customer) {
           const customerSub = orgSubscriptions.find(
             (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
           );
@@ -417,25 +500,56 @@ serve(async (req) => {
         
         // Determine transaction type
         const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
-          (!txn.subscription_code && !txn.plan);
+          txn.metadata?.payment_id ||
+          (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
         
         return {
           paid_at: txn.paid_at || txn.created_at,
           created_at: txn.created_at,
           customer_name: customerName || "Unknown",
           email: email || "Unknown",
-          type: isOneTimePayment ? "One Time Payment" : "Subscription",
-          plan_name: planName || (isOneTimePayment ? "One Time Payment" : "Unknown Plan"),
+          type: isOneTimePayment ? "One-Time Payment" : "Subscription",
+          plan_name: planName || (isOneTimePayment ? "One-Time Payment" : "Unknown Plan"),
           amount: txn.amount / 100, // Convert from kobo to naira
           reference: txn.reference,
           status: txn.status,
+          source: "paystack",
         };
       });
       
+      // Combine all transactions - prioritize Paystack data, dedupe by reference
+      const seenReferences = new Set<string>();
+      const allTransactions: any[] = [];
+      
+      // Add Paystack transactions first (most authoritative)
+      for (const txn of enrichedPaystackTransactions) {
+        if (txn.reference && !seenReferences.has(txn.reference)) {
+          seenReferences.add(txn.reference);
+          allTransactions.push(txn);
+        }
+      }
+      
+      // Add local transactions that aren't already included
+      for (const txn of [...localSubscriptionTransactions, ...localOtpTransactions]) {
+        if (!txn.reference || txn.reference === "N/A" || !seenReferences.has(txn.reference)) {
+          if (txn.reference && txn.reference !== "N/A") {
+            seenReferences.add(txn.reference);
+          }
+          allTransactions.push(txn);
+        }
+      }
+      
+      console.log("Total combined transactions for export:", allTransactions.length);
+      
+      // Sort by date (most recent first)
+      allTransactions.sort((a, b) => 
+        new Date(b.paid_at || b.created_at).getTime() - new Date(a.paid_at || a.created_at).getTime()
+      );
+      
       return new Response(
         JSON.stringify({ 
-          transactions: enrichedTransactions,
-          totalTransactions: enrichedTransactions.length,
+          transactions: allTransactions,
+          totalTransactions: allTransactions.length,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
