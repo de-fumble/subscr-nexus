@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, RefreshCw, User, CreditCard, Calendar, AlertCircle } from "lucide-react";
+import { AlertTriangle, RefreshCw, User, CreditCard, Calendar, AlertCircle, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface FailedPayment {
@@ -36,6 +38,10 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failedPayments, setFailedPayments] = useState<FailedPayment[]>([]);
+  const [searchName, setSearchName] = useState("");
+  const [searchReference, setSearchReference] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const fetchFailedPayments = async () => {
     setLoading(true);
@@ -123,8 +129,55 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
   useEffect(() => {
     if (open) {
       fetchFailedPayments();
+    } else {
+      // Reset filters when dialog closes
+      setSearchName("");
+      setSearchReference("");
+      setDateFrom("");
+      setDateTo("");
     }
   }, [open]);
+
+  const filteredPayments = useMemo(() => {
+    return failedPayments.filter((payment) => {
+      // Filter by name/email
+      if (searchName) {
+        const nameMatch = payment.customer_name?.toLowerCase().includes(searchName.toLowerCase());
+        const emailMatch = payment.email.toLowerCase().includes(searchName.toLowerCase());
+        if (!nameMatch && !emailMatch) return false;
+      }
+
+      // Filter by reference
+      if (searchReference) {
+        if (!payment.reference.toLowerCase().includes(searchReference.toLowerCase())) return false;
+      }
+
+      // Filter by date range
+      if (dateFrom) {
+        const paymentDate = new Date(payment.failed_at);
+        const fromDate = new Date(dateFrom);
+        if (paymentDate < fromDate) return false;
+      }
+
+      if (dateTo) {
+        const paymentDate = new Date(payment.failed_at);
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999); // Include the entire end date
+        if (paymentDate > toDate) return false;
+      }
+
+      return true;
+    });
+  }, [failedPayments, searchName, searchReference, dateFrom, dateTo]);
+
+  const clearFilters = () => {
+    setSearchName("");
+    setSearchReference("");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const hasActiveFilters = searchName || searchReference || dateFrom || dateTo;
 
   const getStatusBadge = (status: string, retryCount: number) => {
     if (status === "abandoned") {
@@ -169,6 +222,68 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
+        {/* Filters */}
+        <div className="space-y-3 mb-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="searchName" className="text-xs text-muted-foreground">Name / Email</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="searchName"
+                  placeholder="Search by name or email..."
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="searchRef" className="text-xs text-muted-foreground">Reference</Label>
+              <Input
+                id="searchRef"
+                placeholder="Search by reference..."
+                value={searchReference}
+                onChange={(e) => setSearchReference(e.target.value)}
+                className="h-9"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="dateFrom" className="text-xs text-muted-foreground">From Date</Label>
+              <Input
+                id="dateFrom"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="dateTo" className="text-xs text-muted-foreground">To Date</Label>
+              <Input
+                id="dateTo"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="h-9"
+              />
+            </div>
+          </div>
+          {hasActiveFilters && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredPayments.length} of {failedPayments.length} payments
+              </p>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 h-8">
+                <X className="h-3 w-3" />
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end mb-4">
           <Button
             variant="outline"
@@ -182,7 +297,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
           </Button>
         </div>
 
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="h-[350px] pr-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
@@ -197,9 +312,22 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
                 All your subscribers' payments are up to date
               </p>
             </div>
+          ) : filteredPayments.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Search className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2">No Matching Payments</h4>
+              <p className="text-sm text-muted-foreground">
+                No failed payments match your filters
+              </p>
+              <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
+                Clear filters
+              </Button>
+            </div>
           ) : (
             <div className="space-y-4">
-              {failedPayments.map((payment) => (
+              {filteredPayments.map((payment) => (
                 <div
                   key={payment.id}
                   className="p-4 rounded-xl glass-card border border-destructive/20 space-y-3"
