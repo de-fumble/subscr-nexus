@@ -178,13 +178,13 @@ export default function DashboardSubscribers() {
             </Button>
           </header>
           
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8 space-y-8">
-              <div>
+          <main className="flex-1 overflow-auto smooth-scroll">
+            <div className="container mx-auto px-6 py-8 space-y-8 animate-page-enter">
+              <div className="animate-fade-in">
                 <p className="text-muted-foreground">View your subscription customers from Paystack</p>
               </div>
 
-              <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
+              <Card className="glass-card border-0 shadow-[var(--shadow-medium)] hover-lift" style={{ animationDelay: '100ms' }}>
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
@@ -222,8 +222,8 @@ export default function DashboardSubscribers() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {subscribers.map((sub) => (
-                            <TableRow key={sub.id}>
+                          {subscribers.map((sub, index) => (
+                            <TableRow key={sub.id} className="table-row-enter transition-colors duration-200" style={{ animationDelay: `${index * 30}ms` }}>
                               <TableCell className="font-medium">
                                 {sub.customer_name || "N/A"}
                               </TableCell>
