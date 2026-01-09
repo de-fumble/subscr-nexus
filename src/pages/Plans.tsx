@@ -51,6 +51,7 @@ const Plans = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
+  const [archiving, setArchiving] = useState(false);
   const [planToManage, setPlanToManage] = useState<Plan | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
@@ -157,19 +158,26 @@ const Plans = () => {
   };
 
   const handleArchivePlan = async (planId: string) => {
+    setArchiving(true);
     try {
-      const { error } = await supabase
-        .from("subscription_plans")
-        .update({ is_active: false })
-        .eq("id", planId);
+      const { data, error } = await supabase.functions.invoke('archive-plan', {
+        body: { planId }
+      });
 
       if (error) throw error;
 
-      toast.success("Plan deleted successfully");
+      if (data?.success) {
+        toast.success(data.message || "Plan deleted and subscriptions cancelled");
+      } else {
+        throw new Error(data?.error || "Failed to archive plan");
+      }
+      
       fetchPlans();
     } catch (error) {
       console.error("Error archiving plan:", error);
       toast.error("Failed to archive plan");
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -421,9 +429,10 @@ const Plans = () => {
                   setPlanToDelete(null);
                 }
               }}
+              disabled={archiving}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Archive Plan
+              {archiving ? "Cancelling subscriptions..." : "Archive Plan"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
