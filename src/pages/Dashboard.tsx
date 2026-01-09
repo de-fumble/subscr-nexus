@@ -153,6 +153,7 @@ const Dashboard = () => {
   const [editTotalDialog, setEditTotalDialog] = useState(false);
   const [newTotalSubscribers, setNewTotalSubscribers] = useState("");
   const [exportingRevenue, setExportingRevenue] = useState(false);
+  const [showRevenueDetailsDialog, setShowRevenueDetailsDialog] = useState(false);
   const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)', 'hsl(330, 81%, 60%)'];
   const failedPaymentsPieData = [{
     name: 'Abandoned',
@@ -472,8 +473,13 @@ const Dashboard = () => {
   };
   const fetchRecentTransactions = async (orgId: string, plansWithCounts: SubscriptionPlan[]) => {
     const transactions: RecentTransaction[] = [];
+    
+    // Calculate 48 hours ago
+    const fortyEightHoursAgo = new Date();
+    fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+    const cutoffDate = fortyEightHoursAgo.toISOString();
 
-    // Fetch subscription transactions
+    // Fetch subscription transactions from last 48 hours
     const planIds = plansWithCounts.map(p => p.id);
     if (planIds.length > 0) {
       const {
@@ -485,9 +491,9 @@ const Dashboard = () => {
       if (subscriberIds.length > 0) {
         const {
           data: txns
-        } = await supabase.from("transactions").select("*").in("subscriber_id", subscriberIds).order("paid_at", {
+        } = await supabase.from("transactions").select("*").in("subscriber_id", subscriberIds).gte("paid_at", cutoffDate).order("paid_at", {
           ascending: false
-        }).limit(10);
+        }).limit(20);
         txns?.forEach(txn => {
           const sub = subscriberMap.get(txn.subscriber_id);
           transactions.push({
@@ -504,7 +510,7 @@ const Dashboard = () => {
       }
     }
 
-    // Fetch one-time payment transactions
+    // Fetch one-time payment transactions from last 48 hours
     const {
       data: otpPayments
     } = await supabase.from("one_time_payments").select("id, name").eq("org_id", orgId);
@@ -513,9 +519,9 @@ const Dashboard = () => {
     if (otpIds.length > 0) {
       const {
         data: otpTxns
-      } = await supabase.from("one_time_payment_transactions").select("*").in("payment_id", otpIds).order("paid_at", {
+      } = await supabase.from("one_time_payment_transactions").select("*").in("payment_id", otpIds).gte("paid_at", cutoffDate).order("paid_at", {
         ascending: false
-      }).limit(10);
+      }).limit(20);
       otpTxns?.forEach(txn => {
         transactions.push({
           id: txn.id,
@@ -898,9 +904,16 @@ const Dashboard = () => {
                 </Card>
 
                 {/* Revenue Distribution by Plan - Takes 1/3 */}
-                <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
+                <Card 
+                  className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setShowRevenueDetailsDialog(true)}
+                >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-foreground">Revenue by Plan</h3>
+                    <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
+                      <Eye className="h-3 w-3 mr-1" />
+                      Details
+                    </Button>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="relative h-40 w-40 mb-4">
@@ -932,12 +945,111 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </Card>
+                
+                {/* Revenue Details Dialog */}
+                <Dialog open={showRevenueDetailsDialog} onOpenChange={setShowRevenueDetailsDialog}>
+                  <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Revenue by Plan - Detailed Breakdown</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-6 pt-4">
+                      {/* Summary */}
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <span className="text-muted-foreground">Total Revenue</span>
+                        <span className="text-2xl font-bold">₦{totalRevenueByPlan.toLocaleString()}</span>
+                      </div>
+                      
+                      {/* Larger Chart */}
+                      <div className="h-64 w-full">
+                        {revenueByPlan.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie 
+                                data={revenueByPlan} 
+                                cx="50%" 
+                                cy="50%" 
+                                innerRadius={60} 
+                                outerRadius={100} 
+                                paddingAngle={2} 
+                                dataKey="value"
+                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                labelLine={false}
+                              >
+                                {revenueByPlan.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']}
+                                contentStyle={{
+                                  backgroundColor: "hsl(var(--card))",
+                                  border: "1px solid hsl(var(--border))",
+                                  borderRadius: "8px"
+                                }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-muted-foreground">
+                            No revenue data available
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Detailed Table */}
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-muted">
+                            <tr>
+                              <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Plan</th>
+                              <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
+                              <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Share</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {revenueByPlan.map((item, index) => (
+                              <tr key={index} className="border-t border-border/50">
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    <div 
+                                      className="h-3 w-3 rounded-full shrink-0" 
+                                      style={{ backgroundColor: item.color }} 
+                                    />
+                                    <span className="text-sm font-medium">{item.name}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-right text-sm font-medium">
+                                  ₦{item.value.toLocaleString()}
+                                </td>
+                                <td className="py-3 px-4 text-right text-sm text-muted-foreground">
+                                  {totalRevenueByPlan > 0 ? ((item.value / totalRevenueByPlan) * 100).toFixed(1) : 0}%
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot className="bg-muted/50">
+                            <tr className="border-t">
+                              <td className="py-3 px-4 text-sm font-bold">Total</td>
+                              <td className="py-3 px-4 text-right text-sm font-bold">
+                                ₦{totalRevenueByPlan.toLocaleString()}
+                              </td>
+                              <td className="py-3 px-4 text-right text-sm font-bold">100%</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               {/* Recent Transactions Table */}
               <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-foreground">Recent Transactions</h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">Recent Transactions</h3>
+                    <p className="text-xs text-muted-foreground">Last 48 hours</p>
+                  </div>
                   <div className="flex gap-2">
                     <Button variant="default" size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
                       <Download className="h-4 w-4" />
