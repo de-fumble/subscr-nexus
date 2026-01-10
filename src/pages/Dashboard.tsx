@@ -12,6 +12,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/com
 import { AppSidebar } from "@/components/AppSidebar";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
+import { TransactionFilterDialog } from "@/components/TransactionFilterDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -154,6 +155,7 @@ const Dashboard = () => {
   const [newTotalSubscribers, setNewTotalSubscribers] = useState("");
   const [exportingRevenue, setExportingRevenue] = useState(false);
   const [showRevenueDetailsDialog, setShowRevenueDetailsDialog] = useState(false);
+  const [showTransactionFilterDialog, setShowTransactionFilterDialog] = useState(false);
   const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)', 'hsl(330, 81%, 60%)'];
   const failedPaymentsPieData = [{
     name: 'Abandoned',
@@ -1051,13 +1053,14 @@ const Dashboard = () => {
                     <p className="text-xs text-muted-foreground">Last 48 hours</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="default" size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
-                      <Download className="h-4 w-4" />
-                      Export CSV
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2"
+                      onClick={() => setShowTransactionFilterDialog(true)}
+                    >
                       <Filter className="h-4 w-4" />
-                      Filters
+                      Filter & Export
                     </Button>
                   </div>
                 </div>
@@ -1111,6 +1114,13 @@ const Dashboard = () => {
       <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
       
       <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
+      
+      <TransactionFilterDialog 
+        open={showTransactionFilterDialog} 
+        onOpenChange={setShowTransactionFilterDialog} 
+        orgId={organization?.id || ""} 
+        orgName={organization?.org_name || "Organization"} 
+      />
     </SidebarProvider>;
 };
 export default Dashboard;
