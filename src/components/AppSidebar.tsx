@@ -120,19 +120,19 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map((item, index) => (
-                <SidebarMenuItem key={item.title} style={{ animationDelay: `${index * 30}ms` }} className="animate-fade-in">
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.url)}
                     isActive={isActive(item.url)}
                     tooltip={item.title}
-                    className={`rounded-lg transition-all duration-200 ease-premium press-effect ${
+                    className={`rounded-lg transition-all duration-200 ${
                       isActive(item.url) 
                         ? 'bg-accent text-accent-foreground shadow-md hover-glow' 
-                        : 'hover:bg-muted/80 hover:translate-x-0.5'
+                        : 'hover:bg-muted/80'
                     }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${isActive(item.url) ? '' : 'text-muted-foreground group-hover:scale-110'}`} />
+                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? '' : 'text-muted-foreground'}`} />
                     {open && <span className="font-medium">{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -150,19 +150,19 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {settingsItems.map((item, index) => (
-                <SidebarMenuItem key={item.title} style={{ animationDelay: `${(index + menuItems.length) * 30}ms` }} className="animate-fade-in">
+              {settingsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.url)}
                     isActive={isActive(item.url)}
                     tooltip={item.title}
-                    className={`rounded-lg transition-all duration-200 ease-premium press-effect ${
+                    className={`rounded-lg transition-all duration-200 ${
                       isActive(item.url) 
                         ? 'bg-accent text-accent-foreground shadow-md' 
-                        : 'hover:bg-muted/80 hover:translate-x-0.5'
+                        : 'hover:bg-muted/80'
                     }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${isActive(item.url) ? '' : 'text-muted-foreground'}`} />
+                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? '' : 'text-muted-foreground'}`} />
                     {open && <span className="font-medium">{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>

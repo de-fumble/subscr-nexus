@@ -728,13 +728,13 @@ const Dashboard = () => {
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <DashboardHeader orgName={organization?.org_name} />
-          <main className="flex-1 overflow-auto smooth-scroll">
-            <div className="container mx-auto px-6 py-6 animate-page-enter">
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-6 py-6">
               
               {/* Top Stats Row - 4 Cards */}
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6 stagger-children">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
                 {/* Total Revenue (MTD) */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)] stat-card-glow">
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -772,7 +772,7 @@ const Dashboard = () => {
                 </Card>
 
                 {/* Active Subscribers */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)] stat-card-glow">
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -814,7 +814,7 @@ const Dashboard = () => {
                 </Card>
 
                 {/* Failed Payments */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)] stat-card-glow">
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -844,7 +844,7 @@ const Dashboard = () => {
                 </Card>
 
                 {/* Upcoming Payouts */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)] stat-card-glow">
+                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm text-muted-foreground">Upcoming Payouts</span>
