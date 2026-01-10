@@ -847,7 +847,16 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-foreground">Collections Over Time</h3>
                     <div className="flex gap-1 bg-muted rounded-lg p-1">
-                      {(['7D', '30D', '90D'] as const).map(period => {})}
+                      {(['7D', '30D', '90D'] as const).map(period => (
+                        <Button
+                          key={period}
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-3 text-xs"
+                        >
+                          {period}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                   <div className="h-64">

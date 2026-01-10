@@ -117,50 +117,42 @@ export function TransactionFilterDialog({
         }
       }
 
-      // Fetch one-time payments
-      const { data: otpPayments } = await supabase
+      // Fetch one-time payments directly from one_time_payments table
+      // (payments are stored directly in this table with is_paid flag)
+      let otpQuery = supabase
         .from("one_time_payments")
-        .select("id, name")
-        .eq("org_id", orgId);
+        .select("*")
+        .eq("org_id", orgId)
+        .eq("is_paid", true)
+        .order("paid_at", { ascending: false });
 
-      const otpIds = otpPayments?.map((p) => p.id) || [];
-      const otpMap = new Map(otpPayments?.map((p) => [p.id, p.name]) || []);
-
-      if (otpIds.length > 0) {
-        let otpQuery = supabase
-          .from("one_time_payment_transactions")
-          .select("*")
-          .in("payment_id", otpIds)
-          .order("paid_at", { ascending: false });
-
-        if (dateFrom) {
-          otpQuery = otpQuery.gte("paid_at", new Date(dateFrom).toISOString());
-        }
-        if (dateTo) {
-          const endDate = new Date(dateTo);
-          endDate.setHours(23, 59, 59, 999);
-          otpQuery = otpQuery.lte("paid_at", endDate.toISOString());
-        }
-        if (searchReference.trim()) {
-          otpQuery = otpQuery.ilike("paystack_reference", `%${searchReference.trim()}%`);
-        }
-
-        const { data: otpTxns } = await otpQuery;
-
-        otpTxns?.forEach((txn) => {
-          allTransactions.push({
-            id: txn.id,
-            reference: txn.paystack_reference || "N/A",
-            payer_name: txn.payer_name,
-            plan_name: otpMap.get(txn.payment_id) || "One-Time Payment",
-            amount: Number(txn.amount),
-            status: "success",
-            paid_at: txn.paid_at,
-            type: "one-time",
-            email: txn.payer_email,
-          });
-        });
+      if (dateFrom) {
+        otpQuery = otpQuery.gte("paid_at", new Date(dateFrom).toISOString());
       }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        otpQuery = otpQuery.lte("paid_at", endDate.toISOString());
+      }
+      if (searchReference.trim()) {
+        otpQuery = otpQuery.ilike("paystack_reference", `%${searchReference.trim()}%`);
+      }
+
+      const { data: otpPayments } = await otpQuery;
+
+      otpPayments?.forEach((payment) => {
+        allTransactions.push({
+          id: payment.id,
+          reference: payment.paystack_reference || "N/A",
+          payer_name: payment.paid_by_name || "Unknown",
+          plan_name: payment.name || "One-Time Payment",
+          amount: Number(payment.amount),
+          status: "success",
+          paid_at: payment.paid_at || payment.created_at,
+          type: "one-time",
+          email: payment.paid_by_email || undefined,
+        });
+      });
 
       // Sort by date
       allTransactions.sort(
