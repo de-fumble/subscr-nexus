@@ -475,7 +475,7 @@ const Dashboard = () => {
   };
   const fetchRecentTransactions = async (orgId: string, plansWithCounts: SubscriptionPlan[]) => {
     const transactions: RecentTransaction[] = [];
-    
+
     // Calculate 48 hours ago
     const fortyEightHoursAgo = new Date();
     fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
@@ -556,51 +556,34 @@ const Dashboard = () => {
     setNewTotalSubscribers("");
     toast.success("Total subscribers updated");
   };
-
   const handleExportRevenue = async () => {
     if (!organization) {
       toast.error("Organization not found");
       return;
     }
-
     setExportingRevenue(true);
     try {
       const now = new Date();
-      const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
       // Export window: last 12 months (including current month)
       const windowStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
       const windowEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
       // Fetch transaction data from Paystack via backend function
-      const { data: paystackData, error: paystackError } = await supabase.functions.invoke(
-        "fetch-paystack-analytics",
-        {
-          body: {
-            orgId: organization.id,
-            action: "export_transactions",
-          },
+      const {
+        data: paystackData,
+        error: paystackError
+      } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: {
+          orgId: organization.id,
+          action: "export_transactions"
         }
-      );
-
+      });
       if (paystackError) {
         console.error("Paystack error:", paystackError);
         throw paystackError;
       }
-
       const allTransactions = paystackData?.transactions || [];
       console.log("Fetched transactions for export:", allTransactions.length);
 
@@ -612,7 +595,11 @@ const Dashboard = () => {
 
       // Group by month for summary
       const monthlyRevenue: {
-        [key: string]: { month: string; revenue: number; transactions: number };
+        [key: string]: {
+          month: string;
+          revenue: number;
+          transactions: number;
+        };
       } = {};
 
       // Initialize months for the last 12 months window
@@ -622,7 +609,7 @@ const Dashboard = () => {
         monthlyRevenue[key] = {
           month: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
           revenue: 0,
-          transactions: 0,
+          transactions: 0
         };
       }
 
@@ -640,24 +627,20 @@ const Dashboard = () => {
       const wb = XLSX.utils.book_new();
 
       // Monthly Summary sheet
-      const summaryData = Object.values(monthlyRevenue).map((m) => ({
+      const summaryData = Object.values(monthlyRevenue).map(m => ({
         Month: m.month,
         "Total Revenue (₦)": m.revenue,
-        "Number of Transactions": m.transactions,
+        "Number of Transactions": m.transactions
       }));
 
       // Add totals row
       const totalRevenue = Object.values(monthlyRevenue).reduce((sum, m) => sum + m.revenue, 0);
-      const totalTransactions = Object.values(monthlyRevenue).reduce(
-        (sum, m) => sum + m.transactions,
-        0
-      );
+      const totalTransactions = Object.values(monthlyRevenue).reduce((sum, m) => sum + m.transactions, 0);
       summaryData.push({
         Month: "TOTAL",
         "Total Revenue (₦)": totalRevenue,
-        "Number of Transactions": totalTransactions,
+        "Number of Transactions": totalTransactions
       });
-
       const summarySheet = XLSX.utils.json_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(wb, summarySheet, "Monthly Summary");
 
@@ -673,10 +656,9 @@ const Dashboard = () => {
           "Plan/Payment Name": txn.plan_name || "Unknown",
           "Amount (₦)": Number(txn.amount),
           Reference: txn.reference || "N/A",
-          Status: txn.status || "success",
+          Status: txn.status || "success"
         };
       });
-
       if (detailedData.length === 0) {
         detailedData.push({
           Date: "No transactions found",
@@ -687,10 +669,9 @@ const Dashboard = () => {
           "Plan/Payment Name": "",
           "Amount (₦)": "",
           Reference: "",
-          Status: "",
+          Status: ""
         });
       }
-
       const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
       XLSX.utils.book_append_sheet(wb, detailedSheet, "All Transactions");
 
@@ -699,7 +680,6 @@ const Dashboard = () => {
       const endLabel = `${monthNames[now.getMonth()]}_${now.getFullYear()}`;
       const fileName = `${organization.org_name}_Revenue_Report_${startLabel}-to-${endLabel}.xlsx`;
       XLSX.writeFile(wb, fileName);
-
       toast.success("Revenue report exported successfully");
     } catch (error) {
       console.error("Error exporting revenue:", error);
@@ -741,24 +721,14 @@ const Dashboard = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">Total Revenue</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-auto p-0 text-accent hover:text-accent/80 text-xs gap-1"
-                          onClick={handleExportRevenue}
-                          disabled={exportingRevenue}
-                        >
-                          {exportingRevenue ? (
-                            <>
+                        <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs gap-1" onClick={handleExportRevenue} disabled={exportingRevenue}>
+                          {exportingRevenue ? <>
                               <Loader2 className="h-3 w-3 animate-spin" />
                               Exporting...
-                            </>
-                          ) : (
-                            <>
+                            </> : <>
                               <Download className="h-3 w-3" />
                               Export
-                            </>
-                          )}
+                            </>}
                         </Button>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
@@ -877,9 +847,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-foreground">Collections Over Time</h3>
                     <div className="flex gap-1 bg-muted rounded-lg p-1">
-                      {(['7D', '30D', '90D'] as const).map(period => <Button key={period} variant={chartPeriod === period ? "default" : "ghost"} size="sm" className={`px-3 py-1 text-xs ${chartPeriod === period ? 'bg-primary text-primary-foreground' : ''}`} onClick={() => setChartPeriod(period)}>
-                          {period}
-                        </Button>)}
+                      {(['7D', '30D', '90D'] as const).map(period => {})}
                     </div>
                   </div>
                   <div className="h-64">
@@ -906,10 +874,7 @@ const Dashboard = () => {
                 </Card>
 
                 {/* Revenue Distribution by Plan - Takes 1/3 */}
-                <Card 
-                  className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setShowRevenueDetailsDialog(true)}
-                >
+                <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowRevenueDetailsDialog(true)}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-foreground">Revenue by Plan</h3>
                     <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
@@ -963,39 +928,23 @@ const Dashboard = () => {
                       
                       {/* Larger Chart */}
                       <div className="h-64 w-full">
-                        {revenueByPlan.length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%">
+                        {revenueByPlan.length > 0 ? <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie 
-                                data={revenueByPlan} 
-                                cx="50%" 
-                                cy="50%" 
-                                innerRadius={60} 
-                                outerRadius={100} 
-                                paddingAngle={2} 
-                                dataKey="value"
-                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                labelLine={false}
-                              >
-                                {revenueByPlan.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
+                              <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" label={({
+                            name,
+                            percent
+                          }) => `${name}: ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                                {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                               </Pie>
-                              <Tooltip 
-                                formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']}
-                                contentStyle={{
-                                  backgroundColor: "hsl(var(--card))",
-                                  border: "1px solid hsl(var(--border))",
-                                  borderRadius: "8px"
-                                }}
-                              />
+                              <Tooltip formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px"
+                          }} />
                             </PieChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-muted-foreground">
+                          </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
                             No revenue data available
-                          </div>
-                        )}
+                          </div>}
                       </div>
                       
                       {/* Detailed Table */}
@@ -1009,14 +958,12 @@ const Dashboard = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {revenueByPlan.map((item, index) => (
-                              <tr key={index} className="border-t border-border/50">
+                            {revenueByPlan.map((item, index) => <tr key={index} className="border-t border-border/50">
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
-                                    <div 
-                                      className="h-3 w-3 rounded-full shrink-0" 
-                                      style={{ backgroundColor: item.color }} 
-                                    />
+                                    <div className="h-3 w-3 rounded-full shrink-0" style={{
+                                  backgroundColor: item.color
+                                }} />
                                     <span className="text-sm font-medium">{item.name}</span>
                                   </div>
                                 </td>
@@ -1024,10 +971,9 @@ const Dashboard = () => {
                                   ₦{item.value.toLocaleString()}
                                 </td>
                                 <td className="py-3 px-4 text-right text-sm text-muted-foreground">
-                                  {totalRevenueByPlan > 0 ? ((item.value / totalRevenueByPlan) * 100).toFixed(1) : 0}%
+                                  {totalRevenueByPlan > 0 ? (item.value / totalRevenueByPlan * 100).toFixed(1) : 0}%
                                 </td>
-                              </tr>
-                            ))}
+                              </tr>)}
                           </tbody>
                           <tfoot className="bg-muted/50">
                             <tr className="border-t">
@@ -1053,12 +999,7 @@ const Dashboard = () => {
                     <p className="text-xs text-muted-foreground">Last 48 hours</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-2"
-                      onClick={() => setShowTransactionFilterDialog(true)}
-                    >
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowTransactionFilterDialog(true)}>
                       <Filter className="h-4 w-4" />
                       Filter & Export
                     </Button>
@@ -1115,12 +1056,7 @@ const Dashboard = () => {
       
       <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
       
-      <TransactionFilterDialog 
-        open={showTransactionFilterDialog} 
-        onOpenChange={setShowTransactionFilterDialog} 
-        orgId={organization?.id || ""} 
-        orgName={organization?.org_name || "Organization"} 
-      />
+      <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
     </SidebarProvider>;
 };
 export default Dashboard;
