@@ -474,74 +474,56 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-  const fetchRecentTransactions = async (orgId: string, plansWithCounts: SubscriptionPlan[]) => {
-    const transactions: RecentTransaction[] = [];
+  const fetchRecentTransactions = async (orgId: string) => {
+    try {
+      // Calculate 48 hours ago
+      const fortyEightHoursAgo = new Date();
+      fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
 
-    // Calculate 48 hours ago
-    const fortyEightHoursAgo = new Date();
-    fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
-    const cutoffDate = fortyEightHoursAgo.toISOString();
-
-    // Fetch subscription transactions from last 48 hours
-    const planIds = plansWithCounts.map(p => p.id);
-    if (planIds.length > 0) {
-      const {
-        data: subscribers
-      } = await supabase.from("subscribers").select("id, customer_name, plan_id").in("plan_id", planIds);
-      const subscriberMap = new Map(subscribers?.map(s => [s.id, s]) || []);
-      const planMap = new Map(plansWithCounts.map(p => [p.id, p.name]));
-      const subscriberIds = subscribers?.map(s => s.id) || [];
-      if (subscriberIds.length > 0) {
-        const {
-          data: txns
-        } = await supabase.from("transactions").select("*").in("subscriber_id", subscriberIds).gte("paid_at", cutoffDate).order("paid_at", {
-          ascending: false
-        }).limit(20);
-        txns?.forEach(txn => {
-          const sub = subscriberMap.get(txn.subscriber_id);
-          transactions.push({
-            id: txn.id,
-            reference: txn.paystack_reference?.substring(0, 10) || 'N/A',
-            payer_name: sub?.customer_name || 'Unknown',
-            plan_name: planMap.get(sub?.plan_id || '') || 'Unknown Plan',
-            amount: Number(txn.amount),
-            status: txn.status,
-            paid_at: txn.paid_at || txn.created_at,
-            type: 'subscription'
-          });
-        });
-      }
-    }
-
-    // Fetch one-time payment transactions from last 48 hours
-    const {
-      data: otpPayments
-    } = await supabase.from("one_time_payments").select("id, name").eq("org_id", orgId);
-    const otpIds = otpPayments?.map(p => p.id) || [];
-    const otpMap = new Map(otpPayments?.map(p => [p.id, p.name]) || []);
-    if (otpIds.length > 0) {
-      const {
-        data: otpTxns
-      } = await supabase.from("one_time_payment_transactions").select("*").in("payment_id", otpIds).gte("paid_at", cutoffDate).order("paid_at", {
-        ascending: false
-      }).limit(20);
-      otpTxns?.forEach(txn => {
-        transactions.push({
-          id: txn.id,
-          reference: txn.paystack_reference?.substring(0, 10) || 'N/A',
-          payer_name: txn.payer_name,
-          plan_name: otpMap.get(txn.payment_id) || 'One-Time Payment',
-          amount: Number(txn.amount),
-          status: 'success',
-          paid_at: txn.paid_at,
-          type: 'one-time'
-        });
+      // Use backend function (Paystack + local DB merged) so this is truly "live" per org
+      const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: {
+          action: "export_transactions",
+          orgId,
+        },
       });
-    }
 
-    // Sort by date and take top 10
-    transactions.sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime());
-    setRecentTransactions(transactions.slice(0, 10));
+      if (error) throw error;
+
+      const raw = (data as any)?.transactions as any[] | undefined;
+      const rows = Array.isArray(raw) ? raw : [];
+
+      const mapped: RecentTransaction[] = rows
+        .map((txn, index) => {
+          const paidAt = txn.paid_at || txn.created_at;
+          const dt = paidAt ? new Date(paidAt) : null;
+
+          // Only last 48 hours
+          if (!dt || dt < fortyEightHoursAgo) return null;
+
+          const rawType = String(txn.type || "").toLowerCase();
+          const type: RecentTransaction["type"] = rawType.includes("one") ? "one-time" : "subscription";
+
+          return {
+            id: String(txn.reference || txn.id || index),
+            reference: String(txn.reference || "N/A").substring(0, 10),
+            payer_name: txn.customer_name || "Unknown",
+            plan_name: txn.plan_name || (type === "one-time" ? "One-Time Payment" : "Unknown Plan"),
+            amount: Number(txn.amount) || 0,
+            status: txn.status || "success",
+            paid_at: paidAt || new Date().toISOString(),
+            type,
+          };
+        })
+        .filter(Boolean) as RecentTransaction[];
+
+      // Sort by date and take top 10
+      mapped.sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime());
+      setRecentTransactions(mapped.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching recent transactions:", error);
+      setRecentTransactions([]);
+    }
   };
   const handleUpdateTotalSubscribers = async () => {
     const total = parseInt(newTotalSubscribers);
