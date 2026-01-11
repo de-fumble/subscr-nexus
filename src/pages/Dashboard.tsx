@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, ArrowUp, ArrowDown, Edit2, Loader2 } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import * as XLSX from "xlsx";
@@ -156,6 +156,7 @@ const Dashboard = () => {
   const [exportingRevenue, setExportingRevenue] = useState(false);
   const [showRevenueDetailsDialog, setShowRevenueDetailsDialog] = useState(false);
   const [showTransactionFilterDialog, setShowTransactionFilterDialog] = useState(false);
+  const [hideValues, setHideValues] = useState(false);
   const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)', 'hsl(330, 81%, 60%)'];
   const failedPaymentsPieData = [{
     name: 'Abandoned',
@@ -715,6 +716,19 @@ const Dashboard = () => {
               
               {/* Top Stats Row - 4 Cards */}
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
+                {/* Toggle for hiding values */}
+                <div className="col-span-full flex justify-end mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setHideValues(!hideValues)}
+                  >
+                    {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {hideValues ? "Show Values" : "Hide Values"}
+                  </Button>
+                </div>
+
                 {/* Total Revenue (MTD) */}
                 <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="flex items-start justify-between">
@@ -732,7 +746,7 @@ const Dashboard = () => {
                         </Button>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
-                        ₦{stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}
+                        {hideValues ? "₦•••••••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}`}
                       </p>
                       <div className="flex items-center gap-1 text-green-600 text-sm">
                         <ArrowUp className="h-3 w-3" />
@@ -754,10 +768,10 @@ const Dashboard = () => {
                         </Button>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
-                        {stats.activeSubscribers.toLocaleString()}
+                        {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
                       </p>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">of {stats.totalSubscribers.toLocaleString()} total</span>
+                        <span className="text-sm text-muted-foreground">of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()} total</span>
                         <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
                           <DialogTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
@@ -798,16 +812,16 @@ const Dashboard = () => {
                         </FailedPaymentsDialog>
                       </div>
                       <p className="text-3xl font-bold text-foreground mb-2">
-                        {stats.totalFailedPayments}
+                        {hideValues ? "•••" : stats.totalFailedPayments}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <div className="h-2 w-2 rounded-full bg-amber-500" />
-                          Abandoned: {stats.abandonedCheckouts}
+                          Abandoned: {hideValues ? "•••" : stats.abandonedCheckouts}
                         </span>
                         <span className="flex items-center gap-1">
                           <div className="h-2 w-2 rounded-full bg-destructive" />
-                          Failed: {stats.failedPayments}
+                          Failed: {hideValues ? "•••" : stats.failedPayments}
                         </span>
                       </div>
                     </div>
@@ -827,13 +841,13 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Pending</span>
-                        <span className="font-semibold">₦{pendingPayouts.toLocaleString()}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Pending</span>
+                        <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${pendingPayouts.toLocaleString()}`}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Paid Out</span>
-                        <span className="font-semibold">₦{totalPaidOut.toLocaleString()}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Complete</span>
+                        <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${totalPaidOut.toLocaleString()}`}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Complete</span>
                       </div>
                     </div>
                   </div>

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Download, Search, Loader2, X } from "lucide-react";
@@ -36,6 +37,7 @@ export function TransactionFilterDialog({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [searchReference, setSearchReference] = useState("");
+  const [transactionType, setTransactionType] = useState<"all" | "subscription" | "one-time">("all");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -60,99 +62,154 @@ export function TransactionFilterDialog({
     try {
       const allTransactions: Transaction[] = [];
 
-      // Fetch subscription plans for this org
-      const { data: plans } = await supabase
-        .from("subscription_plans")
-        .select("id, name")
-        .eq("org_id", orgId);
+      // Fetch subscription transactions if type is "all" or "subscription"
+      if (transactionType === "all" || transactionType === "subscription") {
+        // Fetch subscription plans for this org
+        const { data: plans } = await supabase
+          .from("subscription_plans")
+          .select("id, name")
+          .eq("org_id", orgId);
 
-      const planIds = plans?.map((p) => p.id) || [];
-      const planMap = new Map(plans?.map((p) => [p.id, p.name]) || []);
+        const planIds = plans?.map((p) => p.id) || [];
+        const planMap = new Map(plans?.map((p) => [p.id, p.name]) || []);
 
-      // Fetch subscribers for these plans
-      if (planIds.length > 0) {
-        const { data: subscribers } = await supabase
-          .from("subscribers")
-          .select("id, customer_name, email, plan_id")
-          .in("plan_id", planIds);
+        // Fetch subscribers for these plans
+        if (planIds.length > 0) {
+          const { data: subscribers } = await supabase
+            .from("subscribers")
+            .select("id, customer_name, email, plan_id")
+            .in("plan_id", planIds);
 
-        const subscriberMap = new Map(subscribers?.map((s) => [s.id, s]) || []);
-        const subscriberIds = subscribers?.map((s) => s.id) || [];
+          const subscriberMap = new Map(subscribers?.map((s) => [s.id, s]) || []);
+          const subscriberIds = subscribers?.map((s) => s.id) || [];
 
-        if (subscriberIds.length > 0) {
-          let query = supabase
-            .from("transactions")
+          if (subscriberIds.length > 0) {
+            let query = supabase
+              .from("transactions")
+              .select("*")
+              .in("subscriber_id", subscriberIds)
+              .order("paid_at", { ascending: false });
+
+            if (dateFrom) {
+              query = query.gte("paid_at", new Date(dateFrom).toISOString());
+            }
+            if (dateTo) {
+              const endDate = new Date(dateTo);
+              endDate.setHours(23, 59, 59, 999);
+              query = query.lte("paid_at", endDate.toISOString());
+            }
+            if (searchReference.trim()) {
+              query = query.ilike("paystack_reference", `%${searchReference.trim()}%`);
+            }
+
+            const { data: txns } = await query;
+
+            txns?.forEach((txn) => {
+              const sub = subscriberMap.get(txn.subscriber_id);
+              allTransactions.push({
+                id: txn.id,
+                reference: txn.paystack_reference || "N/A",
+                payer_name: sub?.customer_name || "Unknown",
+                plan_name: planMap.get(sub?.plan_id || "") || "Unknown Plan",
+                amount: Number(txn.amount),
+                status: txn.status,
+                paid_at: txn.paid_at || txn.created_at,
+                type: "subscription",
+                email: sub?.email,
+              });
+            });
+          }
+        }
+      }
+
+      // Fetch one-time payments if type is "all" or "one-time"
+      if (transactionType === "all" || transactionType === "one-time") {
+        // First get one-time payment definitions for this org
+        const { data: otpDefs } = await supabase
+          .from("one_time_payments")
+          .select("id, name")
+          .eq("org_id", orgId);
+
+        const otpIds = otpDefs?.map((p) => p.id) || [];
+        const otpMap = new Map(otpDefs?.map((p) => [p.id, p.name]) || []);
+
+        if (otpIds.length > 0) {
+          // Fetch from one_time_payment_transactions table
+          let otpTxnQuery = supabase
+            .from("one_time_payment_transactions")
             .select("*")
-            .in("subscriber_id", subscriberIds)
+            .in("payment_id", otpIds)
             .order("paid_at", { ascending: false });
 
           if (dateFrom) {
-            query = query.gte("paid_at", new Date(dateFrom).toISOString());
+            otpTxnQuery = otpTxnQuery.gte("paid_at", new Date(dateFrom).toISOString());
           }
           if (dateTo) {
             const endDate = new Date(dateTo);
             endDate.setHours(23, 59, 59, 999);
-            query = query.lte("paid_at", endDate.toISOString());
+            otpTxnQuery = otpTxnQuery.lte("paid_at", endDate.toISOString());
           }
           if (searchReference.trim()) {
-            query = query.ilike("paystack_reference", `%${searchReference.trim()}%`);
+            otpTxnQuery = otpTxnQuery.ilike("paystack_reference", `%${searchReference.trim()}%`);
           }
 
-          const { data: txns } = await query;
+          const { data: otpTxns } = await otpTxnQuery;
 
-          txns?.forEach((txn) => {
-            const sub = subscriberMap.get(txn.subscriber_id);
+          otpTxns?.forEach((txn) => {
             allTransactions.push({
               id: txn.id,
               reference: txn.paystack_reference || "N/A",
-              payer_name: sub?.customer_name || "Unknown",
-              plan_name: planMap.get(sub?.plan_id || "") || "Unknown Plan",
+              payer_name: txn.payer_name || "Unknown",
+              plan_name: otpMap.get(txn.payment_id) || "One-Time Payment",
               amount: Number(txn.amount),
-              status: txn.status,
-              paid_at: txn.paid_at || txn.created_at,
-              type: "subscription",
-              email: sub?.email,
+              status: "success",
+              paid_at: txn.paid_at,
+              type: "one-time",
+              email: txn.payer_email || undefined,
             });
           });
         }
-      }
 
-      // Fetch one-time payments directly from one_time_payments table
-      // (payments are stored directly in this table with is_paid flag)
-      let otpQuery = supabase
-        .from("one_time_payments")
-        .select("*")
-        .eq("org_id", orgId)
-        .eq("is_paid", true)
-        .order("paid_at", { ascending: false });
+        // Also check one_time_payments table for direct payments (is_paid = true)
+        let directOtpQuery = supabase
+          .from("one_time_payments")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("is_paid", true)
+          .order("paid_at", { ascending: false });
 
-      if (dateFrom) {
-        otpQuery = otpQuery.gte("paid_at", new Date(dateFrom).toISOString());
-      }
-      if (dateTo) {
-        const endDate = new Date(dateTo);
-        endDate.setHours(23, 59, 59, 999);
-        otpQuery = otpQuery.lte("paid_at", endDate.toISOString());
-      }
-      if (searchReference.trim()) {
-        otpQuery = otpQuery.ilike("paystack_reference", `%${searchReference.trim()}%`);
-      }
+        if (dateFrom) {
+          directOtpQuery = directOtpQuery.gte("paid_at", new Date(dateFrom).toISOString());
+        }
+        if (dateTo) {
+          const endDate = new Date(dateTo);
+          endDate.setHours(23, 59, 59, 999);
+          directOtpQuery = directOtpQuery.lte("paid_at", endDate.toISOString());
+        }
+        if (searchReference.trim()) {
+          directOtpQuery = directOtpQuery.ilike("paystack_reference", `%${searchReference.trim()}%`);
+        }
 
-      const { data: otpPayments } = await otpQuery;
+        const { data: directOtpPayments } = await directOtpQuery;
 
-      otpPayments?.forEach((payment) => {
-        allTransactions.push({
-          id: payment.id,
-          reference: payment.paystack_reference || "N/A",
-          payer_name: payment.paid_by_name || "Unknown",
-          plan_name: payment.name || "One-Time Payment",
-          amount: Number(payment.amount),
-          status: "success",
-          paid_at: payment.paid_at || payment.created_at,
-          type: "one-time",
-          email: payment.paid_by_email || undefined,
+        directOtpPayments?.forEach((payment) => {
+          // Avoid duplicates - check if we already have this payment by reference
+          const existingRefs = allTransactions.map((t) => t.reference);
+          if (!existingRefs.includes(payment.paystack_reference || "")) {
+            allTransactions.push({
+              id: payment.id,
+              reference: payment.paystack_reference || "N/A",
+              payer_name: payment.paid_by_name || "Unknown",
+              plan_name: payment.name || "One-Time Payment",
+              amount: Number(payment.amount),
+              status: "success",
+              paid_at: payment.paid_at || payment.created_at,
+              type: "one-time",
+              email: payment.paid_by_email || undefined,
+            });
+          }
         });
-      });
+      }
 
       // Sort by date
       allTransactions.sort(
@@ -220,6 +277,9 @@ export function TransactionFilterDialog({
       if (searchReference) {
         fileName += `_ref_${searchReference}`;
       }
+      if (transactionType !== "all") {
+        fileName += `_${transactionType}`;
+      }
       fileName += ".xlsx";
 
       XLSX.writeFile(wb, fileName);
@@ -236,6 +296,7 @@ export function TransactionFilterDialog({
     setDateFrom("");
     setDateTo("");
     setSearchReference("");
+    setTransactionType("all");
     setTransactions([]);
     setSearched(false);
   };
@@ -249,7 +310,7 @@ export function TransactionFilterDialog({
 
         {/* Filters */}
         <div className="space-y-4 py-4 border-b">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dateFrom">From Date</Label>
               <Input
@@ -276,6 +337,19 @@ export function TransactionFilterDialog({
                 value={searchReference}
                 onChange={(e) => setSearchReference(e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="type">Transaction Type</Label>
+              <Select value={transactionType} onValueChange={(value: "all" | "subscription" | "one-time") => setTransactionType(value)}>
+                <SelectTrigger id="type">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Transactions</SelectItem>
+                  <SelectItem value="subscription">Subscriptions Only</SelectItem>
+                  <SelectItem value="one-time">One-Time Only</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -366,8 +440,8 @@ export function TransactionFilterDialog({
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
                             txn.type === "subscription"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-purple-100 text-purple-700"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                           }`}
                         >
                           {txn.type === "subscription" ? "Sub" : "OTP"}
@@ -377,8 +451,8 @@ export function TransactionFilterDialog({
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
                             txn.status === "success"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                           }`}
                         >
                           {txn.status === "success" ? "Success" : "Failed"}
