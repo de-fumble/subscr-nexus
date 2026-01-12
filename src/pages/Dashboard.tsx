@@ -446,7 +446,7 @@ const Dashboard = () => {
         });
 
         // Fetch recent transactions
-        await fetchRecentTransactions(orgData.id, plansWithCounts);
+        await fetchRecentTransactions(orgData.id);
       }
 
       // Fetch balance and payouts
