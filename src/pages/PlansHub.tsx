@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, CreditCard, Repeat, Building2 } from "lucide-react";
+import { PageLoadingSkeleton } from "@/components/DashboardSkeleton";
 
 interface Organization {
   id: string;
@@ -110,14 +111,7 @@ const PlansHub = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Plans Hub...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   if (error || !organization) {

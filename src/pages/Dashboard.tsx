@@ -17,6 +17,7 @@ import { useOrgRole } from "@/hooks/useOrgRole";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 interface Organization {
   id: string;
   org_name: string;
@@ -678,12 +679,8 @@ const Dashboard = () => {
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading dashboard...</p>
-              </div>
-            </div>
+            <DashboardHeader orgName={organization?.org_name} />
+            <DashboardSkeleton />
           </SidebarInset>
         </div>
       </SidebarProvider>;

@@ -16,6 +16,7 @@ import { PasswordVerificationDialog } from "@/components/PasswordVerificationDia
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
 import { KYCSection } from "@/components/KYCSection";
+import { SettingsPageSkeleton } from "@/components/DashboardSkeleton";
 
 export default function DashboardSettings() {
   const navigate = useNavigate();
@@ -165,12 +166,14 @@ export default function DashboardSettings() {
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading settings...</p>
+            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+              <SidebarTrigger />
+              <BackButton />
+              <div className="flex-1 flex items-center gap-3">
+                <h1 className="text-xl font-bold text-foreground">Settings</h1>
               </div>
-            </div>
+            </header>
+            <SettingsPageSkeleton />
           </SidebarInset>
         </div>
       </SidebarProvider>
