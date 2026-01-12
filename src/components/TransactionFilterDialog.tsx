@@ -62,62 +62,115 @@ export function TransactionFilterDialog({
     try {
       const allTransactions: Transaction[] = [];
 
-      // Fetch subscription transactions if type is "all" or "subscription"
+      // Get auth token for API calls
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      // Fetch subscription transactions from Paystack if type is "all" or "subscription"
       if (transactionType === "all" || transactionType === "subscription") {
-        // Fetch subscription plans for this org
-        const { data: plans } = await supabase
-          .from("subscription_plans")
-          .select("id, name")
-          .eq("org_id", orgId);
+        try {
+          // Call the fetch-paystack-analytics edge function to get all transactions
+          const response = await supabase.functions.invoke("fetch-paystack-analytics", {
+            body: { 
+              action: "export_transactions",
+              orgId 
+            },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
 
-        const planIds = plans?.map((p) => p.id) || [];
-        const planMap = new Map(plans?.map((p) => [p.id, p.name]) || []);
+          if (response.data?.transactions) {
+            const paystackTxns = response.data.transactions;
+            
+            // Filter and transform Paystack transactions
+            paystackTxns.forEach((txn: any) => {
+              // Only include subscription transactions
+              if (txn.type !== "subscription") return;
+              
+              const txnDate = new Date(txn.date || txn.paid_at || txn.created_at);
+              
+              // Apply date filters
+              if (dateFrom && txnDate < new Date(dateFrom)) return;
+              if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                if (txnDate > endDate) return;
+              }
+              
+              // Apply reference filter
+              if (searchReference.trim()) {
+                const ref = (txn.reference || txn.paystack_reference || "").toLowerCase();
+                if (!ref.includes(searchReference.trim().toLowerCase())) return;
+              }
 
-        // Fetch subscribers for these plans
-        if (planIds.length > 0) {
-          const { data: subscribers } = await supabase
-            .from("subscribers")
-            .select("id, customer_name, email, plan_id")
-            .in("plan_id", planIds);
-
-          const subscriberMap = new Map(subscribers?.map((s) => [s.id, s]) || []);
-          const subscriberIds = subscribers?.map((s) => s.id) || [];
-
-          if (subscriberIds.length > 0) {
-            let query = supabase
-              .from("transactions")
-              .select("*")
-              .in("subscriber_id", subscriberIds)
-              .order("paid_at", { ascending: false });
-
-            if (dateFrom) {
-              query = query.gte("paid_at", new Date(dateFrom).toISOString());
-            }
-            if (dateTo) {
-              const endDate = new Date(dateTo);
-              endDate.setHours(23, 59, 59, 999);
-              query = query.lte("paid_at", endDate.toISOString());
-            }
-            if (searchReference.trim()) {
-              query = query.ilike("paystack_reference", `%${searchReference.trim()}%`);
-            }
-
-            const { data: txns } = await query;
-
-            txns?.forEach((txn) => {
-              const sub = subscriberMap.get(txn.subscriber_id);
               allTransactions.push({
-                id: txn.id,
-                reference: txn.paystack_reference || "N/A",
-                payer_name: sub?.customer_name || "Unknown",
-                plan_name: planMap.get(sub?.plan_id || "") || "Unknown Plan",
-                amount: Number(txn.amount),
-                status: txn.status,
-                paid_at: txn.paid_at || txn.created_at,
+                id: txn.id || txn.reference,
+                reference: txn.reference || txn.paystack_reference || "N/A",
+                payer_name: txn.customer_name || txn.payer_name || "Unknown",
+                plan_name: txn.plan_name || txn.plan || "Subscription",
+                amount: Number(txn.amount) / 100, // Paystack amounts are in kobo
+                status: txn.status === "success" ? "success" : txn.status,
+                paid_at: txn.date || txn.paid_at || txn.created_at,
                 type: "subscription",
-                email: sub?.email,
+                email: txn.customer_email || txn.email,
               });
             });
+          }
+        } catch (paystackError) {
+          console.error("Error fetching Paystack transactions:", paystackError);
+          // Fallback to local database for subscription transactions
+          const { data: plans } = await supabase
+            .from("subscription_plans")
+            .select("id, name")
+            .eq("org_id", orgId);
+
+          const planIds = plans?.map((p) => p.id) || [];
+          const planMap = new Map(plans?.map((p) => [p.id, p.name]) || []);
+
+          if (planIds.length > 0) {
+            const { data: subscribers } = await supabase
+              .from("subscribers")
+              .select("id, customer_name, email, plan_id")
+              .in("plan_id", planIds);
+
+            const subscriberMap = new Map(subscribers?.map((s) => [s.id, s]) || []);
+            const subscriberIds = subscribers?.map((s) => s.id) || [];
+
+            if (subscriberIds.length > 0) {
+              let query = supabase
+                .from("transactions")
+                .select("*")
+                .in("subscriber_id", subscriberIds)
+                .order("paid_at", { ascending: false });
+
+              if (dateFrom) {
+                query = query.gte("paid_at", new Date(dateFrom).toISOString());
+              }
+              if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                query = query.lte("paid_at", endDate.toISOString());
+              }
+              if (searchReference.trim()) {
+                query = query.ilike("paystack_reference", `%${searchReference.trim()}%`);
+              }
+
+              const { data: txns } = await query;
+
+              txns?.forEach((txn) => {
+                const sub = subscriberMap.get(txn.subscriber_id);
+                allTransactions.push({
+                  id: txn.id,
+                  reference: txn.paystack_reference || "N/A",
+                  payer_name: sub?.customer_name || "Unknown",
+                  plan_name: planMap.get(sub?.plan_id || "") || "Unknown Plan",
+                  amount: Number(txn.amount),
+                  status: txn.status,
+                  paid_at: txn.paid_at || txn.created_at,
+                  type: "subscription",
+                  email: sub?.email,
+                });
+              });
+            }
           }
         }
       }
@@ -211,17 +264,22 @@ export function TransactionFilterDialog({
         });
       }
 
+      // Remove duplicates by reference
+      const uniqueTransactions = allTransactions.filter((txn, index, self) => 
+        index === self.findIndex((t) => t.reference === txn.reference)
+      );
+
       // Sort by date
-      allTransactions.sort(
+      uniqueTransactions.sort(
         (a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime()
       );
 
-      setTransactions(allTransactions);
+      setTransactions(uniqueTransactions);
 
-      if (allTransactions.length === 0) {
+      if (uniqueTransactions.length === 0) {
         toast.info("No transactions found matching your criteria");
       } else {
-        toast.success(`Found ${allTransactions.length} transaction(s)`);
+        toast.success(`Found ${uniqueTransactions.length} transaction(s)`);
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);
