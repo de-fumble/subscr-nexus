@@ -2,10 +2,12 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, Check, Building2, Globe, Lock, Mail, Phone } from "lucide-react";
+import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
+import usecaseSchool from "@/assets/usecase-school.png";
+import usecaseCooperative from "@/assets/usecase-cooperative.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
 const Index = () => {
@@ -298,6 +300,190 @@ const Index = () => {
                   </h3>
                   <p className="text-muted-foreground">{item.description}</p>
                 </div>)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Use Case 1: Schools Section */}
+      <section id="use-cases" className="py-24 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+        
+        <div className="container relative mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Left: Image */}
+            <div className="relative group">
+              {/* Glow Effect */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-accent/30 via-accent/20 to-accent/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+              
+              {/* Glass Frame */}
+              <div className="relative rounded-3xl overflow-hidden border border-accent/20 backdrop-blur-sm bg-card/30 p-4 shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent" />
+                <img 
+                  src={usecaseSchool} 
+                  alt="School Fee Management Dashboard - Digital payment flows for educational institutions" 
+                  className="relative w-full h-auto rounded-2xl shadow-lg"
+                />
+              </div>
+              
+              {/* Floating Badge */}
+              <div className="absolute -bottom-4 -right-4 px-4 py-2 rounded-xl glass-card border border-accent/30 shadow-lg animate-floating">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <GraduationCap className="w-4 h-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-mono">Active Schools</p>
+                    <p className="text-sm font-semibold text-foreground font-mono">15+ Institutions</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Content */}
+            <div className="lg:pl-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-6">
+                <GraduationCap className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-accent font-mono">For Educational Institutions</span>
+              </div>
+              
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
+                Streamline School Fees Collection with{" "}
+                <span className="bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
+                  Automated Billing
+                </span>
+              </h2>
+              
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-mono">
+                Eliminate the chaos of manual fee collection. Recurra automates tuition payments, 
+                sends timely reminders, and provides real-time tracking—so your admin team can 
+                focus on education, not paperwork.
+              </p>
+              
+              {/* Feature Points */}
+              <div className="grid gap-4 mb-8">
+                {[
+                  { icon: CalendarCheck, title: "Automated Term Billing", desc: "Set up recurring fees per term or semester with automatic collection" },
+                  { icon: Bell, title: "Smart Payment Reminders", desc: "Automated notifications to parents before due dates" },
+                  { icon: TrendingUp, title: "Real-time Fee Tracking", desc: "Dashboard showing collected vs outstanding fees instantly" },
+                  { icon: RefreshCw, title: "Failed Payment Recovery", desc: "Auto-retry failed payments up to 3 times within the billing cycle" },
+                ].map((feature, index) => (
+                  <div 
+                    key={index} 
+                    className="group flex items-start gap-4 p-4 rounded-xl bg-card/50 border border-border/50 hover:border-accent/30 hover:bg-card transition-all duration-300"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                      <feature.icon className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1 font-mono">{feature.title}</h4>
+                      <p className="text-sm text-muted-foreground font-mono">{feature.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <Link to="/auth">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20 font-mono">
+                  Get Started for Schools
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Use Case 2: Loan Cooperatives Section */}
+      <section className="py-24 relative overflow-hidden bg-muted/30">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-bl from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute top-1/2 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+        
+        <div className="container relative mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Left: Content (Reversed order on desktop) */}
+            <div className="lg:pr-8 order-2 lg:order-1">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-6">
+                <Landmark className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-accent font-mono">For Loan Cooperatives</span>
+              </div>
+              
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
+                Simplify Loan Repayments with{" "}
+                <span className="bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
+                  Smart Recovery
+                </span>
+              </h2>
+              
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-mono">
+                Transform your cooperative's loan management. Automate monthly repayments, 
+                track member contributions, and reduce defaulters with intelligent retry 
+                mechanisms that recover failed payments automatically.
+              </p>
+              
+              {/* Feature Points */}
+              <div className="grid gap-4 mb-8">
+                {[
+                  { icon: CreditCard, title: "Automated Loan Deductions", desc: "Schedule monthly repayments with direct debit from member accounts" },
+                  { icon: RefreshCw, title: "Intelligent Retry System", desc: "Up to 3 automatic retries for failed payments within the cycle" },
+                  { icon: Users, title: "Member Portal Access", desc: "Members can view loan balance, payment history, and upcoming dues" },
+                  { icon: Shield, title: "Defaulter Management", desc: "Automated flagging and escalation for overdue accounts" },
+                ].map((feature, index) => (
+                  <div 
+                    key={index} 
+                    className="group flex items-start gap-4 p-4 rounded-xl bg-card/50 border border-border/50 hover:border-accent/30 hover:bg-card transition-all duration-300"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                      <feature.icon className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1 font-mono">{feature.title}</h4>
+                      <p className="text-sm text-muted-foreground font-mono">{feature.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <Link to="/auth">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20 font-mono">
+                  Get Started for Cooperatives
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Right: Image */}
+            <div className="relative group order-1 lg:order-2">
+              {/* Glow Effect */}
+              <div className="absolute -inset-4 bg-gradient-to-l from-accent/30 via-accent/20 to-accent/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+              
+              {/* Glass Frame */}
+              <div className="relative rounded-3xl overflow-hidden border border-accent/20 backdrop-blur-sm bg-card/30 p-4 shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-bl from-accent/10 via-transparent to-transparent" />
+                <img 
+                  src={usecaseCooperative} 
+                  alt="Cooperative Loan Management System - Automated repayment tracking for financial cooperatives" 
+                  className="relative w-full h-auto rounded-2xl shadow-lg"
+                />
+              </div>
+              
+              {/* Floating Badge */}
+              <div className="absolute -bottom-4 -left-4 px-4 py-2 rounded-xl glass-card border border-accent/30 shadow-lg animate-floating">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <Landmark className="w-4 h-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-mono">Recovery Rate</p>
+                    <p className="text-sm font-semibold text-foreground font-mono">98.5% Success</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
