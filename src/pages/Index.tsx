@@ -8,11 +8,9 @@ import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
-
 const Index = () => {
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
-
   const features = [{
     icon: BarChart3,
     title: "Analytics Dashboard",
@@ -209,7 +207,7 @@ const Index = () => {
                     <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
                     <div className="w-3 h-3 rounded-full bg-green-500/60" />
                   </div>
-                  <img alt="Recurra Dashboard Preview - Analytics and subscription management interface" src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1765349228/Screenshot_2025-12-10_074046_ci3foy.png" className="w-full h-auto rounded-lg shadow-lg" />
+                  <img alt="Recurra Dashboard Preview - Analytics and subscription management interface" className="w-full h-auto rounded-lg shadow-lg" src="/lovable-uploads/3e644e03-1101-487c-9e2f-0e34126ff0f1.png" />
                 </div>
               </div>
             </div>
