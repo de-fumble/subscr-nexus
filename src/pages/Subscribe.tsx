@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Shield, Lock, CreditCard, CheckCircle2, Sparkles, ArrowLeft, Star, Zap, Award } from "lucide-react";
+import { Loader2, Shield, Lock, CreditCard, CheckCircle2, Sparkles, ArrowLeft, Star, Zap } from "lucide-react";
 import { toast } from "sonner";
 import logoImage from "@/assets/logo.png";
 
@@ -180,202 +180,200 @@ const Subscribe = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 sm:py-12 lg:py-16">
-        <div className="grid gap-8 lg:grid-cols-5 lg:gap-12 max-w-6xl mx-auto">
-          {/* Plan Details Section - 3 columns */}
-          <div className="lg:col-span-3 order-2 lg:order-1">
-            <div className="glass-card rounded-3xl border border-border/50 p-6 sm:p-8 lg:p-10 backdrop-blur-xl shadow-2xl">
-              {/* Organization branding - Premium display */}
-              {organization && (
-                <div className="mb-8 flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 border border-border/30">
+      <main className="container mx-auto px-4 py-6 sm:py-10 lg:py-16">
+        <div className="max-w-2xl mx-auto">
+          {/* Single Premium Card */}
+          <div className="glass-card rounded-3xl border border-border/50 backdrop-blur-xl shadow-2xl overflow-hidden">
+            {/* Organization Header with Profile */}
+            {organization && (
+              <div className="relative p-6 sm:p-8 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent border-b border-border/30">
+                {/* Decorative glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="relative flex items-center gap-4">
+                  {/* Organization Logo */}
                   {organization.logo_url ? (
                     <img
                       src={organization.logo_url}
                       alt={organization.org_name}
-                      className="h-16 w-16 rounded-2xl object-cover ring-4 ring-primary/20 shadow-xl"
+                      className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover ring-4 ring-background/50 shadow-xl flex-shrink-0"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white text-2xl font-bold shadow-xl">
+                    <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white text-2xl sm:text-3xl font-bold shadow-xl ring-4 ring-background/50 flex-shrink-0">
                       {organization.org_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">You're subscribing to</p>
-                    <p className="text-xl font-bold text-foreground">{organization.org_name}</p>
+                  
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">You're subscribing to</p>
+                    <h2 className="text-lg sm:text-2xl font-bold text-foreground truncate">{organization.org_name}</h2>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">{organization.email}</p>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
+            {/* Plan Details */}
+            <div className="p-6 sm:p-8 space-y-6">
               {/* Plan name and category */}
-              <div className="mb-8">
-                {plan.category && (
-                  <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 px-4 py-1.5 text-xs font-semibold text-primary border border-primary/20">
-                    <Star className="h-3.5 w-3.5" />
-                    {plan.category}
-                  </span>
-                )}
-                <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {plan.category && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
+                      <Star className="h-3 w-3" />
+                      {plan.category}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
                   {plan.name}
                 </h1>
                 {plan.description && (
-                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+                  <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
                     {plan.description}
                   </p>
                 )}
               </div>
 
-              {/* Price display - Premium styling */}
-              <div className="mb-8 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 p-8 border border-primary/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
-                <div className="relative">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                      ₦{plan.price.toLocaleString()}
-                    </span>
-                    <span className="text-xl text-muted-foreground font-medium">
-                      / {getIntervalText(plan.interval)}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-muted-foreground flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-primary" />
-                    Billed {plan.interval} • Cancel anytime
-                  </p>
+              {/* Price display */}
+              <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 p-5 sm:p-6 border border-primary/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="relative flex flex-wrap items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                    ₦{plan.price.toLocaleString()}
+                  </span>
+                  <span className="text-base sm:text-lg text-muted-foreground font-medium">
+                    / {getIntervalText(plan.interval)}
+                  </span>
                 </div>
-              </div>
-
-              {/* Features/Benefits - Premium list */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                  <Award className="h-4 w-4 text-primary" />
-                  What's included
-                </h3>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {[
-                    "Priority customer support",
-                    "Automatic renewal",
-                    "Secure payment processing",
-                    "Email notifications",
-                    "Cancel anytime",
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-3 text-muted-foreground group">
-                      <div className="flex-shrink-0 h-6 w-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Subscription Form Section - 2 columns */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
-            <div className="glass-card rounded-3xl border border-border/50 p-6 sm:p-8 backdrop-blur-xl shadow-2xl sticky top-24">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-foreground">
-                  Complete your subscription
-                </h2>
-                <p className="mt-2 text-muted-foreground">
-                  Enter your details to get started
+                <p className="mt-2 text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+                  <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                  Billed {plan.interval} • Cancel anytime
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-semibold">
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                    disabled={submitting}
-                    className="h-12 rounded-xl border-border/50 bg-background/50 px-4 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 text-base"
-                  />
-                </div>
+              {/* Features list - compact */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Priority support",
+                  "Auto-renewal",
+                  "Secure payments",
+                  "Email alerts",
+                ].map((feature, index) => (
+                  <span 
+                    key={index} 
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border/50"
+                  >
+                    <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0" />
+                    {feature}
+                  </span>
+                ))}
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    required
-                    disabled={submitting}
-                    className="h-12 rounded-xl border-border/50 bg-background/50 px-4 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 text-base"
-                  />
-                </div>
+              {/* Divider */}
+              <div className="border-t border-border/50" />
 
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="h-14 w-full rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground font-bold text-base shadow-xl shadow-primary/25 transition-all hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
-                  size="lg"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="mr-2 h-5 w-5" />
-                      Subscribe Now
-                    </>
-                  )}
-                </Button>
+              {/* Subscription Form */}
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Complete your subscription
+                </h3>
 
-                {/* Trust indicators - Premium */}
-                <div className="mt-8 space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground p-3 rounded-xl bg-muted/30">
-                    <Lock className="h-4 w-4 text-primary" />
-                    <span>256-bit SSL encrypted • Your data is secure</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 bg-background/50">
-                      <Shield className="h-5 w-5 text-primary" />
-                      <span className="text-xs text-muted-foreground text-center">Secure Payment</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 bg-background/50">
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                      <span className="text-xs text-muted-foreground text-center">Instant Activation</span>
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="Enter your full name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                      disabled={submitting}
+                      className="h-12 rounded-xl border-border/50 bg-background/50 px-4 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
                   </div>
 
-                  <p className="text-center text-xs text-muted-foreground pt-2">
-                    You will be redirected to Paystack to complete payment
-                    <br />
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-primary/80 font-medium">
-                      <Shield className="h-3.5 w-3.5" />
-                      Powered by Paystack
-                    </span>
-                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      required
+                      disabled={submitting}
+                      className="h-12 rounded-xl border-border/50 bg-background/50 px-4 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="h-14 w-full rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground font-bold text-base shadow-xl shadow-primary/25 transition-all hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+                    size="lg"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="mr-2 h-5 w-5" />
+                        Subscribe Now
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Trust indicators */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground p-3 rounded-xl bg-muted/30 border border-border/30">
+                  <Lock className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span>256-bit SSL encrypted • Your data is secure</span>
                 </div>
-              </form>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 bg-background/50">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <span className="text-xs text-muted-foreground text-center">Secure Payment</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 bg-background/50">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span className="text-xs text-muted-foreground text-center">Instant Activation</span>
+                  </div>
+                </div>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  You will be redirected to Paystack to complete payment
+                  <span className="mt-1.5 flex items-center justify-center gap-1.5 text-primary/80 font-medium">
+                    <Shield className="h-3.5 w-3.5" />
+                    Powered by Paystack
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-xs text-muted-foreground">
-            By subscribing, you agree to our{" "}
-            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
-            {" "}and{" "}
-            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-          </p>
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground">
+              By subscribing, you agree to our{" "}
+              <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+              {" "}and{" "}
+              <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+            </p>
+          </div>
         </div>
       </main>
     </div>
