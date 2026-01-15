@@ -195,18 +195,11 @@ const PlansHub = () => {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {plans.map((plan, index) => (
+                {plans.map((plan) => (
                   <Card 
                     key={plan.id} 
-                    className={`relative overflow-hidden hover:shadow-lg transition-all duration-300 ${
-                      index === 1 ? 'border-accent shadow-lg scale-105 z-10' : ''
-                    }`}
+                    className="relative overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30"
                   >
-                    {index === 1 && (
-                      <div className="absolute top-0 right-0 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-bl-lg">
-                        Popular
-                      </div>
-                    )}
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-xl">{plan.name}</CardTitle>
@@ -244,8 +237,8 @@ const PlansHub = () => {
                     <CardFooter>
                       <Button 
                         onClick={() => handleSubscribe(plan.id)} 
-                        className={`w-full ${index === 1 ? 'bg-accent hover:bg-accent/90' : ''}`}
-                        variant={index === 1 ? 'default' : 'outline'}
+                        className="w-full"
+                        variant="default"
                       >
                         Subscribe Now
                       </Button>
