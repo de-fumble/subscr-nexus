@@ -124,11 +124,109 @@ const Subscribe = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="relative">
-          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-          <Sparkles className="absolute -right-2 -top-2 h-6 w-6 text-primary animate-pulse" />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+        {/* Premium background decorations */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -left-60 -top-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-primary/20 to-accent/10 blur-3xl animate-pulse" />
+          <div className="absolute -bottom-60 -right-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-accent/20 to-primary/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.1)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.1)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
         </div>
+
+        {/* Header skeleton */}
+        <header className="sticky top-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-xl">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 animate-pulse" />
+              <div className="h-5 w-24 rounded-lg bg-muted/50 animate-pulse" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3.5 w-3.5 rounded-full bg-muted/50 animate-pulse" />
+              <div className="h-3 w-24 rounded bg-muted/50 animate-pulse" />
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-6 sm:py-10 lg:py-16">
+          <div className="max-w-2xl mx-auto">
+            {/* Premium skeleton card */}
+            <div className="rounded-3xl border border-border/50 bg-background/80 backdrop-blur-xl shadow-2xl overflow-hidden">
+              {/* Organization header skeleton */}
+              <div className="relative p-6 sm:p-8 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent border-b border-border/30">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative flex items-center gap-4">
+                  <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 animate-shimmer ring-4 ring-background/50" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-32 rounded-full bg-muted/50 animate-pulse" />
+                    <div className="h-6 w-48 rounded-lg bg-muted/60 animate-shimmer" />
+                    <div className="h-3 w-40 rounded-full bg-muted/40 animate-pulse" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Content skeleton */}
+              <div className="p-6 sm:p-8 space-y-6">
+                {/* Plan name skeleton */}
+                <div className="space-y-3">
+                  <div className="h-6 w-20 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 animate-pulse" />
+                  <div className="h-8 w-3/4 rounded-lg bg-muted/60 animate-shimmer" />
+                  <div className="h-4 w-full rounded-lg bg-muted/40 animate-pulse" />
+                </div>
+
+                {/* Price skeleton */}
+                <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 p-5 sm:p-6 border border-primary/20 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+                  <div className="relative space-y-2">
+                    <div className="flex items-baseline gap-2">
+                      <div className="h-10 w-32 rounded-lg bg-muted/60 animate-shimmer" />
+                      <div className="h-5 w-16 rounded-lg bg-muted/40 animate-pulse" />
+                    </div>
+                    <div className="h-4 w-40 rounded-full bg-muted/40 animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Features skeleton */}
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-8 w-28 rounded-full bg-muted/30 border border-border/50 animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
+                  ))}
+                </div>
+
+                <div className="border-t border-border/50" />
+
+                {/* Form skeleton */}
+                <div className="space-y-4">
+                  <div className="h-5 w-48 rounded-lg bg-muted/50 animate-pulse" />
+                  
+                  <div className="space-y-2">
+                    <div className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
+                    <div className="h-12 w-full rounded-xl bg-muted/30 border border-border/50 animate-shimmer" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="h-3 w-28 rounded bg-muted/40 animate-pulse" />
+                    <div className="h-12 w-full rounded-xl bg-muted/30 border border-border/50 animate-shimmer" />
+                  </div>
+
+                  <div className="h-14 w-full rounded-xl bg-gradient-to-r from-primary/40 to-primary/30 animate-pulse-glow shadow-lg" />
+                </div>
+
+                {/* Trust indicators skeleton */}
+                <div className="space-y-3 pt-2">
+                  <div className="h-12 w-full rounded-xl bg-muted/30 border border-border/30 animate-pulse" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-16 rounded-xl border border-border/50 bg-muted/20 animate-pulse" />
+                    <div className="h-16 rounded-xl border border-border/50 bg-muted/20 animate-pulse" style={{ animationDelay: '0.15s' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer skeleton */}
+            <div className="mt-8 flex justify-center">
+              <div className="h-4 w-64 rounded-full bg-muted/30 animate-pulse" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
