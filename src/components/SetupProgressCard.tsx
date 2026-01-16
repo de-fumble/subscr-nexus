@@ -21,8 +21,25 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
   const completedSteps = [hasPaymentProvider, hasPlans, step3Completed].filter(Boolean).length;
   const progressPercentage = (completedSteps / 3) * 100;
   
-  // Don't show if all steps are complete (payment provider connected and plans created)
+  // Debug logging
+  console.log('SetupProgressCard render:', { 
+    hasPaymentProvider, 
+    hasPlans, 
+    orgId, 
+    orgName, 
+    completedSteps,
+    willShow: !(hasPaymentProvider && hasPlans) && !!orgId
+  });
+  
+  // If no orgId, don't show (still loading)
+  if (!orgId) {
+    return null;
+  }
+  
+  // Show a completion message if all steps are done, otherwise show the setup guide
   if (hasPaymentProvider && hasPlans) {
+    // Optionally show a "Setup Complete" message
+    // For now, return null to hide it when complete
     return null;
   }
 
