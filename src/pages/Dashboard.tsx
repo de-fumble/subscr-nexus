@@ -698,21 +698,12 @@ const Dashboard = () => {
               
               {/* Setup Progress Card - Only shows when setup is incomplete */}
               {organization && (
-                <>
-                  {/* Debug info - remove after testing */}
-                  <Card className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200">
-                    <p className="text-sm">
-                      <strong>Debug:</strong> Payment Provider: {organization?.paystack_secret_key ? 'Yes' : 'No'}, 
-                      Plans: {plans.length}, Org ID: {organization?.id ? 'Yes' : 'No'}
-                    </p>
-                  </Card>
-                  <SetupProgressCard
-                    hasPaymentProvider={!!organization?.paystack_secret_key}
-                    hasPlans={plans.length > 0}
-                    orgId={organization?.id}
-                    orgName={organization?.org_name}
-                  />
-                </>
+                <SetupProgressCard
+                  hasPaymentProvider={!!organization?.paystack_secret_key}
+                  hasPlans={plans.length > 0}
+                  orgId={organization?.id}
+                  orgName={organization?.org_name}
+                />
               )}
               
               {/* Top Stats Row - 4 Cards */}
