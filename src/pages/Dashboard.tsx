@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { SetupProgressCard } from "@/components/SetupProgressCard";
 interface Organization {
   id: string;
   org_name: string;
@@ -28,6 +29,8 @@ interface Organization {
   logo_url?: string | null;
   kyc_verified?: boolean;
   kyc_submitted_at?: string | null;
+  paystack_secret_key?: string | null;
+  paystack_public_key?: string | null;
 }
 interface SubscriptionPlan {
   id: string;
@@ -285,7 +288,7 @@ const Dashboard = () => {
       let orgData = null;
       const {
         data: ownedOrg
-      } = await supabase.from("organizations").select("*").eq("user_id", user.id).maybeSingle();
+      } = await supabase.from("organizations").select("*, paystack_secret_key, paystack_public_key").eq("user_id", user.id).maybeSingle();
       if (ownedOrg) {
         orgData = ownedOrg;
       } else {
@@ -295,7 +298,7 @@ const Dashboard = () => {
         if (membership) {
           const {
             data: staffOrg
-          } = await supabase.from("organizations").select("*").eq("id", membership.org_id).maybeSingle();
+          } = await supabase.from("organizations").select("*, paystack_secret_key, paystack_public_key").eq("id", membership.org_id).maybeSingle();
           orgData = staffOrg;
         }
       }
@@ -692,6 +695,14 @@ const Dashboard = () => {
           <DashboardHeader orgName={organization?.org_name} />
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-6 py-6">
+              
+              {/* Setup Progress Card - Only shows when setup is incomplete */}
+              <SetupProgressCard
+                hasPaymentProvider={!!organization?.paystack_secret_key}
+                hasPlans={plans.length > 0}
+                orgId={organization?.id}
+                orgName={organization?.org_name}
+              />
               
               {/* Top Stats Row - 4 Cards */}
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
