@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SendNotificationDialog } from "@/components/SendNotificationDialog";
 
 interface PlatformStats {
   total_organizations: number;
@@ -149,6 +150,7 @@ export default function SuperAdminDashboard() {
             <FileCheck className="h-4 w-4 mr-2" />
             KYC
           </Button>
+          <SendNotificationDialog />
         </div>
       </div>
 

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { SetupProgressCard } from "@/components/SetupProgressCard";
+import { NotificationIcon } from "@/components/NotificationIcon";
 interface Organization {
   id: string;
   org_name: string;
@@ -55,9 +56,11 @@ interface RevenueByPlan {
   color: string;
 }
 const DashboardHeader = ({
-  orgName
+  orgName,
+  orgId
 }: {
   orgName?: string;
+  orgId?: string;
 }) => {
   const {
     state
@@ -70,6 +73,7 @@ const DashboardHeader = ({
           {isCollapsed ? orgName || "Dashboard" : "Dashboard"}
         </h1>
       </div>
+      {orgId && <NotificationIcon orgId={orgId} />}
     </header>;
 };
 
@@ -682,7 +686,7 @@ const Dashboard = () => {
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
-            <DashboardHeader orgName={organization?.org_name} />
+            <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
             <DashboardSkeleton />
           </SidebarInset>
         </div>
