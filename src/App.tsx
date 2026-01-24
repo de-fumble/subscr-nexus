@@ -52,6 +52,9 @@ import CookiePolicy from "./pages/CookiePolicy";
 import GDPR from "./pages/GDPR";
 import VerifyEmail from "./pages/VerifyEmail";
 import PlansHub from "./pages/PlansHub";
+import FindOrganizations from "./pages/FindOrganizations";
+import UserVerifyTransaction from "./pages/UserVerifyTransaction";
+import UserSettings from "./pages/UserSettings";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +71,9 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/user-dashboard" element={<UserDashboard />} />
+          <Route path="/find-organizations" element={<FindOrganizations />} />
+          <Route path="/verify-transaction" element={<UserVerifyTransaction />} />
+          <Route path="/user-settings" element={<UserSettings />} />
           <Route path="/suspended" element={<SuspendedAccount />} />
           <Route path="/subscribe/:planId" element={<Subscribe />} />
           <Route path="/subscription-callback" element={<SubscriptionCallback />} />
