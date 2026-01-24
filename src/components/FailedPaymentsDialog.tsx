@@ -13,8 +13,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, RefreshCw, User, CreditCard, Calendar, AlertCircle, Search, X } from "lucide-react";
+import { AlertTriangle, RefreshCw, User, CreditCard, Calendar, AlertCircle, Search, X, Download } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface FailedPayment {
   id: string;
@@ -37,6 +38,7 @@ interface FailedPaymentsDialogProps {
 export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [failedPayments, setFailedPayments] = useState<FailedPayment[]>([]);
   const [statusFilter, setStatusFilter] = useState<"all" | "failed" | "abandoned">("all");
   const [searchName, setSearchName] = useState("");
@@ -189,6 +191,66 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
 
   const hasActiveFilters = statusFilter !== "all" || searchName || searchReference || dateFrom || dateTo;
 
+  const handleExportToExcel = () => {
+    if (filteredPayments.length === 0) {
+      toast.error("No payments to export");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Prepare data for export
+      const exportData = filteredPayments.map((payment) => ({
+        "Customer Name": payment.customer_name || "Unknown",
+        "Email": payment.email,
+        "Amount (₦)": payment.amount,
+        "Plan": payment.plan_name,
+        "Status": payment.status.charAt(0).toUpperCase() + payment.status.slice(1),
+        "Failure Reason": payment.failure_reason || "Unknown",
+        "Failed Date": new Date(payment.failed_at).toLocaleDateString(),
+        "Failed Time": new Date(payment.failed_at).toLocaleTimeString(),
+        "Retry Attempts": payment.retry_count,
+        "Last Retry": payment.last_retry_at ? new Date(payment.last_retry_at).toLocaleString() : "N/A",
+        "Reference": payment.reference,
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      ws["!cols"] = [
+        { wch: 20 }, // Customer Name
+        { wch: 30 }, // Email
+        { wch: 12 }, // Amount
+        { wch: 20 }, // Plan
+        { wch: 12 }, // Status
+        { wch: 40 }, // Failure Reason
+        { wch: 12 }, // Failed Date
+        { wch: 12 }, // Failed Time
+        { wch: 14 }, // Retry Attempts
+        { wch: 20 }, // Last Retry
+        { wch: 25 }, // Reference
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Failed Payments");
+
+      // Generate filename with date and filter info
+      const filterLabel = statusFilter === "all" ? "all" : statusFilter;
+      const dateStr = new Date().toISOString().split("T")[0];
+      const filename = `failed-payments-${filterLabel}-${dateStr}.xlsx`;
+
+      // Download file
+      XLSX.writeFile(wb, filename);
+      toast.success(`Exported ${filteredPayments.length} payment(s) to Excel`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export payments");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const getStatusBadge = (status: string, retryCount: number) => {
     if (status === "abandoned") {
       return <Badge variant="secondary">Abandoned</Badge>;
@@ -324,7 +386,17 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
           )}
         </div>
 
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end gap-2 mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportToExcel}
+            disabled={loading || exporting || filteredPayments.length === 0}
+            className="gap-2"
+          >
+            <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
+            Export to Excel
+          </Button>
           <Button
             variant="outline"
             size="sm"
