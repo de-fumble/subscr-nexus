@@ -6,7 +6,7 @@
   
   <!-- Homepage - Highest Priority -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/</loc>
+    <loc>https://recurrra.com/</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -14,14 +14,14 @@
 
   <!-- Authentication -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/auth</loc>
+    <loc>https://recurrra.com/auth</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/reset-password</loc>
+    <loc>https://recurrra.com/reset-password</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -29,7 +29,7 @@
 
   <!-- User Dashboard -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/user-dashboard</loc>
+    <loc>https://recurrra.com/user-dashboard</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -37,28 +37,28 @@
 
   <!-- Company Information Pages -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/about</loc>
+    <loc>https://recurrra.com/about</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/careers</loc>
+    <loc>https://recurrra.com/careers</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/press</loc>
+    <loc>https://recurrra.com/press</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/contact</loc>
+    <loc>https://recurrra.com/contact</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -66,28 +66,28 @@
 
   <!-- Resources -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/blog</loc>
+    <loc>https://recurrra.com/blog</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/help</loc>
+    <loc>https://recurrra.com/help</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/community</loc>
+    <loc>https://recurrra.com/community</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/status</loc>
+    <loc>https://recurrra.com/status</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.4</priority>
@@ -95,28 +95,28 @@
 
   <!-- Legal Pages -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/privacy</loc>
+    <loc>https://recurrra.com/privacy</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/terms</loc>
+    <loc>https://recurrra.com/terms</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/cookies</loc>
+    <loc>https://recurrra.com/cookies</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/gdpr</loc>
+    <loc>https://recurrra.com/gdpr</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
@@ -124,21 +124,21 @@
 
   <!-- User Features -->
   <url>
-    <loc>https://subscr-nexus.lovable.app/find-organizations</loc>
+    <loc>https://recurrra.com/find-organizations</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/verify-transaction</loc>
+    <loc>https://recurrra.com/verify-transaction</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://subscr-nexus.lovable.app/user-settings</loc>
+    <loc>https://recurrra.com/user-settings</loc>
     <lastmod>2025-01-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
