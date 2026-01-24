@@ -38,6 +38,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failedPayments, setFailedPayments] = useState<FailedPayment[]>([]);
+  const [statusFilter, setStatusFilter] = useState<"all" | "failed" | "abandoned">("all");
   const [searchName, setSearchName] = useState("");
   const [searchReference, setSearchReference] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -131,6 +132,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
       fetchFailedPayments();
     } else {
       // Reset filters when dialog closes
+      setStatusFilter("all");
       setSearchName("");
       setSearchReference("");
       setDateFrom("");
@@ -140,6 +142,10 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
 
   const filteredPayments = useMemo(() => {
     return failedPayments.filter((payment) => {
+      // Filter by status (failed vs abandoned)
+      if (statusFilter === "failed" && payment.status !== "failed") return false;
+      if (statusFilter === "abandoned" && payment.status !== "abandoned") return false;
+
       // Filter by name/email
       if (searchName) {
         const nameMatch = payment.customer_name?.toLowerCase().includes(searchName.toLowerCase());
@@ -168,16 +174,20 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
 
       return true;
     });
-  }, [failedPayments, searchName, searchReference, dateFrom, dateTo]);
+  }, [failedPayments, statusFilter, searchName, searchReference, dateFrom, dateTo]);
+
+  const failedCount = useMemo(() => failedPayments.filter(p => p.status === "failed").length, [failedPayments]);
+  const abandonedCount = useMemo(() => failedPayments.filter(p => p.status === "abandoned").length, [failedPayments]);
 
   const clearFilters = () => {
+    setStatusFilter("all");
     setSearchName("");
     setSearchReference("");
     setDateFrom("");
     setDateTo("");
   };
 
-  const hasActiveFilters = searchName || searchReference || dateFrom || dateTo;
+  const hasActiveFilters = statusFilter !== "all" || searchName || searchReference || dateFrom || dateTo;
 
   const getStatusBadge = (status: string, retryCount: number) => {
     if (status === "abandoned") {
@@ -221,6 +231,36 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
             View subscribers with failed payment attempts and the reasons for each failure
           </DialogDescription>
         </DialogHeader>
+
+        {/* Quick Status Filters */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            variant={statusFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("all")}
+            className="gap-1"
+          >
+            All ({failedPayments.length})
+          </Button>
+          <Button
+            variant={statusFilter === "failed" ? "destructive" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("failed")}
+            className="gap-1"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Failed ({failedCount})
+          </Button>
+          <Button
+            variant={statusFilter === "abandoned" ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("abandoned")}
+            className="gap-1"
+          >
+            <AlertCircle className="h-3.5 w-3.5" />
+            Abandoned ({abandonedCount})
+          </Button>
+        </div>
 
         {/* Filters */}
         <div className="space-y-3 mb-4">
