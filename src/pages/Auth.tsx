@@ -279,7 +279,7 @@ const Auth = () => {
                   <button type="button" onClick={() => setAccountType("institution")} className={`p-4 rounded-lg border-2 transition-all ${accountType === "institution" ? "border-accent bg-accent/10" : "border-border hover:border-accent/50"}`}>
                     <Building2 className={`h-6 w-6 mx-auto mb-2 ${accountType === "institution" ? "text-accent" : "text-muted-foreground"}`} />
                     <p className="text-sm font-medium">Institution</p>
-                    <p className="text-xs text-muted-foreground">Manage subscriptions</p>
+                    <p className="text-xs text-muted-foreground">Manage Revenue Stream </p>
                   </button>
                   <button type="button" onClick={() => setAccountType("user")} className={`p-4 rounded-lg border-2 transition-all ${accountType === "user" ? "border-accent bg-accent/10" : "border-border hover:border-accent/50"}`}>
                     <User className={`h-6 w-6 mx-auto mb-2 ${accountType === "user" ? "text-accent" : "text-muted-foreground"}`} />
