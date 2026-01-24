@@ -284,7 +284,7 @@ const Auth = () => {
                   <button type="button" onClick={() => setAccountType("user")} className={`p-4 rounded-lg border-2 transition-all ${accountType === "user" ? "border-accent bg-accent/10" : "border-border hover:border-accent/50"}`}>
                     <User className={`h-6 w-6 mx-auto mb-2 ${accountType === "user" ? "text-accent" : "text-muted-foreground"}`} />
                     <p className="text-sm font-medium">User</p>
-                    <p className="text-xs text-muted-foreground">Automate Billing </p>
+                    <p className="text-xs text-muted-foreground">Track / Automate Billing </p>
                   </button>
                 </div>
               </div>}
