@@ -576,36 +576,6 @@ const Index = () => {
       </div>
     </section>
 
-    {/* CTA Section - Gradient Background */}
-    <section className="relative py-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent/80" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/30 via-transparent to-transparent" />
-
-      <div className="container relative mx-auto px-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto font-mono">
-          Ready to Transform Your Subscription Business?
-        </h2>
-        <p className="mt-6 text-lg text-primary-foreground/90 max-w-2xl mx-auto font-mono">
-          Join hundreds of businesses already managing their subscriptions with Recurra.
-          Start your free trial today, no credit card required.
-        </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link to="/auth">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl font-mono">
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-          <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="border-white/30 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 bg-accent font-mono">
-            Contact Sales
-          </Button>
-        </div>
-      </div>
-    </section>
-
-    {/* Contact Sales Dialog */}
-    <ContactSalesDialog open={showContactSalesDialog} onOpenChange={setShowContactSalesDialog} />
-
     {/* FAQ Section */}
     <section id="faq" className="py-20 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/20 to-transparent" />
@@ -721,6 +691,36 @@ const Index = () => {
         </div>
       </div>
     </section>
+
+    {/* CTA Section - Gradient Background */}
+    <section className="relative py-24 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent/80" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/30 via-transparent to-transparent" />
+
+      <div className="container relative mx-auto px-6 text-center">
+        <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto font-mono">
+          Ready to Transform Your Subscription Business?
+        </h2>
+        <p className="mt-6 text-lg text-primary-foreground/90 max-w-2xl mx-auto font-mono">
+          Join hundreds of businesses already managing their subscriptions with Recurra.
+          Start your free trial today, no credit card required.
+        </p>
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link to="/auth">
+            <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl font-mono">
+              Start Your Free Trial
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+          <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="border-white/30 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 bg-accent font-mono">
+            Contact Sales
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    {/* Contact Sales Dialog */}
+    <ContactSalesDialog open={showContactSalesDialog} onOpenChange={setShowContactSalesDialog} />
 
     {/* Enterprise Footer */}
     <footer className="bg-card border-t border-border">
