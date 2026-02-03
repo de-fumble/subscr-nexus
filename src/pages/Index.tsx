@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle } from "lucide-react";
+import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
@@ -11,33 +11,175 @@ import usecaseSchool from "@/assets/usecase-school.png";
 import usecaseCooperative from "@/assets/usecase-cooperative.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
+
+// Step icons mapping
+const stepIcons = [UserPlus, Settings, Share2];
+
+// Desktop Process Steps - Horizontal with moving dot
+const ProcessStepsDesktop = ({ steps }: { steps: { step: string; title: string; description: string }[] }) => {
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % steps.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [steps.length]);
+
+  return (
+    <div className="relative">
+      {/* Dot indicator above */}
+      <div className="flex justify-center mb-4">
+        <div
+          className="w-3 h-3 rounded-full bg-foreground transition-all duration-500 ease-out"
+          style={{
+            transform: `translateX(${(activeStep - 1) * 200}px)`,
+          }}
+        />
+      </div>
+
+      {/* Steps Row */}
+      <div className="flex items-center justify-center gap-6">
+        {steps.map((item, index) => (
+          <div
+            key={index}
+            className={`flex items-center gap-4 px-8 py-5 rounded-full transition-all duration-500 ${activeStep === index
+              ? 'bg-card shadow-xl border-2 border-accent/30 scale-105'
+              : 'bg-muted/50'
+              }`}
+          >
+            {/* Icon Circle */}
+            {(() => {
+              const StepIcon = stepIcons[index] || UserPlus;
+              return (
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${activeStep === index
+                  ? 'bg-gradient-to-br from-accent via-accent/80 to-accent/60'
+                  : 'bg-muted'
+                  }`}>
+                  <StepIcon className={`w-6 h-6 ${activeStep === index ? 'text-accent-foreground' : 'text-muted-foreground'}`} />
+                </div>
+              );
+            })()}
+
+            {/* Text */}
+            <div className="text-left">
+              <h4 className="font-semibold text-foreground text-base">{item.title}</h4>
+              <p className={`text-sm text-muted-foreground transition-all duration-300 max-w-[180px] ${activeStep === index ? 'opacity-100' : 'opacity-60'
+                }`}>
+                {item.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Mobile Process Steps - Single card with orbiting dot
+const ProcessStepsMobile = ({ steps }: { steps: { step: string; title: string; description: string }[] }) => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setActiveStep((prev) => (prev + 1) % steps.length);
+        setIsTransitioning(false);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [steps.length]);
+
+  const currentStep = steps[activeStep];
+
+  return (
+    <div className="flex flex-col items-center">
+      {/* Card without orbiting dot on mobile */}
+      <div className="relative">
+        {/* Main pill-shaped card */}
+        <div className="relative bg-card rounded-full px-6 py-4 shadow-lg border border-border/50 flex items-center gap-4 min-w-[280px]">
+          {/* Icon with gradient */}
+          {(() => {
+            const StepIcon = stepIcons[activeStep] || UserPlus;
+            return (
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent via-accent/80 to-accent/60 flex items-center justify-center flex-shrink-0">
+                <StepIcon className="w-5 h-5 text-accent-foreground" />
+              </div>
+            );
+          })()}
+
+          {/* Content with transition */}
+          <div className={`transition-all duration-300 ${isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+            <h4 className="font-bold text-foreground text-base">{currentStep.title}</h4>
+            <p className="text-sm text-muted-foreground">{currentStep.description}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex gap-2 mt-6">
+        {steps.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setActiveStep(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${activeStep === index ? 'bg-accent w-6' : 'bg-muted-foreground/30'
+              }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Index = () => {
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
+  const [showRecurraIQDialog, setShowRecurraIQDialog] = useState(false);
+  const [heroWord, setHeroWord] = useState("Leader");
+
+  useEffect(() => {
+    const words = ["Leader", "Engine", "Provider", "Toolkit"];
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % words.length;
+      setHeroWord(words[currentIndex]);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
   const features = [{
     icon: BarChart3,
     title: "Analytics Dashboard",
-    description: "Track MRR, churn rate, and subscriber growth with beautiful, real-time analytics."
+    description: "Track MRR, churn rate, and subscriber growth with beautiful, real-time analytics.",
+    shortDesc: "Real-time MRR & growth metrics"
   }, {
     icon: RefreshCw,
     title: "Automated Billing",
-    description: "Set up recurring payments once and let Paystack handle the rest automatically."
+    description: "Set up recurring payments once and let Paystack handle the rest automatically.",
+    shortDesc: "Auto-recurring payments"
   }, {
     icon: Users,
     title: "Subscriber Management",
-    description: "Manage all your subscribers, view payment history, and handle cancellations with ease."
+    description: "Manage all your subscribers, view payment history, and handle cancellations with ease.",
+    shortDesc: "Easy subscriber control"
   }, {
     icon: Shield,
     title: "Secure Payments",
-    description: "Built on Paystack's secure infrastructure with industry-standard encryption."
+    description: "Built on Paystack's secure infrastructure with industry-standard encryption.",
+    shortDesc: "Bank-grade encryption"
   }, {
     icon: Zap,
     title: "Quick Integration",
-    description: "Get started in minutes with our simple setup process and shareable subscription links."
+    description: "Get started in minutes with our simple setup process and shareable subscription links.",
+    shortDesc: "Setup in minutes"
   }, {
     icon: CheckCircle,
     title: "Plan Flexibility",
-    description: "Create unlimited plans with custom pricing, intervals, and features."
+    description: "Create unlimited plans with custom pricing, intervals, and features.",
+    shortDesc: "Unlimited custom plans"
   }];
   const stats = [{
     value: "99.9%",
@@ -139,59 +281,60 @@ const Index = () => {
   return <div className="min-h-screen bg-background">
     <Navbar />
 
-    {/* Hero Section - Premium Split Layout */}
-    <section className="relative overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16 lg:pt-32 lg:pb-24">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/15 via-transparent to-transparent" />
-      <div className="absolute top-1/4 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+    {/* Hero Section - Premium Centered Layout */}
+    <section className="relative overflow-hidden pt-24 pb-8 md:pt-28 md:pb-16 lg:pt-36 lg:pb-24">
+      {/* Background Elements - Hidden on mobile for cleaner look */}
+      <div className="hidden md:block absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
+      <div className="hidden md:block absolute top-1/4 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="hidden md:block absolute bottom-0 left-0 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
 
-      <div className="container relative mx-auto px-4 md:px-6">
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
-          {/* Left Content */}
-          <div className="order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-accent/10 border border-accent/20 mb-4 md:mb-6 animate-fade-in">
+      <div className="container relative mx-auto px-5 md:px-6">
+        <div className="grid lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
+          {/* Left Content - Centered on mobile */}
+          <div className="order-2 lg:order-1 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5 md:mb-6 animate-fade-in">
               <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
               <span className="text-sm font-medium text-accent">Trusted by leading institutions</span>
             </div>
 
-            <h1 className="text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in font-mono">Billing Automation <span className="block mt-1 md:mt-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              So Simple, So Powerful
-            </span>
+            <h1 className="text-[2rem] leading-[1.15] font-bold text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in font-mono">
+              The Billing Automation{" "}
+              <span className="block mt-2 bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                {heroWord}
+              </span>
             </h1>
 
-            <p className="mt-4 md:mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl animate-fade-in font-mono">
-              The most powerful, customizable and easy to integrate subscription billing software
-              used by hundreds of businesses worldwide to simplify revenue operations.
+            <p className="mt-5 md:mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0 animate-fade-in font-mono">
+              Hundreds of businesses trust Recurra to automate billing, reduce churn, and scale revenue operations.
             </p>
 
-            <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4 animate-fade-in">
-              <Link to="/auth">
-                <Button size="lg" className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20 font-mono">
-                  Get Started Free
+            {/* CTA Buttons - Stacked on mobile like Chargebee */}
+            <div className="mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start animate-fade-in">
+              <Button size="lg" onClick={() => setShowDemoDialog(true)} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 h-14 md:h-16 px-8 text-base md:text-lg font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/25 rounded-full font-mono">
+                Get a Demo
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Link to="/auth" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full border-2 border-border hover:border-accent/50 h-14 md:h-16 px-8 text-base md:text-lg font-semibold transition-all duration-300 hover:bg-accent/5 rounded-full font-mono">
+                  Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" onClick={() => setShowDemoDialog(true)} className="w-full sm:w-auto border-border hover:border-accent/50 px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold transition-all duration-300 hover:bg-accent/5 font-mono">
-                Book a Demo
-              </Button>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-6 md:mt-10 pt-6 md:pt-8 border-t border-border/50 animate-fade-in">
-              <p className="text-sm text-muted-foreground mb-4">Powering subscriptions for</p>
-              <div className="flex items-center gap-4 md:gap-8 opacity-60 flex-wrap">
+            {/* Trust Indicators - Compact inline display */}
+            <div className="mt-8 md:mt-12 pt-6 border-t border-border/30 animate-fade-in">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  <span className="text-sm font-medium">Schools</span>
+                  <span className="font-bold text-foreground text-lg md:text-xl">50+</span>
+                  <span className="font-mono">businesses globally</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <span className="text-sm font-medium">Cooperatives</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  <span className="text-sm font-medium">Enterprises</span>
+                <div className="hidden sm:block w-px h-5 bg-border" />
+                <div className="flex items-center gap-1.5">
+                  <div className="flex text-accent">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-accent" />)}
+                  </div>
+                  <span className="font-mono">5.0 rating</span>
                 </div>
               </div>
             </div>
@@ -221,174 +364,287 @@ const Index = () => {
     {/* Book Demo Dialog */}
     <BookDemoDialog open={showDemoDialog} onOpenChange={setShowDemoDialog} />
 
-    {/* Stats Section - Floating Cards */}
+    {/* Trust Logos Section - Horizontal Scroll on Mobile */}
+    <section className="py-6 md:py-10 border-y border-border/30 bg-muted/20">
+      <div className="container mx-auto px-5 md:px-6">
+        <p className="text-center text-sm text-muted-foreground mb-5 font-mono">Powering subscriptions for</p>
+        <div className="flex items-center justify-center gap-6 md:gap-12">
+          <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <Building2 className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
+            <span className="text-sm md:text-base font-semibold text-foreground">Schools</span>
+          </div>
+          <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <Landmark className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
+            <span className="text-sm md:text-base font-semibold text-foreground">Cooperatives</span>
+          </div>
+          <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <Globe className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
+            <span className="text-sm md:text-base font-semibold text-foreground">SaaS</span>
+          </div>
+          <div className="hidden md:flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <Users className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
+            <span className="text-sm md:text-base font-semibold text-foreground">Enterprises</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Stats Section - Compact Cards */}
     <section className="py-10 md:py-16 relative">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {stats.map((stat, index) => <div key={index} className="group relative p-4 md:p-6 rounded-2xl bg-card border border-border/50 text-center transition-all duration-500 hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-1">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative">
-              <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-1">
-                {stat.value}
-              </div>
-              <div className="text-xs md:text-sm text-muted-foreground">{stat.label}</div>
+      <div className="container mx-auto px-5 md:px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+          {stats.map((stat, index) => <div key={index} className="group relative p-4 md:p-6 rounded-xl md:rounded-2xl bg-card border border-border/50 text-center transition-all duration-300 hover:border-accent/30 hover:shadow-lg">
+            <div className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-0.5 font-mono">
+              {stat.value}
             </div>
+            <div className="text-xs md:text-sm text-muted-foreground font-mono">{stat.label}</div>
           </div>)}
         </div>
       </div>
     </section>
 
-    {/* Features Section - Bento Grid Style */}
-    <section id="features" className="py-12 md:py-20 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/30 to-transparent" />
-
-      <div className="container relative mx-auto px-4 md:px-6">
-        <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
+    {/* Features Section - Branch/Timeline Layout */}
+    <section id="features" className="py-10 md:py-20 relative">
+      <div className="container relative mx-auto px-5 md:px-6">
+        <div className="max-w-2xl mx-auto mb-8 md:mb-16 text-center">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Features</span>
-          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+          <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
             All the Power You Need
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono">
+          <p className="mt-3 text-base md:text-lg text-muted-foreground font-mono">
             Powerful features designed for institutions and businesses
           </p>
         </div>
 
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return <Card key={index} className="group relative p-5 md:p-8 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:border-accent/30 hover:-translate-y-1">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Branch/Timeline Layout - Responsive on all screens */}
+        <div className="relative max-w-4xl mx-auto">
+          {/* Center Line - visible on all screen sizes with gradient */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent/30 via-accent/50 to-accent/30 -translate-x-1/2" />
 
-              <div className="relative">
-                <div className="mb-4 inline-flex rounded-xl bg-accent/10 p-3 group-hover:bg-accent/20 transition-all duration-300">
-                  <Icon className="h-6 w-6 text-accent" />
+          <div className="space-y-4 md:space-y-6">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              const isLeft = index % 2 === 0;
+              return (
+                <div key={index} className="relative flex items-center">
+                  {/* Timeline dot with glow */}
+                  <div className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-accent border-2 border-background z-10 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+
+                  {/* Card container with glow */}
+                  <div className={`w-[calc(50%-0.75rem)] ${isLeft ? 'pr-2 md:pr-6' : 'pl-2 md:pl-6 ml-auto'}`}>
+                    <div className="relative group">
+                      <div className="absolute -inset-0.5 bg-accent/10 rounded-xl blur-[2px]" />
+                      <Card className="relative p-3 md:p-5 border-accent/20 bg-card/95 backdrop-blur-sm rounded-xl hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center md:items-start gap-2.5 md:gap-3">
+                          <div className="flex-shrink-0 inline-flex rounded-lg bg-accent/15 p-2 md:p-2.5 shadow-sm">
+                            <Icon className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-[11px] md:text-base font-semibold text-foreground leading-tight">
+                              {feature.title}
+                            </h3>
+                            <p className="mt-0.5 text-[10px] text-muted-foreground leading-snug md:hidden">{feature.shortDesc}</p>
+                            <p className="mt-1 text-sm text-muted-foreground leading-relaxed hidden md:block">{feature.description}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="mb-2 md:mb-3 text-lg md:text-xl font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
-            </Card>;
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
 
-    {/* How It Works Section - Timeline Style */}
-    <section className="py-12 md:py-20">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Process</span>
-          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
-            How It Works
+    {/* How It Works Section - Animated Process */}
+    <section className="py-16 md:py-28 bg-muted/20">
+      <div className="container mx-auto px-5 md:px-6">
+        <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground font-mono">
+            Grow recurring revenue at every stage
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono">
-            Get started in three simple steps
-          </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8 relative">
-            {/* Connection Line */}
-            <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-accent/20 via-accent to-accent/20" />
+        {/* Desktop View - Horizontal Steps with Moving Dot */}
+        <div className="hidden md:block max-w-5xl mx-auto">
+          <ProcessStepsDesktop steps={howItWorks} />
+        </div>
 
-            {howItWorks.map((item, index) => <div key={index} className="relative text-center transition-all duration-500 hover:scale-105">
-              <div className="relative z-10 mx-auto mb-4 md:mb-6 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/80 text-xl md:text-2xl font-bold text-accent-foreground shadow-lg shadow-accent/20">
-                {item.step}
+        {/* Mobile View - Single Card with Orbiting Dot */}
+        <div className="md:hidden">
+          <ProcessStepsMobile steps={howItWorks} />
+        </div>
+      </div>
+    </section>
+
+    {/* Integrations Section - How Recurra Connects */}
+    <section className="py-12 md:py-24">
+      <div className="container mx-auto px-5 md:px-6">
+        <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+            How Recurra connects to your business
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
+          {/* Pre-built Integrations Card */}
+          <div className="bg-zinc-900 rounded-2xl p-6 md:p-8">
+            <div className="grid grid-cols-4 gap-3 md:gap-4 mb-6">
+              {/* Row 1 */}
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <CreditCard className="w-8 h-8 md:w-10 md:h-10 text-green-500" />
               </div>
-              <h3 className="mb-2 md:mb-3 text-lg md:text-xl font-semibold text-foreground">
-                {item.title}
-              </h3>
-              <p className="text-sm md:text-base text-muted-foreground">{item.description}</p>
-            </div>)}
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <Globe className="w-8 h-8 md:w-10 md:h-10 text-blue-400" />
+              </div>
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
+              </div>
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <Shield className="w-8 h-8 md:w-10 md:h-10 text-purple-500" />
+              </div>
+              {/* Row 2 */}
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <BarChart3 className="w-8 h-8 md:w-10 md:h-10 text-sky-400" />
+              </div>
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <Users className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
+              </div>
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <Bell className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
+              </div>
+              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                <Zap className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <span className="text-xs text-zinc-400">Paystack</span>
+              <span className="text-xs text-zinc-400">Analytics</span>
+              <span className="text-xs text-zinc-400">Growth</span>
+              <span className="text-xs text-zinc-400">Security</span>
+            </div>
           </div>
+          <p className="text-center text-muted-foreground font-medium mt-3 md:hidden">Pre-built integrations</p>
+
+          {/* Integration Methods Card */}
+          <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row gap-4 overflow-hidden">
+            {/* Code Preview */}
+            <div className="flex-1 bg-zinc-950 rounded-lg p-3 md:p-4 font-mono text-xs overflow-hidden">
+              <div className="flex gap-1.5 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              </div>
+              <pre className="text-zinc-400 text-[10px] md:text-xs leading-relaxed overflow-hidden">
+                <span className="text-zinc-500">{"<!-- Include Recurra.js -->"}</span>
+                {"\n"}<span className="text-purple-400">{"<script"}</span> <span className="text-blue-300">src</span>=<span className="text-green-400">"https://js.recurra..."</span>
+                {"\n"}
+                {"\n"}<span className="text-purple-400">{"<script>"}</span>
+                {"\n"}  <span className="text-zinc-500">// Initialize Recurra</span>
+                {"\n"}  <span className="text-blue-300">var</span> recurra = <span className="text-blue-300">new</span> <span className="text-yellow-300">Recurra</span>({"{"}
+                {"\n"}    publicKey: <span className="text-green-400">'your_key'</span>
+                {"\n"}  {"}"});
+                {"\n"}<span className="text-purple-400">{"</script>"}</span>
+              </pre>
+            </div>
+
+            {/* Checkout Preview */}
+            <div className="flex-1 bg-white rounded-lg p-3 md:p-4 text-zinc-900">
+              <p className="text-accent font-semibold text-xs mb-1">Checkout: Order summary</p>
+              <p className="text-2xl font-bold mb-3">₦12,840 <span className="text-xs font-normal text-zinc-500">NGN</span></p>
+
+              <div className="bg-zinc-100 rounded-full px-3 py-1.5 mb-3 inline-flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-accent" />
+                <span className="text-xs font-medium">Basic Plan</span>
+                <span className="text-xs text-zinc-500">₦12,000/month</span>
+              </div>
+
+              <div className="space-y-1.5 text-xs border-t border-zinc-200 pt-3">
+                <div className="flex justify-between"><span>One-time charge</span><span>₦12,840</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span>₦12,000</span></div>
+                <div className="flex justify-between"><span>Estimated tax</span><span>₦840</span></div>
+                <div className="flex justify-between font-bold pt-1 border-t"><span>Total due today</span><span>₦12,840</span></div>
+              </div>
+
+              <p className="text-[10px] text-zinc-400 mt-2">Powered by Recurra</p>
+            </div>
+          </div>
+          <p className="text-center text-muted-foreground font-medium mt-3 md:hidden">Integration methods</p>
+        </div>
+
+        <div className="hidden md:grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto mt-4">
+          <p className="text-center text-muted-foreground font-medium">Pre-built integrations</p>
+          <p className="text-center text-muted-foreground font-medium">Integration methods</p>
         </div>
       </div>
     </section>
 
     {/* Use Case 1: Schools Section */}
-    <section id="use-cases" className="py-14 md:py-24 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
-      <div className="absolute top-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+    <section id="use-cases" className="py-10 md:py-24 relative overflow-hidden">
+      {/* Background Elements - Hidden on mobile */}
+      <div className="hidden md:block absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
 
-      <div className="container relative mx-auto px-4 md:px-6">
+      <div className="container relative mx-auto px-5 md:px-6">
+        {/* Use Cases Header */}
+        <div className="text-center mb-10 md:mb-16">
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Use Cases</span>
+          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+            Built for Every Business
+          </h2>
+          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono max-w-2xl mx-auto">
+            See how Recurra powers subscription management across industries
+          </p>
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-20 items-center">
           {/* Left: Image */}
-          <div className="relative group">
-            {/* Glow Effect */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-accent/30 via-accent/20 to-accent/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
-
-            {/* Glass Frame */}
-            <div className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-accent/20 backdrop-blur-sm bg-card/30 p-2 md:p-4 shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent" />
+          <div className="relative">
+            <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
               <img
-                src={usecaseSchool}
-                alt="School Fee Management Dashboard - Digital payment flows for educational institutions"
-                className="relative w-full h-auto rounded-2xl shadow-lg"
+                src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1770100103/Gemini_Generated_Image_s7xtwrs7xtwrs7xt_ng3vlm.png"
+                alt="School Fee Management Dashboard"
+                className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover"
               />
-            </div>
-
-            {/* Floating Badge */}
-            <div className="absolute -bottom-2 -right-2 md:-bottom-4 md:-right-4 px-3 py-1.5 md:px-4 md:py-2 rounded-xl glass-card border border-accent/30 shadow-lg animate-floating">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                  <GraduationCap className="w-4 h-4 text-accent" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-mono">Active Schools</p>
-                  <p className="text-sm font-semibold text-foreground font-mono">15+ Institutions</p>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Right: Content */}
-          <div className="lg:pl-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-accent/10 border border-accent/20 mb-4 md:mb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
               <GraduationCap className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent font-mono">For Educational Institutions</span>
+              <span className="text-sm font-medium text-accent">For Schools</span>
             </div>
 
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4 md:mb-6 font-mono">
-              Streamline School Fees Collection with{" "}
-              <span className="bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
-                Automated Billing
-              </span>
+            <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-6 font-mono">
+              Streamline School Fees with{" "}
+              <span className="text-accent">Automated Billing</span>
             </h2>
 
-            <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed font-mono">
-              Eliminate the chaos of manual fee collection. Recurra automates tuition payments,
-              sends timely reminders, and provides real-time tracking—so your admin team can
-              focus on education, not paperwork.
+            <p className="text-sm md:text-lg text-muted-foreground mb-5 md:mb-8 leading-relaxed">
+              Eliminate manual fee collection. Recurra automates tuition payments and provides real-time tracking.
             </p>
 
-            {/* Feature Points */}
-            <div className="grid gap-3 md:gap-4 mb-6 md:mb-8">
+            {/* Feature Points - Compact on mobile */}
+            <div className="grid gap-2.5 md:gap-4 mb-5 md:mb-8">
               {[
-                { icon: CalendarCheck, title: "Automated Term Billing", desc: "Set up recurring fees per term or semester with automatic collection" },
-                { icon: Bell, title: "Smart Payment Reminders", desc: "Automated notifications to parents before due dates" },
-                { icon: TrendingUp, title: "Real-time Fee Tracking", desc: "Dashboard showing collected vs outstanding fees instantly" },
-                { icon: RefreshCw, title: "Failed Payment Recovery", desc: "Auto-retry failed payments up to 3 times within the billing cycle" },
+                { icon: CalendarCheck, title: "Automated Term Billing" },
+                { icon: Bell, title: "Smart Payment Reminders" },
+                { icon: TrendingUp, title: "Real-time Fee Tracking" },
+                { icon: RefreshCw, title: "Failed Payment Recovery" },
               ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="group flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-card/50 border border-border/50 hover:border-accent/30 hover:bg-card transition-all duration-300"
-                >
-                  <div className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                    <feature.icon className="w-5 h-5 text-accent" />
+                <div key={index} className="flex items-center gap-3 p-2.5 md:p-3 rounded-lg bg-muted/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <feature.icon className="w-4 h-4 text-accent" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1 font-mono">{feature.title}</h4>
-                    <p className="text-sm text-muted-foreground font-mono">{feature.desc}</p>
-                  </div>
+                  <span className="text-sm font-medium text-foreground">{feature.title}</span>
                 </div>
               ))}
             </div>
 
             <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20 font-mono">
+              <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground h-12 md:h-14 px-6 text-base font-semibold rounded-full">
                 Get Started for Schools
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -399,59 +655,44 @@ const Index = () => {
     </section>
 
     {/* Use Case 2: Loan Cooperatives Section */}
-    <section className="py-14 md:py-24 relative overflow-hidden bg-muted/30">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-bl from-primary/5 via-transparent to-accent/5" />
-      <div className="absolute top-1/2 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-
-      <div className="container relative mx-auto px-4 md:px-6">
+    <section className="py-10 md:py-24 relative overflow-hidden bg-muted/20">
+      <div className="container relative mx-auto px-5 md:px-6">
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-20 items-center">
           {/* Left: Content (Reversed order on desktop) */}
-          <div className="lg:pr-8 order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-accent/10 border border-accent/20 mb-4 md:mb-6">
+          <div className="order-2 lg:order-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
               <Landmark className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent font-mono">For Loan Cooperatives</span>
+              <span className="text-sm font-medium text-accent">For Cooperatives</span>
             </div>
 
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4 md:mb-6 font-mono">
+            <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-6 font-mono">
               Simplify Loan Repayments with{" "}
-              <span className="bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
-                Smart Recovery
-              </span>
+              <span className="text-accent">Smart Recovery</span>
             </h2>
 
-            <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed font-mono">
-              Transform your cooperative's loan management. Automate monthly repayments,
-              track member contributions, and reduce defaulters with intelligent retry
-              mechanisms that recover failed payments automatically.
+            <p className="text-sm md:text-lg text-muted-foreground mb-5 md:mb-8 leading-relaxed">
+              Transform your cooperative's loan management. Automate repayments and reduce defaulters with intelligent retry mechanisms.
             </p>
 
-            {/* Feature Points */}
-            <div className="grid gap-3 md:gap-4 mb-6 md:mb-8">
+            {/* Feature Points - Compact on mobile */}
+            <div className="grid gap-2.5 md:gap-4 mb-5 md:mb-8">
               {[
-                { icon: CreditCard, title: "Automated Loan Deductions", desc: "Schedule monthly repayments with direct debit from member accounts" },
-                { icon: RefreshCw, title: "Intelligent Retry System", desc: "Up to 3 automatic retries for failed payments within the cycle" },
-                { icon: Users, title: "Member Portal Access", desc: "Members can view loan balance, payment history, and upcoming dues" },
-                { icon: Shield, title: "Defaulter Management", desc: "Automated flagging and escalation for overdue accounts" },
+                { icon: CreditCard, title: "Automated Loan Deductions" },
+                { icon: RefreshCw, title: "Intelligent Retry System" },
+                { icon: Users, title: "Member Portal Access" },
+                { icon: Shield, title: "Defaulter Management" },
               ].map((feature, index) => (
-                <div
-                  key={index}
-                  className="group flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-card/50 border border-border/50 hover:border-accent/30 hover:bg-card transition-all duration-300"
-                >
-                  <div className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                    <feature.icon className="w-5 h-5 text-accent" />
+                <div key={index} className="flex items-center gap-3 p-2.5 md:p-3 rounded-lg bg-card/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <feature.icon className="w-4 h-4 text-accent" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1 font-mono">{feature.title}</h4>
-                    <p className="text-sm text-muted-foreground font-mono">{feature.desc}</p>
-                  </div>
+                  <span className="text-sm font-medium text-foreground">{feature.title}</span>
                 </div>
               ))}
             </div>
 
             <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/20 font-mono">
+              <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground h-12 md:h-14 px-6 text-base font-semibold rounded-full">
                 Get Started for Cooperatives
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -459,31 +700,13 @@ const Index = () => {
           </div>
 
           {/* Right: Image */}
-          <div className="relative group order-1 lg:order-2">
-            {/* Glow Effect */}
-            <div className="absolute -inset-4 bg-gradient-to-l from-accent/30 via-accent/20 to-accent/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
-
-            {/* Glass Frame */}
-            <div className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-accent/20 backdrop-blur-sm bg-card/30 p-2 md:p-4 shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-bl from-accent/10 via-transparent to-transparent" />
+          <div className="relative order-1 lg:order-2">
+            <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
               <img
-                src={usecaseCooperative}
-                alt="Cooperative Loan Management System - Automated repayment tracking for financial cooperatives"
-                className="relative w-full h-auto rounded-2xl shadow-lg"
+                src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1770100257/Gemini_Generated_Image_677xpp677xpp677x_poggth.png"
+                alt="Cooperative Loan Management System"
+                className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover"
               />
-            </div>
-
-            {/* Floating Badge */}
-            <div className="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-4 px-3 py-1.5 md:px-4 md:py-2 rounded-xl glass-card border border-accent/30 shadow-lg animate-floating">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                  <Landmark className="w-4 h-4 text-accent" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-mono">Recovery Rate</p>
-                  <p className="text-sm font-semibold text-foreground font-mono">98.5% Success</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -503,23 +726,31 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid gap-4 md:gap-8 md:grid-cols-3">
-          {testimonials.map((testimonial, index) => <Card key={index} className="group p-5 md:p-8 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-accent/30">
-            <div className="mb-4 md:mb-6 flex gap-1">
-              {[...Array(testimonial.rating)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
-            </div>
-            <p className="mb-4 md:mb-6 text-muted-foreground italic text-base md:text-lg leading-relaxed">
-              "{testimonial.quote}"
-            </p>
-            <div className="pt-4 border-t border-border/50">
-              <div className="font-semibold text-foreground">
-                {testimonial.author}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {testimonial.role}
-              </div>
-            </div>
-          </Card>)}
+        <div className="relative w-full overflow-hidden">
+          {/* Gradient Masks */}
+          <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-muted/30 to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-muted/30 to-transparent z-10 pointer-events-none" />
+
+          <div className="flex w-max animate-scroll gap-6 hover:[animation-play-state:paused] py-4">
+            {[...testimonials, ...testimonials, ...testimonials, ...testimonials].map((testimonial, index) => (
+              <Card key={index} className="w-[300px] md:w-[400px] shrink-0 group p-5 md:p-8 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 hover:border-accent/30 bg-card/80 backdrop-blur-sm">
+                <div className="mb-4 md:mb-6 flex gap-1">
+                  {[...Array(testimonial.rating)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
+                </div>
+                <p className="mb-4 md:mb-6 text-muted-foreground italic text-base md:text-lg leading-relaxed">
+                  "{testimonial.quote}"
+                </p>
+                <div className="pt-4 border-t border-border/50">
+                  <div className="font-semibold text-foreground">
+                    {testimonial.author}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {testimonial.role}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -539,12 +770,7 @@ const Index = () => {
 
         <div className="max-w-2xl mx-auto">
           <Card className="relative p-6 md:p-10 overflow-hidden transition-all duration-500 hover:shadow-2xl border-accent/20">
-            {/* Premium Badge */}
-            <div className="absolute top-6 right-6">
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-accent/10 text-accent border border-accent/20">
-                Most Popular
-              </span>
-            </div>
+
 
             <div className="text-center mb-6 md:mb-8">
               <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
@@ -575,6 +801,85 @@ const Index = () => {
         </div>
       </div>
     </section>
+
+    {/* Enterprise Scale Section */}
+    <section className="py-16 md:py-28 bg-zinc-950 relative overflow-hidden">
+      {/* World Map Background Image */}
+      <div
+        className="absolute inset-0 opacity-40 bg-center bg-cover bg-no-repeat"
+        style={{ backgroundImage: 'url(https://res.cloudinary.com/dmhy8rk7q/image/upload/v1770098069/Gemini_Generated_Image_9ic5zr9ic5zr9ic5_vwlusf.png)' }}
+      />
+
+      <div className="container relative mx-auto px-5 md:px-6">
+        {/* Stats Section */}
+        <div className="text-center mb-16 md:mb-24">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-mono mb-12 md:mb-16">
+            Built for enterprise scale
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 max-w-4xl mx-auto">
+            <div className="text-center">
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">₦50M+</p>
+              <p className="text-sm md:text-base text-zinc-400">Annual payment volume</p>
+            </div>
+            <div className="text-center">
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">10K+</p>
+              <p className="text-sm md:text-base text-zinc-400">Subscription renewals</p>
+            </div>
+            <div className="text-center">
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">5+</p>
+              <p className="text-sm md:text-base text-zinc-400">Currencies accepted</p>
+            </div>
+            <div className="text-center">
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">1K+</p>
+              <p className="text-sm md:text-base text-zinc-400">Active subscribers</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Recurra IQ Section */}
+        <div className="text-center mt-8 md:mt-12">
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">RECURRA IQ</span>
+          <h3 className="mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white font-mono">
+            AI that works for you
+          </h3>
+          <p className="mt-4 text-base md:text-lg text-zinc-400 max-w-2xl mx-auto">
+            Recurra IQ combines intelligent automation with your subscriber data
+            to optimize retention, reduce churn, and maximize revenue.
+          </p>
+          <Button
+            className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 font-semibold"
+            onClick={() => setShowRecurraIQDialog(true)}
+          >
+            Learn more about Recurra IQ
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    {/* Recurra IQ Coming Soon Modal */}
+    {showRecurraIQDialog && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="bg-card border border-border rounded-2xl p-8 md:p-12 max-w-md mx-4 text-center shadow-2xl">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
+            <Settings className="w-10 h-10 text-accent animate-spin" style={{ animationDuration: '3s' }} />
+          </div>
+          <h3 className="text-xl md:text-2xl font-bold text-foreground font-mono mb-4">
+            Coming Soon!
+          </h3>
+          <p className="text-muted-foreground mb-8">
+            Our engineers are tirelessly working to make sure Recurra IQ is what you need.
+          </p>
+          <Button
+            className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 font-semibold w-full"
+            onClick={() => setShowRecurraIQDialog(false)}
+          >
+            We'll be done soon
+          </Button>
+        </div>
+      </div>
+    )}
 
     <section id="faq" className="py-12 md:py-20 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/20 to-transparent" />

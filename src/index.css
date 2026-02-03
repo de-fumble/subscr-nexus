@@ -37,19 +37,19 @@ All colors MUST be HSL.
     --ring: 180 97% 32%;
 
     --radius: 0.75rem;
-    
+
     --gradient-primary: linear-gradient(135deg, hsl(210 100% 7%), hsl(210 100% 12%));
     --gradient-accent: linear-gradient(135deg, hsl(180 97% 32%), hsl(180 97% 42%));
     --gradient-hero: linear-gradient(135deg, hsl(210 100% 7%) 0%, hsl(180 97% 32%) 100%);
-    
+
     --shadow-soft: 0 2px 8px hsl(210 100% 7% / 0.08);
     --shadow-medium: 0 4px 16px hsl(210 100% 7% / 0.12);
     --shadow-strong: 0 8px 32px hsl(210 100% 7% / 0.16);
     --shadow-glow: 0 0 40px hsl(180 97% 32% / 0.15);
-    
+
     --glass-bg: hsl(0 0% 100% / 0.7);
     --glass-border: hsl(210 30% 90% / 1);
-    
+
     --chart-1: 180 97% 32%;
     --chart-2: 210 100% 12%;
 
@@ -98,14 +98,14 @@ All colors MUST be HSL.
     --border: 210 50% 15%;
     --input: 210 50% 15%;
     --ring: 180 97% 42%;
-    
+
     --gradient-primary: linear-gradient(135deg, hsl(210 100% 6%), hsl(210 100% 10%));
     --gradient-accent: linear-gradient(135deg, hsl(180 97% 32%), hsl(180 97% 42%));
     --gradient-hero: linear-gradient(135deg, hsl(210 100% 6%) 0%, hsl(180 97% 32%) 100%);
-    
+
     --glass-bg: hsl(210 100% 6% / 0.6);
     --glass-border: hsl(180 97% 32% / 0.7);
-    
+
     --chart-1: 180 97% 32%;
     --chart-2: 210 100% 12%;
     --sidebar-background: 240 5.9% 10%;
@@ -133,65 +133,67 @@ All colors MUST be HSL.
   .glass-card {
     @apply backdrop-blur-xl bg-[var(--glass-bg)] border border-[var(--glass-border)];
   }
-  
+
   .glass-sidebar {
     @apply backdrop-blur-2xl bg-[var(--glass-bg)] border-r border-[var(--glass-border)];
   }
-  
+
   .premium-shadow {
-    box-shadow: 
+    box-shadow:
       0 0 0 1px hsl(var(--border) / 0.5),
       0 1px 2px hsl(var(--foreground) / 0.05),
       0 4px 8px hsl(var(--foreground) / 0.05),
       0 8px 16px hsl(var(--foreground) / 0.05);
   }
-  
+
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)];
   }
-  
+
   .hover-glow {
     @apply transition-all duration-300;
   }
-  
+
   .hover-glow:hover {
     box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
   }
-  
+
   .fade-in-up {
     animation: fadeInUp 0.6s ease-out forwards;
   }
-  
+
   @keyframes fadeInUp {
     from {
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-  
+
   .shimmer {
     background: linear-gradient(90deg, transparent, hsl(var(--accent) / 0.1), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
-  
+
   @keyframes shimmer {
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
   }
-  
+
   .gradient-border {
     position: relative;
   }
-  
+
   .gradient-border::before {
     content: '';
     position: absolute;
@@ -205,12 +207,12 @@ All colors MUST be HSL.
     mask-composite: exclude;
     pointer-events: none;
   }
-  
+
   .stat-card-glow {
     position: relative;
     overflow: hidden;
   }
-  
+
   .stat-card-glow::after {
     content: '';
     position: absolute;
@@ -223,24 +225,31 @@ All colors MUST be HSL.
     transition: opacity 0.3s ease;
     pointer-events: none;
   }
-  
+
   .stat-card-glow:hover::after {
     opacity: 1;
   }
-  
+
   .floating {
     animation: floating 3s ease-in-out infinite;
   }
-  
+
   @keyframes floating {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-5px);
+    }
   }
-  
+
   .pulse-ring {
     position: relative;
   }
-  
+
   .pulse-ring::before {
     content: '';
     position: absolute;
@@ -249,15 +258,104 @@ All colors MUST be HSL.
     border: 2px solid hsl(var(--accent) / 0.3);
     animation: pulse-ring 2s ease-out infinite;
   }
-  
+
   @keyframes pulse-ring {
     0% {
       transform: scale(1);
       opacity: 1;
     }
+
     100% {
       transform: scale(1.1);
       opacity: 0;
     }
+  }
+
+  /* Hide scrollbar for horizontal scrolling elements */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Orbit animation for mobile process section */
+  @keyframes orbitDot {
+    0% {
+      transform: translateY(-50%) rotate(0deg);
+    }
+
+    25% {
+      transform: translateY(-50%) rotate(90deg);
+    }
+
+    50% {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    75% {
+      transform: translateY(-50%) rotate(270deg);
+    }
+
+    100% {
+      transform: translateY(-50%) rotate(360deg);
+    }
+  }
+
+  /* Slide up animation for content transition */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+  }
+
+  /* Infinite scroll animation */
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-scroll {
+    animation: scroll 40s linear infinite;
+  }
+
+  .animate-scroll:hover {
+    animation-play-state: paused;
+  }
+
+  /* Gradient text animation */
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-gradient {
+    animation: gradient 6s ease infinite;
   }
 }
