@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -34,7 +35,11 @@ interface Organization {
   org_name: string;
   email: string;
   logo_url?: string | null;
+  paystack_secret_key?: string | null;
+  paystack_public_key?: string | null;
 }
+
+const MAX_PLANS_WITHOUT_PAYSTACK = 3;
 
 const CreatePlan = () => {
   const navigate = useNavigate();
@@ -42,6 +47,8 @@ const CreatePlan = () => {
   const [loading, setLoading] = useState(false);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
+  const [planCount, setPlanCount] = useState(0);
+  const [paystackConnected, setPaystackConnected] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -67,14 +74,16 @@ const CreatePlan = () => {
 
       // Get organization
       let orgData = null;
+      let orgId = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, logo_url")
+        .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (ownedOrg) {
         orgData = ownedOrg;
+        orgId = ownedOrg.id;
       } else {
         const { data: membership } = await supabase
           .from("organization_members")
@@ -85,15 +94,28 @@ const CreatePlan = () => {
         if (membership) {
           const { data: memberOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, logo_url")
+            .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key")
             .eq("id", membership.org_id)
             .maybeSingle();
           
           orgData = memberOrg;
+          orgId = memberOrg?.id;
         }
       }
 
       setOrganization(orgData);
+      setPaystackConnected(!!(orgData?.paystack_secret_key && orgData?.paystack_public_key));
+
+      // Get plan count
+      if (orgId) {
+        const { count } = await supabase
+          .from("subscription_plans")
+          .select("*", { count: "exact", head: true })
+          .eq("org_id", orgId)
+          .eq("is_active", true);
+        
+        setPlanCount(count || 0);
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -139,7 +161,11 @@ const CreatePlan = () => {
       }
 
       if (data.error) {
-        toast.error(data.error);
+        if (data.plan_limit_reached) {
+          toast.error(data.error, { duration: 6000 });
+        } else {
+          toast.error(data.error);
+        }
         return;
       }
 
@@ -175,6 +201,31 @@ const CreatePlan = () => {
               <div className="mb-6">
                 <p className="text-muted-foreground">Set up a new recurring payment plan for your subscribers</p>
               </div>
+
+              {/* Plan limit warning for orgs without Paystack */}
+              {!paystackConnected && planCount >= MAX_PLANS_WITHOUT_PAYSTACK && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Plan limit reached</AlertTitle>
+                  <AlertDescription>
+                    You've reached the maximum of {MAX_PLANS_WITHOUT_PAYSTACK} plans. Connect your own Paystack API keys in{" "}
+                    <a href="/dashboard/settings" className="underline font-medium">Settings</a>{" "}
+                    to create unlimited plans.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {!paystackConnected && planCount < MAX_PLANS_WITHOUT_PAYSTACK && planCount >= MAX_PLANS_WITHOUT_PAYSTACK - 1 && (
+                <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <AlertTitle className="text-amber-600">Limited plans remaining</AlertTitle>
+                  <AlertDescription>
+                    You have {MAX_PLANS_WITHOUT_PAYSTACK - planCount} plan(s) remaining. Connect your Paystack API keys in{" "}
+                    <a href="/dashboard/settings" className="underline font-medium">Settings</a>{" "}
+                    for unlimited plans.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Card className="mx-auto max-w-2xl p-8 glass-card border-0 shadow-[var(--shadow-medium)]">
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -302,7 +353,7 @@ const CreatePlan = () => {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={loading}
+                      disabled={loading || (!paystackConnected && planCount >= MAX_PLANS_WITHOUT_PAYSTACK)}
                       className="flex-1 bg-accent hover:bg-accent/90"
                     >
                       {loading ? (

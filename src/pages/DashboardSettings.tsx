@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Key, Save, Shield, Lock, FileCheck, Building2 } from "lucide-react";
+import { Key, Save, Shield, Lock, FileCheck, Building2, Link2, Link2Off } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 import { BackButton } from "@/components/BackButton";
@@ -200,6 +200,55 @@ export default function DashboardSettings() {
           
           <main className="flex-1 overflow-auto">
             <div className="container max-w-3xl py-8 px-6">
+              {/* Paystack Connection Status Card */}
+              <Card className={`mb-6 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 ${hasExistingKeys ? 'border-l-green-500' : 'border-l-amber-500'}`}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${hasExistingKeys ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+                      {hasExistingKeys ? (
+                        <Link2 className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <Link2Off className="h-6 w-6 text-amber-500" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        Paystack Connection
+                        {hasExistingKeys && <Shield className="h-4 w-4 text-green-500" />}
+                      </CardTitle>
+                      <CardDescription>
+                        {hasExistingKeys 
+                          ? "Your Paystack account is connected. You have unlimited plans and your own payment processing."
+                          : "Connect your Paystack API keys to unlock unlimited plans and use your own payment processing."}
+                      </CardDescription>
+                    </div>
+                    <div>
+                      {hasExistingKeys ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-600">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                          Connected
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-amber-500/10 text-amber-600">
+                          <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                          Not Connected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {!hasExistingKeys && (
+                    <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                      <p className="font-medium text-foreground mb-1">Benefits of connecting your Paystack:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Create unlimited subscription plans</li>
+                        <li>Payments go directly to your Paystack account</li>
+                        <li>Full control over your payment settings</li>
+                      </ul>
+                    </div>
+                  )}
+                </CardHeader>
+              </Card>
+
               <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
