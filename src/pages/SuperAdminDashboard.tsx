@@ -44,9 +44,13 @@ interface Organization {
   email: string;
   created_at: string;
   is_suspended: boolean;
+  paystack_connected: boolean;
+  total_plans: number;
+  active_plans: number;
   active_subscribers: number;
   total_subscribers: number;
   total_revenue: number;
+  transaction_count: number;
   mrr: number;
   arr: number;
   defaulted_subscribers: number;
@@ -290,6 +294,8 @@ export default function SuperAdminDashboard() {
                 <TableHead>Organization</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Paystack</TableHead>
+                <TableHead className="text-right">Plans</TableHead>
                 <TableHead className="text-right">Subscribers</TableHead>
                 <TableHead className="text-right">Revenue</TableHead>
                 <TableHead className="text-right">MRR</TableHead>
@@ -309,6 +315,17 @@ export default function SuperAdminDashboard() {
                     ) : (
                       <Badge variant="default">Active</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    {org.paystack_connected ? (
+                      <Badge variant="default" className="bg-green-600">Connected</Badge>
+                    ) : (
+                      <Badge variant="secondary">Not Connected</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-medium">{org.active_plans}</span>
+                    <span className="text-muted-foreground text-xs"> / {org.total_plans}</span>
                   </TableCell>
                   <TableCell className="text-right">
                     <span className="font-medium">{org.active_subscribers}</span>
@@ -339,7 +356,7 @@ export default function SuperAdminDashboard() {
               ))}
               {filteredOrganizations.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'No organizations match your search' : 'No organizations found'}
                   </TableCell>
                 </TableRow>

@@ -223,6 +223,21 @@ async function getAllOrganizations(supabase: any) {
 
   if (error) throw error;
 
+  // Get plan counts for each organization
+  const { data: allPlans } = await supabase
+    .from('subscription_plans')
+    .select('org_id, is_active');
+
+  const planCountByOrg: { [key: string]: number } = {};
+  const activePlanCountByOrg: { [key: string]: number } = {};
+  
+  (allPlans || []).forEach((plan: any) => {
+    planCountByOrg[plan.org_id] = (planCountByOrg[plan.org_id] || 0) + 1;
+    if (plan.is_active) {
+      activePlanCountByOrg[plan.org_id] = (activePlanCountByOrg[plan.org_id] || 0) + 1;
+    }
+  });
+
   // Get detailed stats for each org from Paystack
   const orgsWithStats = await Promise.all(organizations.map(async (org: any) => {
     let activeSubscribers = 0;
@@ -231,6 +246,9 @@ async function getAllOrganizations(supabase: any) {
     let transactionCount = 0;
     let mrr = 0;
     let defaultedSubscribers = 0;
+
+    // Check if org has connected their own Paystack keys
+    const paystackConnected = !!(org.paystack_secret_key && org.paystack_public_key);
 
     if (org.paystack_secret_key) {
       const { subscriptions, transactions } = await fetchPaystackData(org.paystack_secret_key);
@@ -248,6 +266,9 @@ async function getAllOrganizations(supabase: any) {
 
     return {
       ...org,
+      paystack_connected: paystackConnected,
+      total_plans: planCountByOrg[org.id] || 0,
+      active_plans: activePlanCountByOrg[org.id] || 0,
       active_subscribers: activeSubscribers,
       total_subscribers: totalSubscribers,
       total_revenue: totalRevenue,

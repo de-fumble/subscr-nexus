@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const MAX_PLANS_WITHOUT_PAYSTACK = 3;
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,16 +15,6 @@ serve(async (req) => {
   }
 
   try {
-    const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY')
-    
-    if (!paystackSecretKey) {
-      console.error('PAYSTACK_SECRET_KEY not found in environment')
-      return new Response(
-        JSON.stringify({ error: 'Paystack API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
@@ -47,7 +39,7 @@ serve(async (req) => {
       )
     }
 
-    const { name, price, interval, description, currency = 'NGN' } = await req.json()
+    const { name, price, interval, description, currency = 'NGN', category } = await req.json()
 
     if (!name || !price || !interval) {
       return new Response(
@@ -61,7 +53,7 @@ serve(async (req) => {
 
     const { data: ownedOrg } = await supabase
       .from('organizations')
-      .select('*')
+      .select('id, paystack_secret_key, paystack_public_key')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -78,7 +70,7 @@ serve(async (req) => {
       if (membership) {
         const { data: memberOrg } = await supabase
           .from('organizations')
-          .select('*')
+          .select('id, paystack_secret_key, paystack_public_key')
           .eq('id', membership.org_id)
           .maybeSingle()
         
@@ -94,7 +86,42 @@ serve(async (req) => {
       )
     }
 
-    console.log('Creating plan on Paystack:', { name, price, interval, currency })
+    // Check if org has connected their Paystack keys
+    const hasPaystackConnected = !!(org.paystack_secret_key && org.paystack_public_key);
+    
+    // If not connected, check plan limit
+    if (!hasPaystackConnected) {
+      const { count, error: countError } = await supabase
+        .from('subscription_plans')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', org.id)
+        .eq('is_active', true);
+
+      if (countError) {
+        console.error('Error counting plans:', countError);
+      } else if (count !== null && count >= MAX_PLANS_WITHOUT_PAYSTACK) {
+        return new Response(
+          JSON.stringify({ 
+            error: `You have reached the limit of ${MAX_PLANS_WITHOUT_PAYSTACK} plans. Connect your own Paystack API keys in Settings to create unlimited plans.`,
+            plan_limit_reached: true
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
+    // Use org's Paystack key if available, otherwise fall back to platform default
+    const paystackSecretKey = org.paystack_secret_key || Deno.env.get('PAYSTACK_SECRET_KEY')
+    
+    if (!paystackSecretKey) {
+      console.error('No Paystack API key available')
+      return new Response(
+        JSON.stringify({ error: 'Paystack API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Creating plan on Paystack:', { name, price, interval, currency, usingOrgKey: !!org.paystack_secret_key })
 
     // Create plan on Paystack
     const paystackResponse = await fetch('https://api.paystack.co/plan', {
@@ -135,6 +162,7 @@ serve(async (req) => {
         price,
         interval,
         currency,
+        category,
       })
       .select()
       .single()
@@ -153,7 +181,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         plan,
-        paystack_data: paystackData.data
+        paystack_data: paystackData.data,
+        using_org_keys: !!org.paystack_secret_key
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
