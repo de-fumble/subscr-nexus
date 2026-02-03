@@ -56,6 +56,8 @@ import FindOrganizations from "./pages/FindOrganizations";
 import UserVerifyTransaction from "./pages/UserVerifyTransaction";
 import UserSettings from "./pages/UserSettings";
 
+import { ThemeProvider } from "./components/ThemeProvider";
+
 const queryClient = new QueryClient();
 
 const App = () => (

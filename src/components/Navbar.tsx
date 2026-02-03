@@ -30,7 +30,7 @@ const Navbar = () => {
     await supabase.auth.signOut();
     navigate("/");
   };
-  return <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  return <nav className="absolute top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
     <div className="container mx-auto flex items-center justify-between px-5 md:px-6 py-3 md:py-4">
       <Link to="/" className="flex items-center gap-2.5 transition-transform duration-300 hover:scale-105">
         <img src={logoImage} alt="Recurra Logo" className="h-10 w-10 md:h-12 md:w-12 object-cover rounded-xl" />

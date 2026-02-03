@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Calendar, Mail, User, Building2, Loader2 } from "lucide-react";
+import { Calendar, Mail, User, Building2, Loader2, ArrowRight } from "lucide-react";
 
 interface BookDemoDialogProps {
   open: boolean;
@@ -23,7 +23,7 @@ const BookDemoDialog = ({ open, onOpenChange }: BookDemoDialogProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email) {
       toast.error("Please fill in your name and email");
       return;
@@ -39,11 +39,11 @@ const BookDemoDialog = ({ open, onOpenChange }: BookDemoDialogProps) => {
         `Company: ${formData.company || 'Not provided'}\n\n` +
         `Message:\n${formData.message || 'I would like to book a demo of Recurra.'}`
       );
-      
+
       window.location.href = `mailto:Recurrra@outlook.com?subject=${subject}&body=${body}`;
-      
+
       toast.success("Opening your email client to send the demo request");
-      
+
       // Reset form and close dialog after a short delay
       setTimeout(() => {
         setFormData({ name: "", email: "", company: "", message: "" });
@@ -58,91 +58,99 @@ const BookDemoDialog = ({ open, onOpenChange }: BookDemoDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Calendar className="h-5 w-5 text-accent" />
+      <DialogContent className="sm:max-w-md w-[95vw] md:w-full bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl animate-fade-in duration-300">
+        <DialogHeader className="space-y-3">
+          <div className="mx-auto w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-2">
+            <Calendar className="h-6 w-6 text-accent" />
+          </div>
+          <DialogTitle className="text-center text-2xl font-bold font-mono">
             Book a Demo
           </DialogTitle>
-          <DialogDescription>
-            Fill in your details and we'll get back to you to schedule a personalized demo.
+          <DialogDescription className="text-center text-base">
+            See how Recurra can transform your subscription billing.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              Full Name *
-            </Label>
-            <Input
-              id="name"
-              placeholder="John Doe"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4 text-accent" />
+                Full Name
+              </Label>
+              <Input
+                id="name"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                className="h-12 bg-muted/30 border-border/50 focus:border-accent/50 transition-all font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4 text-accent" />
+                Work Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@company.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                className="h-12 bg-muted/30 border-border/50 focus:border-accent/50 transition-all font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company" className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-accent" />
+                Company Name
+              </Label>
+              <Input
+                id="company"
+                placeholder="Acme Inc."
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                className="h-12 bg-muted/30 border-border/50 focus:border-accent/50 transition-all font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="message" className="text-sm font-medium">Message (Optional)</Label>
+              <Textarea
+                id="message"
+                placeholder="Tell us about your needs..."
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                rows={3}
+                className="bg-muted/30 border-border/50 focus:border-accent/50 transition-all font-mono resize-none"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              Email Address *
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="john@company.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="company" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              Company Name
-            </Label>
-            <Input
-              id="company"
-              placeholder="Acme Inc."
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="message">Message (Optional)</Label>
-            <Textarea
-              id="message"
-              placeholder="Tell us about your subscription management needs..."
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              rows={3}
-            />
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+          <Button
+            type="submit"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-12 rounded-lg font-semibold text-lg transition-all duration-300 hover:shadow-lg hover:shadow-accent/20"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Opening Email...
               </>
             ) : (
               <>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Demo Request
+                Send Request
+                <ArrowRight className="ml-2 h-5 w-5" />
               </>
             )}
           </Button>
 
-          <p className="text-xs text-center text-muted-foreground">
-            This will open your email client to send the request to our team.
+          <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-mono">
+            Secure & Confidential
           </p>
         </form>
       </DialogContent>

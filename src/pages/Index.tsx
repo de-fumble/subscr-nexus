@@ -3,12 +3,12 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2 } from "lucide-react";
+import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, ArrowDown, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
-import usecaseSchool from "@/assets/usecase-school.png";
-import usecaseCooperative from "@/assets/usecase-cooperative.png";
+import usecaseSchool from "@/assets/usecase-school-v2.png";
+import usecaseCooperative from "@/assets/usecase-cooperative-v2.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
 
@@ -209,17 +209,17 @@ const Index = () => {
   }];
   const testimonials = [{
     quote: "Recurra transformed how we manage subscriptions. The analytics alone are worth it.",
-    author: "Sarah Johnson",
+    author: "Adewale Adeyemi",
     role: "CEO, TechStart",
     rating: 5
   }, {
     quote: "Best subscription management platform we've used. Simple, powerful, and reliable.",
-    author: "Michael Chen",
+    author: "Wanjiku Mwangi",
     role: "Finance Director, EduCorp",
     rating: 5
   }, {
     quote: "The automated billing saved us countless hours. Highly recommend for any business.",
-    author: "Emily Rodriguez",
+    author: "Kwame Mensah",
     role: "Operations Manager, MediaFlow",
     rating: 5
   }];
@@ -483,100 +483,106 @@ const Index = () => {
     <section className="py-12 md:py-24">
       <div className="container mx-auto px-5 md:px-6">
         <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Process</span>
+          <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
             How Recurra connects to your business
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 max-w-5xl mx-auto">
           {/* Pre-built Integrations Card */}
-          <div className="bg-zinc-900 rounded-2xl p-6 md:p-8">
-            <div className="grid grid-cols-4 gap-3 md:gap-4 mb-6">
-              {/* Row 1 */}
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <CreditCard className="w-8 h-8 md:w-10 md:h-10 text-green-500" />
+          <div className="w-full md:flex-1">
+            <div className="bg-zinc-900 rounded-2xl p-6 md:p-8 h-full">
+              <div className="grid grid-cols-4 gap-3 md:gap-4 mb-6">
+                {/* Row 1 */}
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <CreditCard className="w-8 h-8 md:w-10 md:h-10 text-green-500" />
+                </div>
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Globe className="w-8 h-8 md:w-10 md:h-10 text-blue-400" />
+                </div>
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
+                </div>
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Shield className="w-8 h-8 md:w-10 md:h-10 text-purple-500" />
+                </div>
+                {/* Row 2 */}
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <BarChart3 className="w-8 h-8 md:w-10 md:h-10 text-sky-400" />
+                </div>
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Users className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
+                </div>
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Bell className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
+                </div>
+                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Zap className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
+                </div>
               </div>
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <Globe className="w-8 h-8 md:w-10 md:h-10 text-blue-400" />
-              </div>
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
-              </div>
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <Shield className="w-8 h-8 md:w-10 md:h-10 text-purple-500" />
-              </div>
-              {/* Row 2 */}
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <BarChart3 className="w-8 h-8 md:w-10 md:h-10 text-sky-400" />
-              </div>
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <Users className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
-              </div>
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <Bell className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
-              </div>
-              <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                <Zap className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <span className="text-xs text-zinc-400">Paystack</span>
+                <span className="text-xs text-zinc-400">Analytics</span>
+                <span className="text-xs text-zinc-400">Growth</span>
+                <span className="text-xs text-zinc-400">Security</span>
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <span className="text-xs text-zinc-400">Paystack</span>
-              <span className="text-xs text-zinc-400">Analytics</span>
-              <span className="text-xs text-zinc-400">Growth</span>
-              <span className="text-xs text-zinc-400">Security</span>
-            </div>
+            <p className="text-center text-muted-foreground font-medium mt-3">Pre-built integrations</p>
           </div>
-          <p className="text-center text-muted-foreground font-medium mt-3 md:hidden">Pre-built integrations</p>
+
+          {/* Connection Arrow */}
+          <div className="flex-shrink-0 text-muted-foreground/30 z-10">
+            <ArrowRight className="hidden md:block w-8 h-8 md:w-12 md:h-12" />
+            <ArrowDown className="md:hidden w-8 h-8" />
+          </div>
 
           {/* Integration Methods Card */}
-          <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row gap-4 overflow-hidden">
-            {/* Code Preview */}
-            <div className="flex-1 bg-zinc-950 rounded-lg p-3 md:p-4 font-mono text-xs overflow-hidden">
-              <div className="flex gap-1.5 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+          <div className="w-full md:flex-1">
+            <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row gap-4 overflow-hidden h-full">
+              {/* Code Preview */}
+              <div className="flex-1 bg-zinc-950 rounded-lg p-3 md:p-4 font-mono text-xs overflow-hidden">
+                <div className="flex gap-1.5 mb-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                </div>
+                <pre className="text-zinc-400 text-[10px] md:text-xs leading-relaxed overflow-hidden">
+                  <span className="text-zinc-500">{"<!-- Include Recurra.js -->"}</span>
+                  {"\n"}<span className="text-purple-400">{"<script"}</span> <span className="text-blue-300">src</span>=<span className="text-green-400">"https://js.recurra..."</span>
+                  {"\n"}
+                  {"\n"}<span className="text-purple-400">{"<script>"}</span>
+                  {"\n"}  <span className="text-zinc-500">// Initialize Recurra</span>
+                  {"\n"}  <span className="text-blue-300">var</span> recurra = <span className="text-blue-300">new</span> <span className="text-yellow-300">Recurra</span>({"{"}
+                  {"\n"}    publicKey: <span className="text-green-400">'your_key'</span>
+                  {"\n"}  {"}"});
+                  {"\n"}<span className="text-purple-400">{"</script>"}</span>
+                </pre>
               </div>
-              <pre className="text-zinc-400 text-[10px] md:text-xs leading-relaxed overflow-hidden">
-                <span className="text-zinc-500">{"<!-- Include Recurra.js -->"}</span>
-                {"\n"}<span className="text-purple-400">{"<script"}</span> <span className="text-blue-300">src</span>=<span className="text-green-400">"https://js.recurra..."</span>
-                {"\n"}
-                {"\n"}<span className="text-purple-400">{"<script>"}</span>
-                {"\n"}  <span className="text-zinc-500">// Initialize Recurra</span>
-                {"\n"}  <span className="text-blue-300">var</span> recurra = <span className="text-blue-300">new</span> <span className="text-yellow-300">Recurra</span>({"{"}
-                {"\n"}    publicKey: <span className="text-green-400">'your_key'</span>
-                {"\n"}  {"}"});
-                {"\n"}<span className="text-purple-400">{"</script>"}</span>
-              </pre>
+
+              {/* Checkout Preview */}
+              <div className="flex-1 bg-white rounded-lg p-3 md:p-4 text-zinc-900">
+                <p className="text-accent font-semibold text-xs mb-1">Checkout: Order summary</p>
+                <p className="text-2xl font-bold mb-3">₦12,840 <span className="text-xs font-normal text-zinc-500">NGN</span></p>
+
+                <div className="bg-zinc-100 rounded-full px-3 py-1.5 mb-3 inline-flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-accent" />
+                  <span className="text-xs font-medium">Basic Plan</span>
+                  <span className="text-xs text-zinc-500">₦12,000/month</span>
+                </div>
+
+                <div className="space-y-1.5 text-xs border-t border-zinc-200 pt-3">
+                  <div className="flex justify-between"><span>One-time charge</span><span>₦12,840</span></div>
+                  <div className="flex justify-between"><span>Subtotal</span><span>₦12,000</span></div>
+                  <div className="flex justify-between"><span>Estimated tax</span><span>₦840</span></div>
+                  <div className="flex justify-between font-bold pt-1 border-t"><span>Total due today</span><span>₦12,840</span></div>
+                </div>
+
+                <p className="text-[10px] text-zinc-400 mt-2">Powered by Recurra</p>
+              </div>
             </div>
-
-            {/* Checkout Preview */}
-            <div className="flex-1 bg-white rounded-lg p-3 md:p-4 text-zinc-900">
-              <p className="text-accent font-semibold text-xs mb-1">Checkout: Order summary</p>
-              <p className="text-2xl font-bold mb-3">₦12,840 <span className="text-xs font-normal text-zinc-500">NGN</span></p>
-
-              <div className="bg-zinc-100 rounded-full px-3 py-1.5 mb-3 inline-flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-accent" />
-                <span className="text-xs font-medium">Basic Plan</span>
-                <span className="text-xs text-zinc-500">₦12,000/month</span>
-              </div>
-
-              <div className="space-y-1.5 text-xs border-t border-zinc-200 pt-3">
-                <div className="flex justify-between"><span>One-time charge</span><span>₦12,840</span></div>
-                <div className="flex justify-between"><span>Subtotal</span><span>₦12,000</span></div>
-                <div className="flex justify-between"><span>Estimated tax</span><span>₦840</span></div>
-                <div className="flex justify-between font-bold pt-1 border-t"><span>Total due today</span><span>₦12,840</span></div>
-              </div>
-
-              <p className="text-[10px] text-zinc-400 mt-2">Powered by Recurra</p>
-            </div>
+            <p className="text-center text-muted-foreground font-medium mt-3">Integration methods</p>
           </div>
-          <p className="text-center text-muted-foreground font-medium mt-3 md:hidden">Integration methods</p>
-        </div>
-
-        <div className="hidden md:grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto mt-4">
-          <p className="text-center text-muted-foreground font-medium">Pre-built integrations</p>
-          <p className="text-center text-muted-foreground font-medium">Integration methods</p>
         </div>
       </div>
     </section>
@@ -603,7 +609,7 @@ const Index = () => {
           <div className="relative">
             <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
               <img
-                src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1770100103/Gemini_Generated_Image_s7xtwrs7xtwrs7xt_ng3vlm.png"
+                src={usecaseSchool}
                 alt="School Fee Management Dashboard"
                 className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover"
               />
@@ -703,7 +709,7 @@ const Index = () => {
           <div className="relative order-1 lg:order-2">
             <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
               <img
-                src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1770100257/Gemini_Generated_Image_677xpp677xpp677x_poggth.png"
+                src={usecaseCooperative}
                 alt="Cooperative Loan Management System"
                 className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover"
               />
