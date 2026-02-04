@@ -28,6 +28,8 @@ import DashboardSubscribers from "./pages/DashboardSubscribers";
 import DashboardLogs from "./pages/DashboardLogs";
 import DashboardStaff from "./pages/DashboardStaff";
 import DashboardVerify from "./pages/DashboardVerify";
+import DashboardFailedPayments from "./pages/DashboardFailedPayments";
+import DashboardInvoices from "./pages/DashboardInvoices";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminOrganization from "./pages/SuperAdminOrganization";
 import SuperAdminPayouts from "./pages/SuperAdminPayouts";
@@ -95,6 +97,8 @@ const App = () => (
           <Route path="/dashboard/logs" element={<ProtectedRoute><DashboardLogs /></ProtectedRoute>} />
           <Route path="/dashboard/staff" element={<ProtectedRoute><DashboardStaff /></ProtectedRoute>} />
           <Route path="/dashboard/verify" element={<ProtectedRoute><DashboardVerify /></ProtectedRoute>} />
+          <Route path="/dashboard/failed-payments" element={<ProtectedRoute><DashboardFailedPayments /></ProtectedRoute>} />
+          <Route path="/dashboard/invoices" element={<ProtectedRoute><DashboardInvoices /></ProtectedRoute>} />
           {/* Super Admin Routes */}
           <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
