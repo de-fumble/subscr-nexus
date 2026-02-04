@@ -278,18 +278,15 @@ const Index = () => {
       href: "/gdpr"
     }]
   };
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background w-full overflow-x-hidden relative" style={{ maxWidth: '100%', boxSizing: 'border-box' }}>
     <Navbar />
 
-    {/* Hero Section - Premium Centered Layout */}
-    <section className="relative overflow-hidden pt-24 pb-8 md:pt-28 md:pb-16 lg:pt-36 lg:pb-24">
-      {/* Background Elements - Hidden on mobile for cleaner look */}
-      <div className="hidden md:block absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
-      <div className="hidden md:block absolute top-1/4 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="hidden md:block absolute bottom-0 left-0 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+    {/* Hero Section - Premium Centered Layout - White Background */}
+    <section className="relative overflow-hidden pt-24 pb-8 md:pt-28 md:pb-16 lg:pt-36 lg:pb-24 bg-white">
+      {/* Background Elements removed for clean white look */}
 
-      <div className="container relative mx-auto px-5 md:px-6">
-        <div className="grid lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6 lg:px-8" style={{ maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-10 lg:gap-16 items-center">
           {/* Left Content - Centered on mobile */}
           <div className="order-2 lg:order-1 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5 md:mb-6 animate-fade-in">
@@ -340,7 +337,7 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Right Content - Dashboard Preview (Hidden on smaller screens) */}
+          {/* Right Content - Dashboard Preview (Only visible on large screens) */}
           <div className="hidden lg:block order-1 lg:order-2 animate-fade-in">
             <div className="relative">
               {/* Glow Effect */}
@@ -366,9 +363,9 @@ const Index = () => {
 
     {/* Trust Logos Section - Horizontal Scroll on Mobile */}
     <section className="py-6 md:py-10 border-y border-border/30 bg-muted/20">
-      <div className="container mx-auto px-5 md:px-6">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <p className="text-center text-sm text-muted-foreground mb-5 font-mono">Powering subscriptions for</p>
-        <div className="flex items-center justify-center gap-6 md:gap-12">
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-12">
           <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
             <Building2 className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
             <span className="text-sm md:text-base font-semibold text-foreground">Schools</span>
@@ -391,8 +388,8 @@ const Index = () => {
 
     {/* Stats Section - Compact Cards */}
     <section className="py-10 md:py-16 relative">
-      <div className="container mx-auto px-5 md:px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6">
           {stats.map((stat, index) => <div key={index} className="group relative p-4 md:p-6 rounded-xl md:rounded-2xl bg-card border border-border/50 text-center transition-all duration-300 hover:border-accent/30 hover:shadow-lg">
             <div className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-0.5 font-mono">
               {stat.value}
@@ -405,7 +402,7 @@ const Index = () => {
 
     {/* Features Section - Branch/Timeline Layout */}
     <section id="features" className="py-10 md:py-20 relative">
-      <div className="container relative mx-auto px-5 md:px-6">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-8 md:mb-16 text-center">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Features</span>
           <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
@@ -431,19 +428,19 @@ const Index = () => {
                   <div className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-accent border-2 border-background z-10 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
 
                   {/* Card container with glow */}
-                  <div className={`w-[calc(50%-0.75rem)] ${isLeft ? 'pr-2 md:pr-6' : 'pl-2 md:pl-6 ml-auto'}`}>
+                  <div className={`w-[calc(50%-0.5rem)] sm:w-[calc(50%-0.75rem)] ${isLeft ? 'pr-1 sm:pr-2 md:pr-6' : 'pl-1 sm:pl-2 md:pl-6 ml-auto'}`}>
                     <div className="relative group">
                       <div className="absolute -inset-0.5 bg-accent/10 rounded-xl blur-[2px]" />
-                      <Card className="relative p-3 md:p-5 border-accent/20 bg-card/95 backdrop-blur-sm rounded-xl hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center md:items-start gap-2.5 md:gap-3">
-                          <div className="flex-shrink-0 inline-flex rounded-lg bg-accent/15 p-2 md:p-2.5 shadow-sm">
-                            <Icon className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+                      <Card className="relative p-2 sm:p-3 md:p-5 border-accent/20 bg-card/95 backdrop-blur-sm rounded-xl hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center md:items-start gap-1.5 sm:gap-2.5 md:gap-3">
+                          <div className="flex-shrink-0 inline-flex rounded-lg bg-accent/15 p-1.5 sm:p-2 md:p-2.5 shadow-sm">
+                            <Icon className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-accent" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-[11px] md:text-base font-semibold text-foreground leading-tight">
+                            <h3 className="text-[10px] sm:text-[11px] md:text-base font-semibold text-foreground leading-tight">
                               {feature.title}
                             </h3>
-                            <p className="mt-0.5 text-[10px] text-muted-foreground leading-snug md:hidden">{feature.shortDesc}</p>
+                            <p className="mt-0.5 text-[9px] sm:text-[10px] text-muted-foreground leading-snug md:hidden">{feature.shortDesc}</p>
                             <p className="mt-1 text-sm text-muted-foreground leading-relaxed hidden md:block">{feature.description}</p>
                           </div>
                         </div>
@@ -459,10 +456,10 @@ const Index = () => {
     </section>
 
     {/* How It Works Section - Animated Process */}
-    <section className="py-16 md:py-28 bg-muted/20">
-      <div className="container mx-auto px-5 md:px-6">
+    <section className="py-12 md:py-20 lg:py-28 bg-muted/20">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground font-mono">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground font-mono">
             Grow recurring revenue at every stage
           </h2>
         </div>
@@ -480,8 +477,8 @@ const Index = () => {
     </section>
 
     {/* Integrations Section - How Recurra Connects */}
-    <section className="py-12 md:py-24">
-      <div className="container mx-auto px-5 md:px-6">
+    <section className="py-10 md:py-16 lg:py-24">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Process</span>
           <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
@@ -489,36 +486,36 @@ const Index = () => {
           </h2>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto">
           {/* Pre-built Integrations Card */}
           <div className="w-full md:flex-1">
-            <div className="bg-zinc-900 rounded-2xl p-6 md:p-8 h-full">
-              <div className="grid grid-cols-4 gap-3 md:gap-4 mb-6">
+            <div className="bg-zinc-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 h-full">
+              <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {/* Row 1 */}
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <CreditCard className="w-8 h-8 md:w-10 md:h-10 text-green-500" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-green-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Globe className="w-8 h-8 md:w-10 md:h-10 text-blue-400" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Globe className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-400" />
                 </div>
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Shield className="w-8 h-8 md:w-10 md:h-10 text-purple-500" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Shield className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-purple-500" />
                 </div>
                 {/* Row 2 */}
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <BarChart3 className="w-8 h-8 md:w-10 md:h-10 text-sky-400" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-sky-400" />
                 </div>
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Users className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Users className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Bell className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Bell className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-red-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-xl p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Zap className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
+                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
+                  <Zap className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-emerald-500" />
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-2 text-center">
@@ -539,15 +536,15 @@ const Index = () => {
 
           {/* Integration Methods Card */}
           <div className="w-full md:flex-1">
-            <div className="bg-zinc-900 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row gap-4 overflow-hidden h-full">
+            <div className="bg-zinc-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 flex flex-col md:flex-row gap-3 sm:gap-4 overflow-hidden h-full">
               {/* Code Preview */}
-              <div className="flex-1 bg-zinc-950 rounded-lg p-3 md:p-4 font-mono text-xs overflow-hidden">
+              <div className="flex-1 bg-zinc-950 rounded-lg p-2 sm:p-3 md:p-4 font-mono text-xs overflow-hidden">
                 <div className="flex gap-1.5 mb-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                 </div>
-                <pre className="text-zinc-400 text-[10px] md:text-xs leading-relaxed overflow-hidden">
+                <pre className="text-zinc-400 text-[9px] sm:text-[10px] md:text-xs leading-relaxed overflow-hidden whitespace-pre-wrap break-all">
                   <span className="text-zinc-500">{"<!-- Include Recurra.js -->"}</span>
                   {"\n"}<span className="text-purple-400">{"<script"}</span> <span className="text-blue-300">src</span>=<span className="text-green-400">"https://js.recurra..."</span>
                   {"\n"}
@@ -561,7 +558,7 @@ const Index = () => {
               </div>
 
               {/* Checkout Preview */}
-              <div className="flex-1 bg-white rounded-lg p-3 md:p-4 text-zinc-900">
+              <div className="flex-1 bg-white rounded-lg p-2 sm:p-3 md:p-4 text-zinc-900">
                 <p className="text-accent font-semibold text-xs mb-1">Checkout: Order summary</p>
                 <p className="text-2xl font-bold mb-3">₦12,840 <span className="text-xs font-normal text-zinc-500">NGN</span></p>
 
@@ -588,11 +585,11 @@ const Index = () => {
     </section>
 
     {/* Use Case 1: Schools Section */}
-    <section id="use-cases" className="py-10 md:py-24 relative overflow-hidden">
+    <section id="use-cases" className="py-10 md:py-16 lg:py-24 relative overflow-hidden">
       {/* Background Elements - Hidden on mobile */}
       <div className="hidden md:block absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
 
-      <div className="container relative mx-auto px-5 md:px-6">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         {/* Use Cases Header */}
         <div className="text-center mb-10 md:mb-16">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Use Cases</span>
@@ -604,7 +601,7 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-20 items-center">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-20 items-center">
           {/* Left: Image */}
           <div className="relative">
             <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
@@ -661,9 +658,9 @@ const Index = () => {
     </section>
 
     {/* Use Case 2: Loan Cooperatives Section */}
-    <section className="py-10 md:py-24 relative overflow-hidden bg-muted/20">
-      <div className="container relative mx-auto px-5 md:px-6">
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-20 items-center">
+    <section className="py-10 md:py-16 lg:py-24 relative overflow-hidden bg-muted/20">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-20 items-center">
           {/* Left: Content (Reversed order on desktop) */}
           <div className="order-2 lg:order-1">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
@@ -720,8 +717,8 @@ const Index = () => {
     </section>
 
     {/* Testimonials Section - Modern Cards */}
-    <section className="py-12 md:py-20 bg-muted/30">
-      <div className="container mx-auto px-4 md:px-6">
+    <section className="py-10 md:py-16 lg:py-20 bg-muted/30">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Testimonials</span>
           <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
@@ -737,9 +734,9 @@ const Index = () => {
           <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-muted/30 to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-muted/30 to-transparent z-10 pointer-events-none" />
 
-          <div className="flex w-max animate-scroll gap-6 hover:[animation-play-state:paused] py-4">
+          <div className="flex w-max animate-scroll gap-4 sm:gap-6 hover:[animation-play-state:paused] py-4">
             {[...testimonials, ...testimonials, ...testimonials, ...testimonials].map((testimonial, index) => (
-              <Card key={index} className="w-[300px] md:w-[400px] shrink-0 group p-5 md:p-8 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 hover:border-accent/30 bg-card/80 backdrop-blur-sm">
+              <Card key={index} className="w-[260px] sm:w-[300px] md:w-[400px] shrink-0 group p-4 sm:p-5 md:p-8 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 hover:border-accent/30 bg-card/80 backdrop-blur-sm">
                 <div className="mb-4 md:mb-6 flex gap-1">
                   {[...Array(testimonial.rating)].map((_, i) => <Star key={i} className="h-5 w-5 fill-accent text-accent" />)}
                 </div>
@@ -762,8 +759,8 @@ const Index = () => {
     </section>
 
     {/* Pricing Section - Premium Card */}
-    <section id="pricing" className="py-12 md:py-20">
-      <div className="container mx-auto px-4 md:px-6">
+    <section id="pricing" className="py-10 md:py-16 lg:py-20">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Pricing</span>
           <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
@@ -809,36 +806,36 @@ const Index = () => {
     </section>
 
     {/* Enterprise Scale Section */}
-    <section className="py-16 md:py-28 bg-zinc-950 relative overflow-hidden">
+    <section className="py-12 md:py-20 lg:py-28 bg-zinc-950 relative overflow-hidden">
       {/* World Map Background Image */}
       <div
         className="absolute inset-0 opacity-40 bg-center bg-cover bg-no-repeat"
         style={{ backgroundImage: 'url(https://res.cloudinary.com/dmhy8rk7q/image/upload/v1770098069/Gemini_Generated_Image_9ic5zr9ic5zr9ic5_vwlusf.png)' }}
       />
 
-      <div className="container relative mx-auto px-5 md:px-6">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         {/* Stats Section */}
         <div className="text-center mb-16 md:mb-24">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-mono mb-12 md:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white font-mono mb-8 sm:mb-12 md:mb-16">
             Built for enterprise scale
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 md:gap-12 max-w-4xl mx-auto">
             <div className="text-center">
-              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">₦50M+</p>
-              <p className="text-sm md:text-base text-zinc-400">Annual payment volume</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">₦50M+</p>
+              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Annual payment volume</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">10K+</p>
-              <p className="text-sm md:text-base text-zinc-400">Subscription renewals</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">10K+</p>
+              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Subscription renewals</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">5+</p>
-              <p className="text-sm md:text-base text-zinc-400">Currencies accepted</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">5+</p>
+              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Currencies accepted</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-2">1K+</p>
-              <p className="text-sm md:text-base text-zinc-400">Active subscribers</p>
+              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">1K+</p>
+              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Active subscribers</p>
             </div>
           </div>
         </div>
@@ -887,10 +884,10 @@ const Index = () => {
       </div>
     )}
 
-    <section id="faq" className="py-12 md:py-20 relative">
+    <section id="faq" className="py-10 md:py-16 lg:py-20 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/20 to-transparent" />
 
-      <div className="container relative mx-auto px-4 md:px-6">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-accent/10 border border-accent/20 mb-4 md:mb-6">
             <HelpCircle className="w-4 h-4 text-accent" />
@@ -1003,11 +1000,11 @@ const Index = () => {
     </section>
 
     {/* CTA Section - Gradient Background */}
-    <section className="relative py-14 md:py-24 overflow-hidden">
+    <section className="relative py-10 sm:py-14 md:py-20 lg:py-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent/80" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/30 via-transparent to-transparent" />
 
-      <div className="container relative mx-auto px-4 md:px-6 text-center">
+      <div className="container relative mx-auto px-4 sm:px-5 md:px-6 text-center">
         <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto font-mono">
           Ready to Transform Your Subscription Business?
         </h2>
@@ -1035,7 +1032,7 @@ const Index = () => {
     {/* Enterprise Footer */}
     <footer className="bg-card border-t border-border">
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 md:px-6 py-10 md:py-16">
+      <div className="container mx-auto px-4 sm:px-5 md:px-6 py-8 sm:py-10 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-6 md:gap-8">
           {/* Brand Column */}
           <div className="col-span-2">

@@ -120,12 +120,63 @@ All colors MUST be HSL.
 }
 
 @layer base {
-  * {
+
+  *,
+  *::before,
+  *::after {
     @apply border-border;
+    box-sizing: border-box;
   }
 
+  html,
   body {
-    @apply bg-background text-foreground overflow-x-hidden;
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    position: relative;
+    /* Prevent iOS horizontal scroll */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Reset any potential overflow sources */
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    /* Avoids bottom margin issues */
+  }
+
+  /* Container adjustments for tablets */
+  .container {
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      max-width: 1280px;
+      margin-left: auto;
+      margin-right: auto;
+    }
   }
 }
 
