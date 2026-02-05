@@ -91,6 +91,65 @@ serve(async (req) => {
       }
 
       console.log("Subscriber created successfully with authorization code");
+
+     // Create or link billing profile
+     const customerEmail = customer.email;
+     const customerName = customer.first_name && customer.last_name 
+       ? `${customer.first_name} ${customer.last_name}` 
+       : null;
+
+     // Check if billing profile exists
+     const { data: existingProfile } = await supabase
+       .from("billing_profiles")
+       .select("id")
+       .eq("email", customerEmail)
+       .single();
+
+    let billingProfileId: string | null = null;
+
+     if (existingProfile) {
+       billingProfileId = existingProfile.id;
+     } else {
+       // Create new billing profile
+       const { data: newProfile, error: profileError } = await supabase
+         .from("billing_profiles")
+         .insert({
+           email: customerEmail,
+           full_name: customerName,
+         })
+         .select("id")
+         .single();
+
+       if (profileError) {
+         console.error("Error creating billing profile:", profileError);
+       } else {
+         billingProfileId = newProfile.id;
+       }
+     }
+
+     // Get org_id from the plan
+     const { data: planData } = await supabase
+       .from("subscription_plans")
+       .select("org_id")
+       .eq("id", planId)
+       .single();
+
+     if (planData && billingProfileId) {
+       // Link billing profile to organization if not already linked
+       const { data: existingLink } = await supabase
+         .from("billing_profile_organizations")
+         .select("id")
+         .eq("billing_profile_id", billingProfileId)
+         .eq("org_id", planData.org_id)
+         .single();
+
+       if (!existingLink) {
+         await supabase.from("billing_profile_organizations").insert({
+           billing_profile_id: billingProfileId,
+           org_id: planData.org_id,
+         });
+       }
+     }
     }
 
     // Handle successful charge - clear any failed payment state
@@ -135,6 +194,42 @@ serve(async (req) => {
         } else {
           console.log("Transaction recorded successfully, failed payment state cleared");
         }
+
+       // Update billing profile organization total_paid
+       const { data: subData } = await supabase
+         .from("subscribers")
+         .select("email, subscription_plans(org_id)")
+         .eq("id", subscriber.id)
+         .single();
+
+       if (subData) {
+         const { data: profile } = await supabase
+           .from("billing_profiles")
+           .select("id")
+           .eq("email", subData.email)
+           .single();
+
+         if (profile) {
+           const orgId = (subData.subscription_plans as any)?.org_id;
+           if (orgId) {
+             // Get current total and add new amount
+             const { data: bpo } = await supabase
+               .from("billing_profile_organizations")
+               .select("total_paid")
+               .eq("billing_profile_id", profile.id)
+               .eq("org_id", orgId)
+               .single();
+
+             const newTotal = (bpo?.total_paid || 0) + amount;
+
+             await supabase
+               .from("billing_profile_organizations")
+               .update({ total_paid: newTotal })
+               .eq("billing_profile_id", profile.id)
+               .eq("org_id", orgId);
+           }
+         }
+       }
       }
     }
 

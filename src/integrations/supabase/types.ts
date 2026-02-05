@@ -91,6 +91,78 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_profile_organizations: {
+        Row: {
+          billing_profile_id: string
+          created_at: string
+          first_interaction_at: string
+          id: string
+          org_id: string
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          billing_profile_id: string
+          created_at?: string
+          first_interaction_at?: string
+          id?: string
+          org_id: string
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_profile_id?: string
+          created_at?: string
+          first_interaction_at?: string
+          id?: string
+          org_id?: string
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_profile_organizations_billing_profile_id_fkey"
+            columns: ["billing_profile_id"]
+            isOneToOne: false
+            referencedRelation: "billing_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_profile_organizations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deletion_requests: {
         Row: {
           created_at: string
