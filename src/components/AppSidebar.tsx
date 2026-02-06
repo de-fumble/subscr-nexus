@@ -1,16 +1,15 @@
-import { 
-  LayoutDashboard, 
-  CreditCard, 
-  Users, 
-  TrendingUp, 
-  Settings, 
+import {
+  LayoutDashboard,
+  CreditCard,
+  Users,
+  TrendingUp,
+  Settings,
   User,
   LogOut,
   Building2,
   FileText,
   Shield,
   Lock,
-  Sparkles,
   CheckCircle,
   Banknote,
   AlertTriangle,
@@ -68,15 +67,15 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   ];
 
   // Only show profile/settings to owners
-  const settingsItems = canAccessSettings 
+  const settingsItems = canAccessSettings
     ? [
-        { title: "Profile", icon: User, url: "/dashboard/profile" },
-        { title: "Settings", icon: Settings, url: "/dashboard/settings" },
-      ]
+      { title: "Profile", icon: User, url: "/dashboard/profile" },
+      { title: "Settings", icon: Settings, url: "/dashboard/settings" },
+    ]
     : [
-        { title: "Profile", icon: Lock, url: "/dashboard/profile", restricted: true },
-        { title: "Settings", icon: Lock, url: "/dashboard/settings", restricted: true },
-      ];
+      { title: "Profile", icon: Lock, url: "/dashboard/profile", restricted: true },
+      { title: "Settings", icon: Lock, url: "/dashboard/settings", restricted: true },
+    ];
 
   // Display name and email based on role
   const displayName = role === 'staff' ? userEmail?.split('@')[0] || 'Staff' : organization?.org_name;
@@ -91,55 +90,64 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar collapsible="icon" className="glass-sidebar border-r-0">
+    <Sidebar collapsible="icon" className="border-r border-border/20 bg-background/80 backdrop-blur-md">
       <SidebarContent className="px-2">
         {/* Premium Header */}
         <SidebarGroup className="pt-4">
-          <div className={`flex items-center gap-3 px-2 py-3 rounded-xl glass-card mb-2 ${open ? '' : 'justify-center'}`}>
-            <div className="relative">
-              <Avatar className="h-10 w-10 ring-2 ring-accent/30 ring-offset-1 ring-offset-background">
-                <AvatarImage src={organization?.logo_url || undefined} alt={organization?.org_name} />
-                <AvatarFallback className="bg-gradient-to-br from-accent to-accent/70 text-accent-foreground font-bold">
-                  {organization?.org_name?.charAt(0).toUpperCase() || "O"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
-            </div>
-            {open && (
-              <div className="flex-1 overflow-hidden">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold truncate text-foreground">{organization?.org_name || "Dashboard"}</p>
-                  <Sparkles className="h-3 w-3 text-accent shrink-0" />
+          <div className={`flex items-center gap-3 px-2 py-2 mb-2 transition-all duration-300 ${open ? 'justify-start' : 'justify-center'}`}>
+            {open ? (
+              <div className="w-full bg-gradient-to-b from-sidebar-accent/50 to-sidebar-accent/30 border border-sidebar-border/50 rounded-xl p-2 shadow-sm group-hover:border-primary/20 transition-all duration-300 flex items-center gap-3 relative overflow-hidden">
+                <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+                <div className="relative shrink-0">
+                  <img
+                    src="/sidebar-logo.png"
+                    alt="Recurra"
+                    className="h-9 w-9 object-cover rounded-full ring-2 ring-background shadow-sm transform scale-110"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
                 </div>
-                <RoleBadge role={role || null} />
+                <div className="flex flex-col min-w-0 justify-center">
+                  <span className="font-mono font-bold text-lg tracking-wider text-teal-900">
+                    RECURRA
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="relative group/icon">
+                <Avatar className="h-10 w-10 ring-1 ring-border/50 ring-offset-1 ring-offset-background transition-all duration-300 group-hover/icon:ring-primary/40 group-hover/icon:shadow-lg group-hover/icon:shadow-primary/10">
+                  <AvatarImage src={organization?.logo_url || undefined} alt={organization?.org_name} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/90 to-primary/70 text-primary-foreground text-sm font-semibold">
+                    {organization?.org_name?.charAt(0).toUpperCase() || "O"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 rounded-full border-2 border-background shadow-sm animate-pulse" />
               </div>
             )}
           </div>
         </SidebarGroup>
 
-        {open && <Separator className="mx-2 my-2 bg-border/50" />}
+        {open && <Separator className="mx-2 my-2 bg-border/30" />}
 
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium px-2 mb-1">
             {open ? "Navigation" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-0.5">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.url)}
                     isActive={isActive(item.url)}
                     tooltip={item.title}
-                    className={`rounded-lg transition-all duration-200 ${
-                      isActive(item.url) 
-                        ? 'bg-accent text-accent-foreground shadow-md hover-glow' 
-                        : 'hover:bg-muted/80'
-                    }`}
+                    className={`rounded-md transition-all duration-150 ${isActive(item.url)
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                      }`}
                   >
-                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? '' : 'text-muted-foreground'}`} />
-                    {open && <span className="font-medium">{item.title}</span>}
+                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-primary' : ''}`} />
+                    {open && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -147,29 +155,28 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {open && <Separator className="mx-2 my-2 bg-border/50" />}
+        {open && <Separator className="mx-2 my-2 bg-border/30" />}
 
         {/* Account Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium px-2 mb-1">
             {open ? "Account" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-0.5">
               {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.url)}
                     isActive={isActive(item.url)}
                     tooltip={item.title}
-                    className={`rounded-lg transition-all duration-200 ${
-                      isActive(item.url) 
-                        ? 'bg-accent text-accent-foreground shadow-md' 
-                        : 'hover:bg-muted/80'
-                    }`}
+                    className={`rounded-md transition-all duration-150 ${isActive(item.url)
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                      }`}
                   >
-                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? '' : 'text-muted-foreground'}`} />
-                    {open && <span className="font-medium">{item.title}</span>}
+                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-primary' : ''}`} />
+                    {open && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -179,29 +186,29 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
       </SidebarContent>
 
       <SidebarFooter className="p-2">
-        <div className={`glass-card rounded-xl p-3 ${open ? '' : 'p-2'}`}>
+        <div className={`rounded-lg bg-muted/30 border border-border/30 p-2.5 ${open ? '' : 'p-2'}`}>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div className={`flex items-center gap-3 mb-3 ${open ? '' : 'justify-center'}`}>
-                <Avatar className="h-9 w-9 ring-2 ring-border">
+              <div className={`flex items-center gap-2.5 mb-2 ${open ? '' : 'justify-center'}`}>
+                <Avatar className="h-8 w-8 ring-1 ring-border/40">
                   <AvatarImage src={organization?.logo_url || undefined} alt={displayName || ''} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  <AvatarFallback className="bg-primary/90 text-primary-foreground text-xs font-medium">
                     {displayName?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
                 {open && (
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-medium truncate">{displayName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{displayEmail}</p>
+                    <p className="text-[13px] font-medium truncate">{displayName}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{displayEmail}</p>
                   </div>
                 )}
               </div>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={handleSignOut} 
+              <SidebarMenuButton
+                onClick={handleSignOut}
                 tooltip="Sign Out"
-                className="rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+                className="rounded-md hover:bg-destructive/8 hover:text-destructive text-muted-foreground transition-colors text-[13px]"
               >
                 <LogOut className="h-4 w-4" />
                 {open && <span>Sign Out</span>}

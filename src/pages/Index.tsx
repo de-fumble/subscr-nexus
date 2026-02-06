@@ -11,6 +11,7 @@ import usecaseSchool from "@/assets/usecase-school-v2.png";
 import usecaseCooperative from "@/assets/usecase-cooperative-v2.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
+import { TeamSection } from "@/components/TeamSection";
 
 // Step icons mapping
 const stepIcons = [UserPlus, Settings, Share2];
@@ -804,6 +805,9 @@ const Index = () => {
         </div>
       </div>
     </section>
+
+    {/* Meet Our Team Section */}
+    <TeamSection />
 
     {/* Enterprise Scale Section */}
     <section className="py-12 md:py-20 lg:py-28 bg-zinc-950 relative overflow-hidden">

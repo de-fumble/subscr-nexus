@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Loader2 } from "lucide-react";
+import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Loader2, PlayCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import * as XLSX from "xlsx";
@@ -66,15 +66,15 @@ const DashboardHeader = ({
     state
   } = useSidebar();
   const isCollapsed = state === "collapsed";
-  return <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-      <SidebarTrigger />
-      <div className="flex-1 flex items-center gap-3">
-        <h1 className="text-xl font-bold text-foreground">
-          {isCollapsed ? orgName || "Dashboard" : "Dashboard"}
-        </h1>
-      </div>
-      {orgId && <NotificationIcon orgId={orgId} />}
-    </header>;
+  return <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-border/30 bg-background/95 backdrop-blur-sm px-4">
+    <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity" />
+    <div className="flex-1 flex items-center gap-3">
+      <h1 className="text-base font-semibold text-foreground tracking-tight">
+        {isCollapsed ? orgName || "Dashboard" : "Dashboard"}
+      </h1>
+    </div>
+    {orgId && <NotificationIcon orgId={orgId} />}
+  </header>;
 };
 
 // Circular progress indicator component
@@ -89,9 +89,9 @@ const CircularProgress = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - percentage / 100 * circumference;
   return <svg width="60" height="60" viewBox="0 0 60 60" className="transform -rotate-90">
-      <circle cx="30" cy="30" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
-      <circle cx="30" cy="30" r={radius} fill="none" stroke={color} strokeWidth="4" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" className="transition-all duration-500" />
-    </svg>;
+    <circle cx="30" cy="30" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
+    <circle cx="30" cy="30" r={radius} fill="none" stroke={color} strokeWidth="4" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" className="transition-all duration-500" />
+  </svg>;
 };
 
 // Mini pie chart for failed payments breakdown
@@ -107,14 +107,14 @@ const MiniPieChart = ({
   const total = data.reduce((sum, item) => sum + item.value, 0);
   if (total === 0) return null;
   return <div className="relative h-14 w-14">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={15} outerRadius={25} paddingAngle={2} dataKey="value">
-            {data.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-    </div>;
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie data={data} cx="50%" cy="50%" innerRadius={15} outerRadius={25} paddingAngle={2} dataKey="value">
+          {data.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+  </div>;
 };
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -683,399 +683,419 @@ const Dashboard = () => {
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   if (loading) {
     return <SidebarProvider defaultOpen={true}>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
-            <DashboardSkeleton />
-          </SidebarInset>
-        </div>
-      </SidebarProvider>;
+      <div className="flex min-h-screen w-full">
+        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+        <SidebarInset>
+          <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
+          <DashboardSkeleton />
+        </SidebarInset>
+      </div>
+    </SidebarProvider>;
   }
   return <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <DashboardHeader orgName={organization?.org_name} />
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-6">
-              
-              {/* Setup Progress Card - Only shows when setup is incomplete */}
-              {organization && (
-                <SetupProgressCard
-                  hasPaymentProvider={!!organization?.paystack_secret_key}
-                  hasPlans={plans.length > 0}
-                  orgId={organization?.id}
-                  orgName={organization?.org_name}
-                />
-              )}
-              
-              {/* Top Stats Row - 4 Cards */}
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
-                {/* Toggle for hiding values */}
-                <div className="col-span-full flex justify-end mb-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setHideValues(!hideValues)}
-                  >
-                    {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    {hideValues ? "Show Values" : "Hide Values"}
-                  </Button>
-                </div>
+    <div className="flex min-h-screen w-full bg-background">
+      <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+      <SidebarInset className="flex-1">
+        <DashboardHeader orgName={organization?.org_name} />
+        <main className="flex-1 overflow-auto">
+          <div className="container mx-auto px-6 py-6">
 
-                {/* Total Revenue (MTD) */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Total Revenue</span>
-                        <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs gap-1" onClick={handleExportRevenue} disabled={exportingRevenue}>
-                          {exportingRevenue ? <>
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Exporting...
-                            </> : <>
-                              <Download className="h-3 w-3" />
-                              Export
-                            </>}
-                        </Button>
-                      </div>
-                      <p className="text-3xl font-bold text-foreground mb-2">
-                        {hideValues ? "₦•••••••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}`}
-                      </p>
-                      <div className="flex items-center gap-1 text-green-600 text-sm">
-                        <ArrowUp className="h-3 w-3" />
-                        <span>Live data</span>
-                      </div>
-                    </div>
-                    <CircularProgress percentage={75} color="hsl(142, 76%, 36%)" />
-                  </div>
-                </Card>
+            {/* Setup Progress Card - Only shows when setup is incomplete */}
+            {organization && (
+              <SetupProgressCard
+                hasPaymentProvider={!!organization?.paystack_secret_key}
+                hasPlans={plans.length > 0}
+                orgId={organization?.id}
+                orgName={organization?.org_name}
+              />
+            )}
 
-                {/* Active Subscribers */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Active Subscribers</span>
-                        <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs" onClick={() => navigate("/dashboard/subscribers")}>
-                          View All
-                        </Button>
-                      </div>
-                      <p className="text-3xl font-bold text-foreground mb-2">
-                        {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()} total</span>
-                        <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                              <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[350px]">
-                            <DialogHeader>
-                              <DialogTitle>Edit Total Subscribers</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 pt-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="total">Total Subscribers Count</Label>
-                                <Input id="total" type="number" placeholder="Enter total subscribers" value={newTotalSubscribers} onChange={e => setNewTotalSubscribers(e.target.value)} />
-                              </div>
-                              <Button onClick={handleUpdateTotalSubscribers} className="w-full">
-                                Update
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </div>
-                    <CircularProgress percentage={stats.totalSubscribers > 0 ? Math.round(stats.activeSubscribers / stats.totalSubscribers * 100) : 0} color="hsl(35, 92%, 50%)" />
-                  </div>
-                </Card>
-
-                {/* Failed Payments */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">Failed Payments</span>
-                        <FailedPaymentsDialog>
-                          <Button variant="ghost" size="sm" className="h-auto p-0 text-destructive hover:text-destructive/80 text-xs">
-                            ​Manage
-                          </Button>
-                        </FailedPaymentsDialog>
-                      </div>
-                      <p className="text-3xl font-bold text-foreground mb-2">
-                        {hideValues ? "•••" : stats.totalFailedPayments}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <div className="h-2 w-2 rounded-full bg-amber-500" />
-                          Abandoned: {hideValues ? "•••" : stats.abandonedCheckouts}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="h-2 w-2 rounded-full bg-destructive" />
-                          Failed: {hideValues ? "•••" : stats.failedPayments}
-                        </span>
-                      </div>
-                    </div>
-                    <MiniPieChart data={failedPaymentsPieData} />
-                  </div>
-                </Card>
-
-                {/* Upcoming Payouts */}
-                <Card className="p-5 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Upcoming Payouts</span>
-                      <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs" onClick={() => setShowPayoutDialog(true)}>
-                        Manage
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Pending</span>
-                        <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${pendingPayouts.toLocaleString()}`}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Paid Out</span>
-                        <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${totalPaidOut.toLocaleString()}`}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Complete</span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
+            {/* Top Stats Row - 4 Cards */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
+              {/* Toggle for hiding values */}
+              <div className="col-span-full flex justify-end mb-2 gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toast.info("Guided tour coming soon!")}
+                >
+                  <PlayCircle className="h-4 w-4" />
+                  Guided Tour
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toast.info("No new updates")}
+                >
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  What's New
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                </Button>
+                <div className="h-4 w-px bg-border/50 my-auto mx-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setHideValues(!hideValues)}
+                >
+                  {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {hideValues ? "Show Values" : "Hide Values"}
+                </Button>
               </div>
 
-              {/* Charts Row */}
-              <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mb-6">
-                {/* Collections Over Time - Takes 2/3 */}
-                <Card className="lg:col-span-2 p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-foreground">Collections Over Time</h3>
-                    <div className="flex gap-1 bg-muted rounded-lg p-1">
-                      {(['7D', '30D', '90D'] as const).map(period => (
-                        <Button
-                          key={period}
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-3 text-xs"
-                        >
-                          {period}
-                        </Button>
-                      ))}
+              {/* Total Revenue (MTD) */}
+              <Card className="p-5 dashboard-stat-card">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="stat-label">Total Revenue</span>
+                      <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs gap-1.5 opacity-70 hover:opacity-100 transition-opacity" onClick={handleExportRevenue} disabled={exportingRevenue}>
+                        {exportingRevenue ? <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Exporting...
+                        </> : <>
+                          <Download className="h-3 w-3" />
+                          Export
+                        </>}
+                      </Button>
+                    </div>
+                    <p className="text-3xl stat-value text-foreground mb-2">
+                      {hideValues ? "₦•••••••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}`}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
+                      <ArrowUp className="h-3 w-3" />
+                      <span>Live data</span>
                     </div>
                   </div>
-                  <div className="h-64">
-                    {timeSeriesData.length > 0 ? <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={timeSeriesData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                          <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{
+                  <CircularProgress percentage={75} color="hsl(152, 69%, 40%)" />
+                </div>
+              </Card>
+
+              {/* Active Subscribers */}
+              <Card className="p-5 dashboard-stat-card">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="stat-label">Active Subscribers</span>
+                      <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs" onClick={() => navigate("/dashboard/subscribers")}>
+                        View All
+                      </Button>
+                    </div>
+                    <p className="text-3xl font-bold text-foreground mb-2">
+                      {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()} total</span>
+                      <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                            <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[350px]">
+                          <DialogHeader>
+                            <DialogTitle>Edit Total Subscribers</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="total">Total Subscribers Count</Label>
+                              <Input id="total" type="number" placeholder="Enter total subscribers" value={newTotalSubscribers} onChange={e => setNewTotalSubscribers(e.target.value)} />
+                            </div>
+                            <Button onClick={handleUpdateTotalSubscribers} className="w-full">
+                              Update
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                  <CircularProgress percentage={stats.totalSubscribers > 0 ? Math.round(stats.activeSubscribers / stats.totalSubscribers * 100) : 0} color="hsl(35, 92%, 50%)" />
+                </div>
+              </Card>
+
+              {/* Failed Payments */}
+              <Card className="p-5 dashboard-stat-card">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Failed Payments</span>
+                      <FailedPaymentsDialog>
+                        <Button variant="ghost" size="sm" className="h-auto p-0 text-destructive hover:text-destructive/80 text-xs">
+                          Manage
+                        </Button>
+                      </FailedPaymentsDialog>
+                    </div>
+                    <p className="text-3xl font-bold text-foreground mb-2">
+                      {hideValues ? "•••" : stats.totalFailedPayments}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <div className="h-2 w-2 rounded-full bg-amber-500" />
+                        Abandoned: {hideValues ? "•••" : stats.abandonedCheckouts}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <div className="h-2 w-2 rounded-full bg-destructive" />
+                        Failed: {hideValues ? "•••" : stats.failedPayments}
+                      </span>
+                    </div>
+                  </div>
+                  <MiniPieChart data={failedPaymentsPieData} />
+                </div>
+              </Card>
+
+              {/* Upcoming Payouts */}
+              <Card className="p-5 dashboard-stat-card">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="stat-label">Upcoming Payouts</span>
+                    <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs" onClick={() => setShowPayoutDialog(true)}>
+                      Manage
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Pending</span>
+                      <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${pendingPayouts.toLocaleString()}`}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Paid Out</span>
+                      <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${totalPaidOut.toLocaleString()}`}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Complete</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mb-6">
+              {/* Collections Over Time - Takes 2/3 */}
+              <Card className="lg:col-span-2 p-6 dashboard-stat-card">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-lg font-bold text-foreground">Collections Over Time</h3>
+                  <div className="flex gap-1 bg-muted rounded-lg p-1">
+                    {(['7D', '30D', '90D'] as const).map(period => (
+                      <Button
+                        key={period}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-3 text-xs"
+                      >
+                        {period}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="h-64">
+                  {timeSeriesData.length > 0 ? <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={timeSeriesData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{
                         fontSize: 10
                       }} interval="preserveStartEnd" />
-                          <YAxis stroke="hsl(var(--muted-foreground))" tick={{
+                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{
                         fontSize: 12
                       }} tickFormatter={value => value > 0 ? `₦${(value / 1000).toFixed(0)}K` : '₦0'} />
-                          <Tooltip contentStyle={{
+                      <Tooltip contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px"
                       }} formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} />
-                          <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
-                        No transaction data available for this period
-                      </div>}
-                  </div>
-                </Card>
+                      <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
+                    No transaction data available for this period
+                  </div>}
+                </div>
+              </Card>
 
-                {/* Revenue Distribution by Plan - Takes 1/3 */}
-                <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowRevenueDetailsDialog(true)}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-foreground">Revenue by Plan</h3>
-                    <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
-                      <Eye className="h-3 w-3 mr-1" />
-                      Details
-                    </Button>
+              {/* Revenue Distribution by Plan - Takes 1/3 */}
+              <Card className="p-6 dashboard-stat-card cursor-pointer" onClick={() => setShowRevenueDetailsDialog(true)}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-foreground">Revenue by Plan</h3>
+                  <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
+                    <Eye className="h-3 w-3 mr-1" />
+                    Details
+                  </Button>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="relative h-40 w-40 mb-4">
+                    {revenueByPlan.length > 0 ? <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
+                            {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
+                      </div>
+                    </> : <div className="flex items-center justify-center h-full text-muted-foreground text-sm text-center">
+                      No revenue data yet
+                    </div>}
                   </div>
-                  <div className="flex flex-col items-center">
-                    <div className="relative h-40 w-40 mb-4">
-                      {revenueByPlan.length > 0 ? <>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
-                                {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
-                          </div>
-                        </> : <div className="flex items-center justify-center h-full text-muted-foreground text-sm text-center">
-                          No revenue data yet
-                        </div>}
-                    </div>
-                    <div className="space-y-2 w-full max-h-32 overflow-y-auto">
-                      {revenueByPlan.map((item, index) => <div key={index} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded-full shrink-0" style={{
+                  <div className="space-y-2 w-full max-h-32 overflow-y-auto">
+                    {revenueByPlan.map((item, index) => <div key={index} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full shrink-0" style={{
                           backgroundColor: item.color
                         }} />
-                            <span className="text-sm text-muted-foreground truncate">{item.name}</span>
-                          </div>
-                          <span className="text-sm font-medium">₦{item.value.toLocaleString()}</span>
-                        </div>)}
-                    </div>
-                  </div>
-                </Card>
-                
-                {/* Revenue Details Dialog */}
-                <Dialog open={showRevenueDetailsDialog} onOpenChange={setShowRevenueDetailsDialog}>
-                  <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Revenue by Plan - Detailed Breakdown</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-6 pt-4">
-                      {/* Summary */}
-                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                        <span className="text-muted-foreground">Total Revenue</span>
-                        <span className="text-2xl font-bold">₦{totalRevenueByPlan.toLocaleString()}</span>
+                        <span className="text-sm text-muted-foreground truncate">{item.name}</span>
                       </div>
-                      
-                      {/* Larger Chart */}
-                      <div className="h-64 w-full">
-                        {revenueByPlan.length > 0 ? <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" label={({
+                      <span className="text-sm font-medium">₦{item.value.toLocaleString()}</span>
+                    </div>)}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Revenue Details Dialog */}
+              <Dialog open={showRevenueDetailsDialog} onOpenChange={setShowRevenueDetailsDialog}>
+                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Revenue by Plan - Detailed Breakdown</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-6 pt-4">
+                    {/* Summary */}
+                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                      <span className="text-muted-foreground">Total Revenue</span>
+                      <span className="text-2xl font-bold">₦{totalRevenueByPlan.toLocaleString()}</span>
+                    </div>
+
+                    {/* Larger Chart */}
+                    <div className="h-64 w-full">
+                      {revenueByPlan.length > 0 ? <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" label={({
                             name,
                             percent
                           }) => `${name}: ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                                {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                              </Pie>
-                              <Tooltip formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} contentStyle={{
+                            {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} contentStyle={{
                             backgroundColor: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "8px"
                           }} />
-                            </PieChart>
-                          </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
-                            No revenue data available
-                          </div>}
-                      </div>
-                      
-                      {/* Detailed Table */}
-                      <div className="border rounded-lg overflow-hidden">
-                        <table className="w-full">
-                          <thead className="bg-muted">
-                            <tr>
-                              <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Plan</th>
-                              <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
-                              <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Share</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {revenueByPlan.map((item, index) => <tr key={index} className="border-t border-border/50">
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full shrink-0" style={{
+                        </PieChart>
+                      </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
+                        No revenue data available
+                      </div>}
+                    </div>
+
+                    {/* Detailed Table */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Plan</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Share</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {revenueByPlan.map((item, index) => <tr key={index} className="border-t border-border/50">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-full shrink-0" style={{
                                   backgroundColor: item.color
                                 }} />
-                                    <span className="text-sm font-medium">{item.name}</span>
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4 text-right text-sm font-medium">
-                                  ₦{item.value.toLocaleString()}
-                                </td>
-                                <td className="py-3 px-4 text-right text-sm text-muted-foreground">
-                                  {totalRevenueByPlan > 0 ? (item.value / totalRevenueByPlan * 100).toFixed(1) : 0}%
-                                </td>
-                              </tr>)}
-                          </tbody>
-                          <tfoot className="bg-muted/50">
-                            <tr className="border-t">
-                              <td className="py-3 px-4 text-sm font-bold">Total</td>
-                              <td className="py-3 px-4 text-right text-sm font-bold">
-                                ₦{totalRevenueByPlan.toLocaleString()}
-                              </td>
-                              <td className="py-3 px-4 text-right text-sm font-bold">100%</td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
+                                <span className="text-sm font-medium">{item.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right text-sm font-medium">
+                              ₦{item.value.toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4 text-right text-sm text-muted-foreground">
+                              {totalRevenueByPlan > 0 ? (item.value / totalRevenueByPlan * 100).toFixed(1) : 0}%
+                            </td>
+                          </tr>)}
+                        </tbody>
+                        <tfoot className="bg-muted/50">
+                          <tr className="border-t">
+                            <td className="py-3 px-4 text-sm font-bold">Total</td>
+                            <td className="py-3 px-4 text-right text-sm font-bold">
+                              ₦{totalRevenueByPlan.toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4 text-right text-sm font-bold">100%</td>
+                          </tr>
+                        </tfoot>
+                      </table>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Recent Transactions Table */}
-              <Card className="p-6 glass-card border-0 shadow-[var(--shadow-medium)]">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Recent Transactions</h3>
-                    <p className="text-xs text-muted-foreground">Last 48 hours</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowTransactionFilterDialog(true)}>
-                      <Filter className="h-4 w-4" />
-                      Filter & Export
-                    </Button>
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">REF</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PAYER</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TYPE</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">DATE</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentTransactions.length > 0 ? recentTransactions.map(txn => <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/30">
-                            <td className="py-4 px-4 text-sm font-mono">{txn.reference}</td>
-                            <td className="py-4 px-4 text-sm">{txn.payer_name}</td>
-                            <td className="py-4 px-4 text-sm">{txn.plan_name}</td>
-                            <td className="py-4 px-4 text-sm font-medium">₦{txn.amount.toLocaleString()}</td>
-                            <td className="py-4 px-4">
-                              <span className={`text-xs px-2 py-1 rounded-full ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                                {txn.type === 'subscription' ? 'Subscription' : 'One-Time'}
-                              </span>
-                            </td>
-                            <td className="py-4 px-4">
-                              <span className={`text-xs px-2 py-1 rounded-full ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {txn.status === 'success' ? 'Success' : 'Failed'}
-                              </span>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-muted-foreground">
-                              {new Date(txn.paid_at).toLocaleDateString()}
-                            </td>
-                          </tr>) : <tr>
-                          <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                            No recent transactions
-                          </td>
-                        </tr>}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-
+                </DialogContent>
+              </Dialog>
             </div>
-          </main>
-        </SidebarInset>
-      </div>
-      
-      <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
-      
-      <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
-      
-      <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
-    </SidebarProvider>;
+
+            {/* Recent Transactions Table */}
+            <Card className="p-6 dashboard-stat-card">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Recent Transactions</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Last 48 hours</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 text-xs h-8 opacity-80 hover:opacity-100 transition-opacity" onClick={() => setShowTransactionFilterDialog(true)}>
+                    <Filter className="h-3.5 w-3.5" />
+                    Filter & Export
+                  </Button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full premium-table">
+                  <thead>
+                    <tr>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">REF</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PAYER</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TYPE</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">DATE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentTransactions.length > 0 ? recentTransactions.map(txn => <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-4 px-4 text-sm font-mono">{txn.reference}</td>
+                      <td className="py-4 px-4 text-sm">{txn.payer_name}</td>
+                      <td className="py-4 px-4 text-sm">{txn.plan_name}</td>
+                      <td className="py-4 px-4 text-sm font-medium">₦{txn.amount.toLocaleString()}</td>
+                      <td className="py-4 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                          {txn.type === 'subscription' ? 'Subscription' : 'One-Time'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {txn.status === 'success' ? 'Success' : 'Failed'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-muted-foreground">
+                        {new Date(txn.paid_at).toLocaleDateString()}
+                      </td>
+                    </tr>) : <tr>
+                      <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                        No recent transactions
+                      </td>
+                    </tr>}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+          </div>
+        </main>
+      </SidebarInset>
+    </div>
+
+    <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
+
+    <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
+
+    <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
+  </SidebarProvider>;
 };
 export default Dashboard;
