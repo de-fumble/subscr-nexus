@@ -27,17 +27,18 @@
  import { AppSidebar } from "@/components/AppSidebar";
  import { BackButton } from "@/components/BackButton";
  
- interface BillingProfile {
-   id: string;
-   email: string;
-   full_name: string | null;
-   phone_number: string | null;
-   created_at: string;
-   total_paid: number;
-   active_plans_count: number;
-   latest_payment_status: string | null;
-   latest_payment_date: string | null;
- }
+interface BillingProfile {
+  id: string;
+  profile_number: string | null;
+  email: string;
+  full_name: string | null;
+  phone_number: string | null;
+  created_at: string;
+  total_paid: number;
+  active_plans_count: number;
+  latest_payment_status: string | null;
+  latest_payment_date: string | null;
+}
  
  interface Organization {
    id: string;
@@ -71,15 +72,15 @@
      let filtered = [...profiles];
  
      // Apply search filter
-     if (searchQuery) {
-       const query = searchQuery.toLowerCase();
-       filtered = filtered.filter(
-         (p) =>
-           p.email.toLowerCase().includes(query) ||
-           p.id.toLowerCase().includes(query) ||
-           (p.full_name && p.full_name.toLowerCase().includes(query))
-       );
-     }
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (p) =>
+            p.email.toLowerCase().includes(query) ||
+            (p.profile_number && p.profile_number.includes(query)) ||
+            (p.full_name && p.full_name.toLowerCase().includes(query))
+        );
+      }
  
      // Apply status filter
      if (statusFilter === "active") {
@@ -149,20 +150,21 @@
        }
  
        // Fetch billing profiles linked to this organization
-       const { data: profileLinks, error: linksError } = await supabase
-         .from("billing_profile_organizations")
-         .select(`
-           billing_profile_id,
-           total_paid,
-           billing_profiles!inner (
-             id,
-             email,
-             full_name,
-             phone_number,
-             created_at
-           )
-         `)
-         .eq("org_id", orgId);
+        const { data: profileLinks, error: linksError } = await supabase
+          .from("billing_profile_organizations")
+          .select(`
+            billing_profile_id,
+            total_paid,
+            billing_profiles!inner (
+              id,
+              profile_number,
+              email,
+              full_name,
+              phone_number,
+              created_at
+            )
+          `)
+          .eq("org_id", orgId);
  
        if (linksError) throw linksError;
  
@@ -206,17 +208,18 @@
  
          const latestTx = transactions?.[0];
  
-         enrichedProfiles.push({
-           id: profile.id,
-           email: profile.email,
-           full_name: profile.full_name,
-           phone_number: profile.phone_number,
-           created_at: profile.created_at,
-           total_paid: link.total_paid || 0,
-           active_plans_count: activePlans,
-           latest_payment_status: latestTx?.status || null,
-           latest_payment_date: latestTx?.paid_at || latestTx?.created_at || null,
-         });
+          enrichedProfiles.push({
+            id: profile.id,
+            profile_number: profile.profile_number,
+            email: profile.email,
+            full_name: profile.full_name,
+            phone_number: profile.phone_number,
+            created_at: profile.created_at,
+            total_paid: link.total_paid || 0,
+            active_plans_count: activePlans,
+            latest_payment_status: latestTx?.status || null,
+            latest_payment_date: latestTx?.paid_at || latestTx?.created_at || null,
+          });
        }
  
        setProfiles(enrichedProfiles);
@@ -359,25 +362,25 @@
                                {profile.full_name || "—"}
                              </TableCell>
                              <TableCell>{profile.email}</TableCell>
-                             <TableCell>
-                               <div className="flex items-center gap-2">
-                                 <code className="text-xs bg-muted px-2 py-1 rounded">
-                                   {profile.id.slice(0, 8)}...
-                                 </code>
-                                 <Button
-                                   variant="ghost"
-                                   size="icon"
-                                   className="h-6 w-6"
-                                   onClick={() => copyToClipboard(profile.id)}
-                                 >
-                                   {copiedId === profile.id ? (
-                                     <CheckCircle className="h-3 w-3 text-green-500" />
-                                   ) : (
-                                     <Copy className="h-3 w-3" />
-                                   )}
-                                 </Button>
-                               </div>
-                             </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <code className="text-sm font-bold bg-muted px-2 py-1 rounded">
+                                    #{profile.profile_number || "—"}
+                                  </code>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => copyToClipboard(profile.profile_number || profile.id)}
+                                  >
+                                    {copiedId === (profile.profile_number || profile.id) ? (
+                                      <CheckCircle className="h-3 w-3 text-green-500" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </TableCell>
                              <TableCell>
                                <Badge
                                  variant={profile.active_plans_count > 0 ? "default" : "secondary"}

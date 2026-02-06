@@ -50,13 +50,14 @@
  import { AppSidebar } from "@/components/AppSidebar";
  import { BackButton } from "@/components/BackButton";
  
- interface BillingProfile {
-   id: string;
-   email: string;
-   full_name: string | null;
-   phone_number: string | null;
-   created_at: string;
- }
+interface BillingProfile {
+  id: string;
+  profile_number: string | null;
+  email: string;
+  full_name: string | null;
+  phone_number: string | null;
+  created_at: string;
+}
  
  interface Plan {
    id: string;
@@ -269,14 +270,14 @@
      }
    };
  
-   const copyProfileId = () => {
-     if (profile) {
-       navigator.clipboard.writeText(profile.id);
-       setCopiedId(true);
-       setTimeout(() => setCopiedId(false), 2000);
-       toast.success("Profile ID copied!");
-     }
-   };
+    const copyProfileId = () => {
+      if (profile) {
+        navigator.clipboard.writeText(profile.profile_number || profile.id);
+        setCopiedId(true);
+        setTimeout(() => setCopiedId(false), 2000);
+        toast.success("Profile ID copied!");
+      }
+    };
  
    const handleSaveProfile = async () => {
      if (!profile) return;
@@ -430,23 +431,23 @@
                          <CardTitle className="text-2xl">
                            {profile.full_name || profile.email}
                          </CardTitle>
-                         <CardDescription className="flex items-center gap-2 mt-1">
-                           <code className="text-xs bg-muted px-2 py-1 rounded">
-                             {profile.id}
-                           </code>
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             className="h-6 w-6"
-                             onClick={copyProfileId}
-                           >
-                             {copiedId ? (
-                               <CheckCircle className="h-3 w-3 text-green-500" />
-                             ) : (
-                               <Copy className="h-3 w-3" />
-                             )}
-                           </Button>
-                         </CardDescription>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <code className="text-sm font-bold bg-muted px-3 py-1 rounded">
+                              #{profile.profile_number || "—"}
+                            </code>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={copyProfileId}
+                            >
+                              {copiedId ? (
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </CardDescription>
                        </div>
                      </div>
                      {canWrite && !isEditing && (
