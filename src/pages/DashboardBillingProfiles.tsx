@@ -5,7 +5,7 @@
  import { supabase } from "@/integrations/supabase/client";
  import { toast } from "sonner";
  import { useNavigate } from "react-router-dom";
- import { Users, Search, RefreshCw, Loader2, Eye, Copy, CheckCircle } from "lucide-react";
+ import { Users, Search, RefreshCw, Loader2, Eye, Copy, CheckCircle, Download } from "lucide-react";
  import { useOrgRole } from "@/hooks/useOrgRole";
  import {
    Table,
@@ -57,8 +57,9 @@ interface BillingProfile {
    const [userEmail, setUserEmail] = useState<string | undefined>();
    const [searchQuery, setSearchQuery] = useState("");
    const [statusFilter, setStatusFilter] = useState<string>("all");
-   const [copiedId, setCopiedId] = useState<string | null>(null);
-   const { role, canAccessSettings } = useOrgRole();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const { role, canAccessSettings } = useOrgRole();
  
    useEffect(() => {
      fetchBillingProfiles();
@@ -239,9 +240,32 @@ interface BillingProfile {
      toast.success("Billing Profile ID copied!");
    };
  
-   const formatCurrency = (amount: number) => {
-     return `₦${amount.toLocaleString()}`;
-   };
+    const formatCurrency = (amount: number) => {
+      return `₦${amount.toLocaleString()}`;
+    };
+
+    const handleSyncFromPaystack = async () => {
+      setSyncing(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("sync-billing-profiles");
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        const summary = data?.summary;
+        toast.success(
+          `Synced! ${summary?.profiles_created || 0} profiles created, ${summary?.unique_emails || 0} subscribers found.`
+        );
+
+        // Refresh the list
+        await fetchBillingProfiles(true);
+      } catch (error: any) {
+        console.error("Error syncing billing profiles:", error);
+        toast.error(error.message || "Failed to sync from Paystack");
+      } finally {
+        setSyncing(false);
+      }
+    };
  
    if (loading) {
      return (
@@ -272,19 +296,34 @@ interface BillingProfile {
              <div className="flex-1">
                <h1 className="text-xl font-bold text-foreground">Billing Profiles</h1>
              </div>
-             <Button
-               onClick={() => fetchBillingProfiles(true)}
-               variant="outline"
-               disabled={refreshing}
-               size="sm"
-             >
-               {refreshing ? (
-                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-               ) : (
-                 <RefreshCw className="h-4 w-4 mr-2" />
-               )}
-               Refresh
-             </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleSyncFromPaystack}
+                  variant="outline"
+                  disabled={syncing}
+                  size="sm"
+                >
+                  {syncing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {syncing ? "Syncing..." : "Sync from Paystack"}
+                </Button>
+                <Button
+                  onClick={() => fetchBillingProfiles(true)}
+                  variant="outline"
+                  disabled={refreshing}
+                  size="sm"
+                >
+                  {refreshing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Refresh
+                </Button>
+              </div>
            </header>
  
            <main className="flex-1 overflow-auto">
