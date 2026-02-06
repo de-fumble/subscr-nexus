@@ -826,20 +826,16 @@ const Index = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 md:gap-12 max-w-4xl mx-auto">
             <div className="text-center">
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">₦50M+</p>
-              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Annual payment volume</p>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Supports high-volume payments</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">10K+</p>
-              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Subscription renewals</p>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Handles thousands of renewals</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">5+</p>
-              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Currencies accepted</p>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Multi-currency support</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-accent mb-1 sm:mb-2">1K+</p>
-              <p className="text-xs sm:text-sm md:text-base text-zinc-400">Active subscribers</p>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Built to scale with your subscribers</p>
             </div>
           </div>
         </div>
