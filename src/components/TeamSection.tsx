@@ -5,16 +5,19 @@ import { User, Code, ShieldCheck } from "lucide-react";
 export const TeamSection = () => {
     const team = [
         {
+            name: "Daniel Oyewole",
             title: "System's Architect/Founder",
             image: "/team-founder.jpg",
             icon: User,
         },
         {
+            name: "Okiefe Gift",
             title: "Software Engineer/QA Tester",
             image: "/team-qa.jpg",
             icon: ShieldCheck,
         },
         {
+            name: "Funsho Gbenga",
             title: "Software Engineer",
             image: "/team-engineer.jpg",
             icon: Code,
@@ -50,7 +53,8 @@ export const TeamSection = () => {
                                 />
                             </div>
                             <div className="p-6 text-center">
-                                <h3 className="font-bold text-lg text-foreground font-mono">{member.title}</h3>
+                                <h3 className="font-bold text-lg text-foreground font-mono">{member.name}</h3>
+                                <p className="text-sm text-muted-foreground mt-1 font-mono">{member.title}</p>
                                 <div className="w-10 h-1 bg-accent/30 mx-auto mt-3 rounded-full" />
                             </div>
                         </Card>
