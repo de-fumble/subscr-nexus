@@ -56,7 +56,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
     { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
     { title: "Plans", icon: CreditCard, url: "/plans" },
     { title: "Failed Payments", icon: AlertTriangle, url: "/dashboard/failed-payments" },
-    { title: "One-Time Payments", icon: Banknote, url: "/payments" },
+    { title: "Standard Payments", icon: Banknote, url: "/payments" },
     { title: "Subscribers", icon: Users, url: "/dashboard/subscribers" },
     { title: "Billing Profiles", icon: UserSquare, url: "/dashboard/billing-profiles" },
     { title: "Analytics", icon: TrendingUp, url: "/dashboard/analytics" },
@@ -84,7 +84,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
-    navigate("/");
+    navigate("/auth");
   };
 
   const isActive = (path: string) => location.pathname === path;

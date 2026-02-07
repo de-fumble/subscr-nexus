@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Users, Mail, RefreshCw, Loader2 } from "lucide-react";
+import { Users, RefreshCw, Loader2, Eye } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import {
   Table,
@@ -15,12 +15,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BackButton } from "@/components/BackButton";
@@ -37,6 +31,16 @@ interface Subscriber {
   created_at: string;
 }
 
+interface DeduplicatedSubscriber {
+  email: string;
+  customer_name: string | null;
+  plans: { plan_name: string; amount: number; status: string }[];
+  total_amount: number;
+  latest_status: string;
+  earliest_date: string;
+  billing_profile_id: string | null;
+}
+
 interface Organization {
   id: string;
   org_name: string;
@@ -51,7 +55,8 @@ export default function DashboardSubscribers() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
-  const { canWrite, role, canAccessSettings } = useOrgRole();
+  const [billingProfileMap, setBillingProfileMap] = useState<Map<string, string>>(new Map());
+  const { role, canAccessSettings } = useOrgRole();
 
   useEffect(() => {
     fetchSubscribers();
@@ -74,8 +79,9 @@ export default function DashboardSubscribers() {
 
       setUserEmail(user.email);
 
-      // Get organization - check if owner first, then check membership
+      // Get organization
       let orgData = null;
+      let orgId = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("id, org_name, email, logo_url")
@@ -84,6 +90,7 @@ export default function DashboardSubscribers() {
 
       if (ownedOrg) {
         orgData = ownedOrg;
+        orgId = ownedOrg.id;
       } else {
         const { data: membership } = await supabase
           .from("organization_members")
@@ -92,6 +99,7 @@ export default function DashboardSubscribers() {
           .maybeSingle();
 
         if (membership) {
+          orgId = membership.org_id;
           const { data: memberOrg } = await supabase
             .from("organizations")
             .select("id, org_name, email, logo_url")
@@ -111,6 +119,28 @@ export default function DashboardSubscribers() {
       if (data.error) throw new Error(data.error);
 
       setSubscribers(data.subscribers || []);
+
+      // Fetch billing profiles to map email → profile ID
+      if (orgId) {
+        const { data: profileLinks } = await supabase
+          .from("billing_profile_organizations")
+          .select(`
+            billing_profiles!inner (
+              id,
+              email
+            )
+          `)
+          .eq("org_id", orgId);
+
+        const profileMap = new Map<string, string>();
+        for (const link of profileLinks || []) {
+          const profile = link.billing_profiles as any;
+          if (profile?.email) {
+            profileMap.set(profile.email.toLowerCase(), profile.id);
+          }
+        }
+        setBillingProfileMap(profileMap);
+      }
     } catch (error: any) {
       console.error("Error fetching subscribers:", error);
       toast.error(error.message || "Failed to load subscribers");
@@ -119,6 +149,53 @@ export default function DashboardSubscribers() {
       setRefreshing(false);
     }
   };
+
+  // Deduplicate subscribers by email
+  const deduplicatedSubscribers = useMemo(() => {
+    const emailMap = new Map<string, DeduplicatedSubscriber>();
+
+    for (const sub of subscribers) {
+      const emailKey = sub.email.toLowerCase();
+      const existing = emailMap.get(emailKey);
+
+      if (existing) {
+        existing.plans.push({
+          plan_name: sub.plan_name,
+          amount: sub.amount,
+          status: sub.status,
+        });
+        existing.total_amount += sub.amount;
+        // Keep earliest date
+        if (new Date(sub.created_at) < new Date(existing.earliest_date)) {
+          existing.earliest_date = sub.created_at;
+        }
+        // Update status if any plan is active
+        if (sub.status.toLowerCase() === "active") {
+          existing.latest_status = "active";
+        }
+        // Use customer name if available
+        if (!existing.customer_name && sub.customer_name) {
+          existing.customer_name = sub.customer_name;
+        }
+      } else {
+        emailMap.set(emailKey, {
+          email: sub.email,
+          customer_name: sub.customer_name,
+          plans: [{
+            plan_name: sub.plan_name,
+            amount: sub.amount,
+            status: sub.status,
+          }],
+          total_amount: sub.amount,
+          latest_status: sub.status,
+          earliest_date: sub.created_at,
+          billing_profile_id: billingProfileMap.get(emailKey) || null,
+        });
+      }
+    }
+
+    return Array.from(emailMap.values());
+  }, [subscribers, billingProfileMap]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -131,6 +208,14 @@ export default function DashboardSubscribers() {
         return 'destructive';
       default:
         return 'outline';
+    }
+  };
+
+  const handleViewDetails = (sub: DeduplicatedSubscriber) => {
+    if (sub.billing_profile_id) {
+      navigate(`/dashboard/billing-profiles/${sub.billing_profile_id}`);
+    } else {
+      toast.info("No billing profile found for this subscriber. Try syncing from Paystack in the Billing Profiles page.");
     }
   };
 
@@ -193,13 +278,13 @@ export default function DashboardSubscribers() {
                     <div>
                       <CardTitle>All Subscribers</CardTitle>
                       <CardDescription>
-                        {subscribers.length} total subscriber{subscribers.length !== 1 ? 's' : ''} from Paystack
+                        {deduplicatedSubscribers.length} unique subscriber{deduplicatedSubscribers.length !== 1 ? 's' : ''} ({subscribers.length} total subscriptions)
                       </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {subscribers.length === 0 ? (
+                  {deduplicatedSubscribers.length === 0 ? (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-2">No subscribers yet</p>
@@ -208,62 +293,56 @@ export default function DashboardSubscribers() {
                       </p>
                     </div>
                   ) : (
-                    <TooltipProvider>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Plan</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Subscribed</TableHead>
-                            {canWrite && <TableHead className="text-right">Contact</TableHead>}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Plans</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Since</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {deduplicatedSubscribers.map((sub) => (
+                          <TableRow key={sub.email}>
+                            <TableCell className="font-medium">
+                              {sub.customer_name || "N/A"}
+                            </TableCell>
+                            <TableCell>{sub.email}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {sub.plans.map((plan, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {plan.plan_name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusVariant(sub.latest_status)}>
+                                {sub.latest_status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(sub.earliest_date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-1"
+                                onClick={() => handleViewDetails(sub)}
+                              >
+                                <Eye className="h-4 w-4" />
+                                Details
+                              </Button>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {subscribers.map((sub) => (
-                            <TableRow key={sub.id}>
-                              <TableCell className="font-medium">
-                                {sub.customer_name || "N/A"}
-                              </TableCell>
-                              <TableCell>{sub.email}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{sub.plan_name}</Badge>
-                              </TableCell>
-                              <TableCell>₦{sub.amount.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge variant={getStatusVariant(sub.status)}>
-                                  {sub.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {new Date(sub.created_at).toLocaleDateString()}
-                              </TableCell>
-                              {canWrite && (
-                                <TableCell className="text-right">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => window.location.href = `mailto:${sub.email}`}
-                                      >
-                                        <Mail className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Email {sub.email}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TableCell>
-                              )}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TooltipProvider>
+                        ))}
+                      </TableBody>
+                    </Table>
                   )}
                 </CardContent>
               </Card>

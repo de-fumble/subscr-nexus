@@ -24,7 +24,7 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/");
+    navigate("/auth");
   };
 
   // Mobile Sidebar Component - rendered via Portal
