@@ -338,7 +338,7 @@ const OneTimePayments = () => {
             <SidebarTrigger />
             <BackButton />
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">One-Time Payments</h1>
+              <h1 className="text-xl font-bold text-foreground">Standard Payments</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -368,7 +368,7 @@ const OneTimePayments = () => {
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-6 py-8">
               <div className="mb-6">
-                <p className="text-muted-foreground">Manage one-time payment links</p>
+                <p className="text-muted-foreground">Manage standard payment links</p>
               </div>
 
               {/* Analytics Section */}

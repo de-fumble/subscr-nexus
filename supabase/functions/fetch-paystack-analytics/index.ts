@@ -288,20 +288,20 @@ serve(async (req) => {
       const enrichedFailedTransactions = failedTransactions.map((txn: any) => {
         let planName = null;
         
-        // 1. Try to get plan name directly from transaction's plan object
-        if (txn.plan?.name) {
+        // 1. FIRST try to match plan_code from transaction to our LOCAL org plans (most accurate)
+        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+        if (txnPlanCode && planCodeToName[txnPlanCode]) {
+          planName = planCodeToName[txnPlanCode];
+        }
+        
+        // 2. Try to get plan name from Paystack's plan object (only if we didn't find a local match)
+        if (!planName && txn.plan?.name) {
           planName = txn.plan.name;
         }
         
-        // 2. Try plan_object if exists
+        // 3. Try plan_object name
         if (!planName && txn.plan_object?.name) {
           planName = txn.plan_object.name;
-        }
-        
-        // 3. Try to match plan_code from transaction to org plans
-        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
-        if (!planName && txnPlanCode && planCodeToName[txnPlanCode]) {
-          planName = planCodeToName[txnPlanCode];
         }
         
         // 4. Try to find plan from subscription using subscription_code
@@ -346,7 +346,7 @@ serve(async (req) => {
           (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
         
         if (!planName && isOneTimePayment) {
-          planName = "One-Time Payment";
+          planName = "Standard Payment";
         }
         
         // Log for debugging

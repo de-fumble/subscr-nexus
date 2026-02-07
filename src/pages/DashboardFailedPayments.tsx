@@ -136,7 +136,7 @@ const DashboardFailedPayments = () => {
           ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim()
           : txn.metadata?.customer_name || null,
         amount: txn.amount / 100,
-        plan_name: txn.plan?.name || txn.metadata?.plan_name || "One Time Payment",
+        plan_name: txn.plan?.name || txn.metadata?.plan_name || "Standard Payment",
         failure_reason: txn.gateway_response || txn.message || getDefaultFailureReason(txn.status),
         failed_at: txn.created_at || txn.transaction_date,
         retry_count: 0,

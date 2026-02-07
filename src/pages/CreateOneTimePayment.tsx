@@ -124,7 +124,7 @@ const CreateOneTimePayment = () => {
         return;
       }
 
-      toast.success("One-time payment link created!");
+      toast.success("Standard payment link created!");
       navigate("/payments");
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -147,14 +147,14 @@ const CreateOneTimePayment = () => {
             <SidebarTrigger />
             <BackButton />
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">Create One-Time Payment</h1>
+              <h1 className="text-xl font-bold text-foreground">Create Standard Payment</h1>
             </div>
           </header>
 
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-6 py-8">
               <div className="mb-6">
-                <p className="text-muted-foreground">Create a one-time payment link that can only be used once</p>
+                <p className="text-muted-foreground">Create a standard payment link that can only be used once</p>
               </div>
 
               <Card className="mx-auto max-w-2xl p-8 glass-card border-0 shadow-[var(--shadow-medium)]">
