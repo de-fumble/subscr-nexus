@@ -376,7 +376,7 @@ const Dashboard = () => {
           const otpRevenue = otpTxns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
           if (otpRevenue > 0) {
             revenueData.push({
-              name: 'One-Time Payments',
+              name: 'Standard Payments',
               value: otpRevenue,
               color: CHART_COLORS[revenueData.length % CHART_COLORS.length]
             });
@@ -922,33 +922,47 @@ const Dashboard = () => {
                   </Button>
                 </div>
                 <div className="flex flex-col items-center">
-                  <div className="relative h-40 w-40 mb-4">
-                    {revenueByPlan.length > 0 ? <>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
-                            {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
+                  {(() => {
+                    // Show only top 2 plans on overview, sorted by revenue descending
+                    const topPlans = [...revenueByPlan].sort((a, b) => b.value - a.value).slice(0, 2);
+                    const othersValue = revenueByPlan
+                      .sort((a, b) => b.value - a.value)
+                      .slice(2)
+                      .reduce((sum, item) => sum + item.value, 0);
+                    const displayPlans = othersValue > 0
+                      ? [...topPlans, { name: `+${revenueByPlan.length - 2} more`, value: othersValue, color: 'hsl(var(--muted-foreground))' }]
+                      : topPlans;
+
+                    return <>
+                      <div className="relative h-40 w-40 mb-4">
+                        {displayPlans.length > 0 ? <>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={displayPlans} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
+                                {displayPlans.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
+                          </div>
+                        </> : <div className="flex items-center justify-center h-full text-muted-foreground text-sm text-center">
+                          No revenue data yet
+                        </div>}
                       </div>
-                    </> : <div className="flex items-center justify-center h-full text-muted-foreground text-sm text-center">
-                      No revenue data yet
-                    </div>}
-                  </div>
-                  <div className="space-y-2 w-full max-h-32 overflow-y-auto">
-                    {revenueByPlan.map((item, index) => <div key={index} className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full shrink-0" style={{
-                          backgroundColor: item.color
-                        }} />
-                        <span className="text-sm text-muted-foreground truncate">{item.name}</span>
+                      <div className="space-y-2 w-full">
+                        {displayPlans.map((item, index) => <div key={index} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 rounded-full shrink-0" style={{
+                              backgroundColor: item.color
+                            }} />
+                            <span className="text-sm text-muted-foreground truncate">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-medium">₦{item.value.toLocaleString()}</span>
+                        </div>)}
                       </div>
-                      <span className="text-sm font-medium">₦{item.value.toLocaleString()}</span>
-                    </div>)}
-                  </div>
+                    </>;
+                  })()}
                 </div>
               </Card>
 
