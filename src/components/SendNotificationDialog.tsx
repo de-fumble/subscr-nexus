@@ -52,7 +52,6 @@ export function SendNotificationDialog() {
         org_id: org.id,
         title: title.trim(),
         message: message.trim(),
-        created_by: user.id,
       }));
 
       const { error: insertError } = await supabase
