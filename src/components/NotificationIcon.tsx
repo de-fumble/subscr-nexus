@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -27,7 +27,6 @@ export function NotificationIcon({ orgId }: NotificationIconProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!orgId) return;
@@ -127,18 +126,18 @@ export function NotificationIcon({ orgId }: NotificationIconProps) {
   if (!orgId) return null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-bold">
-              {unreadCount > 9 ? "9+" : unreadCount}
+            <span className="absolute -top-1.5 -right-2 px-1.5 py-0.5 rounded-md bg-destructive text-destructive-foreground text-[10px] font-bold leading-none uppercase tracking-wider">
+              NEW
             </span>
           )}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-80 p-0" align="end" sideOffset={8}>
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold text-foreground">Notifications</h3>
           {unreadCount > 0 && (
@@ -170,7 +169,9 @@ export function NotificationIcon({ orgId }: NotificationIconProps) {
                     "p-4 hover:bg-muted/50 transition-colors cursor-pointer",
                     !notification.is_read && "bg-accent/10"
                   )}
-                  onClick={() => !notification.is_read && markAsRead(notification.id)}
+                  onClick={() =>
+                    !notification.is_read && markAsRead(notification.id)
+                  }
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -191,9 +192,10 @@ export function NotificationIcon({ orgId }: NotificationIconProps) {
                         {notification.message}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {formatDistanceToNow(new Date(notification.created_at), {
-                          addSuffix: true,
-                        })}
+                        {formatDistanceToNow(
+                          new Date(notification.created_at),
+                          { addSuffix: true }
+                        )}
                       </p>
                     </div>
                     {!notification.is_read && (
@@ -215,7 +217,7 @@ export function NotificationIcon({ orgId }: NotificationIconProps) {
             </div>
           )}
         </ScrollArea>
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
