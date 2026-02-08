@@ -696,7 +696,7 @@ const Dashboard = () => {
     <div className="flex min-h-screen w-full bg-background">
       <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
       <SidebarInset className="flex-1">
-        <DashboardHeader orgName={organization?.org_name} />
+        <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto px-6 py-6">
 
