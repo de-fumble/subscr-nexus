@@ -284,52 +284,60 @@ serve(async (req) => {
       
       console.log("Failed transactions found:", failedTransactions.length);
       
-      // Enrich with plan names
+      // Build subscription_code -> local plan name map for accurate lookups
+      const subCodeToPlanName: { [key: string]: string } = {};
+      orgSubscriptions.forEach((sub: any) => {
+        if (sub.subscription_code && sub.plan?.plan_code) {
+          const localName = planCodeToName[sub.plan.plan_code];
+          if (localName) {
+            subCodeToPlanName[sub.subscription_code] = localName;
+          }
+        }
+      });
+
+      // Build customer_code -> local plan name map (uses most recent subscription)
+      const customerCodeToPlanName: { [key: string]: string } = {};
+      orgSubscriptions.forEach((sub: any) => {
+        if (sub.customer?.customer_code && sub.plan?.plan_code) {
+          const localName = planCodeToName[sub.plan.plan_code];
+          if (localName) {
+            customerCodeToPlanName[sub.customer.customer_code] = localName;
+          }
+        }
+      });
+
+      // Enrich with plan names - ONLY use local database names, never raw Paystack names
       const enrichedFailedTransactions = failedTransactions.map((txn: any) => {
         let planName = null;
         
-        // 1. FIRST try to match plan_code from transaction to our LOCAL org plans (most accurate)
+        // 1. Match plan_code from transaction to LOCAL org plans (most accurate)
         const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
         if (txnPlanCode && planCodeToName[txnPlanCode]) {
           planName = planCodeToName[txnPlanCode];
         }
         
-        // 2. Try to get plan name from Paystack's plan object (only if we didn't find a local match)
-        if (!planName && txn.plan?.name) {
-          planName = txn.plan.name;
+        // 2. Match subscription_code to local plan name via subscription lookup
+        if (!planName && txn.subscription_code && subCodeToPlanName[txn.subscription_code]) {
+          planName = subCodeToPlanName[txn.subscription_code];
         }
         
-        // 3. Try plan_object name
-        if (!planName && txn.plan_object?.name) {
-          planName = txn.plan_object.name;
+        // 3. Match metadata plan_id to local org plan
+        if (!planName && txn.metadata?.plan_id) {
+          const plan = orgPlans?.find(p => p.id === txn.metadata.plan_id);
+          if (plan) planName = plan.name;
         }
         
-        // 4. Try to find plan from subscription using subscription_code
-        if (!planName && txn.subscription_code) {
-          const matchingSub = orgSubscriptions.find(
-            (sub: any) => sub.subscription_code === txn.subscription_code
-          );
-          if (matchingSub?.plan?.name) {
-            planName = matchingSub.plan.name;
-          }
-        }
-        
-        // 5. Try to find plan from subscription using customer_code
-        if (!planName && txn.customer?.customer_code) {
-          const customerSub = orgSubscriptions.find(
-            (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
-          );
-          if (customerSub?.plan?.name) {
-            planName = customerSub.plan.name;
-          }
-        }
-        
-        // 6. Try metadata for plan_name
+        // 4. Match metadata plan_name ONLY if it matches a known local plan name
         if (!planName && txn.metadata?.plan_name) {
-          planName = txn.metadata.plan_name;
+          const matchingPlan = orgPlans?.find(
+            p => p.name.toLowerCase() === txn.metadata.plan_name.toLowerCase()
+          );
+          if (matchingPlan) {
+            planName = matchingPlan.name;
+          }
         }
         
-        // 7. Try custom_fields for plan_id and match to org plans
+        // 5. Try custom_fields for plan_id and match to org plans
         if (!planName && txn.metadata?.custom_fields) {
           const planField = txn.metadata.custom_fields.find(
             (f: any) => f.variable_name === "plan_id"
@@ -340,17 +348,22 @@ serve(async (req) => {
           }
         }
         
-        // 8. Check if it's a one-time payment by metadata or lack of subscription
-        const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
+        // 6. Match customer_code to local plan name via subscription lookup
+        if (!planName && txn.customer?.customer_code && customerCodeToPlanName[txn.customer.customer_code]) {
+          planName = customerCodeToPlanName[txn.customer.customer_code];
+        }
+        
+        // 7. Check if it's a standard payment
+        const isStandardPayment = txn.metadata?.payment_type === "one_time" || 
           txn.metadata?.payment_id ||
           (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
         
-        if (!planName && isOneTimePayment) {
+        if (!planName && isStandardPayment) {
           planName = "Standard Payment";
         }
         
         // Log for debugging
-        console.log(`Transaction ${txn.reference}: planName=${planName}, plan_code=${txnPlanCode}, subscription_code=${txn.subscription_code}`);
+        console.log(`Failed txn ${txn.reference}: resolved planName=${planName}, plan_code=${txnPlanCode}, sub_code=${txn.subscription_code}, customer_code=${txn.customer?.customer_code}`);
         
         return {
           ...txn,
