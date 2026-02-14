@@ -14,7 +14,8 @@ import {
   Banknote,
   AlertTriangle,
   Receipt,
-  UserSquare
+  UserSquare,
+  RotateCcw
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -56,6 +57,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
     { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
     { title: "Plans", icon: CreditCard, url: "/plans" },
     { title: "Failed Payments", icon: AlertTriangle, url: "/dashboard/failed-payments" },
+    { title: "Retry Queue", icon: RotateCcw, url: "/dashboard/retry-queue" },
     { title: "Standard Payments", icon: Banknote, url: "/payments" },
     { title: "Subscribers", icon: Users, url: "/dashboard/subscribers" },
     { title: "Billing Profiles", icon: UserSquare, url: "/dashboard/billing-profiles" },
