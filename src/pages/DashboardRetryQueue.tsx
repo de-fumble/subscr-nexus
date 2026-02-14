@@ -54,6 +54,9 @@ interface RetrySubscriber {
   plan_name: string;
   plan_id: string;
   next_retry_eligible: string | null;
+  has_authorization: boolean;
+  paystack_subscription_status: string | null;
+  paystack_next_payment_date: string | null;
 }
 
 interface Organization {
@@ -124,56 +127,13 @@ const DashboardRetryQueue = () => {
 
   const fetchRetryQueue = async (orgId: string) => {
     try {
-      // Get all subscribers for this org's plans that have failed payments
-      const { data: plans } = await supabase
-        .from("subscription_plans")
-        .select("id, name")
-        .eq("org_id", orgId);
-
-      if (!plans || plans.length === 0) {
-        setSubscribers([]);
-        return;
-      }
-
-      const planMap = new Map(plans.map(p => [p.id, p.name]));
-      const planIds = plans.map(p => p.id);
-
-      const { data: subs, error } = await supabase
-        .from("subscribers")
-        .select("id, email, customer_name, amount, retry_count, last_retry_at, payment_failed_at, status, plan_id")
-        .in("plan_id", planIds)
-        .not("payment_failed_at", "is", null);
+      const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: { orgId, action: "retry_queue" },
+      });
 
       if (error) throw error;
 
-      const mapped: RetrySubscriber[] = (subs || []).map(s => {
-        let nextRetryEligible: string | null = null;
-        if (s.retry_count !== null && s.retry_count < 3 && s.status === "active") {
-          if (s.last_retry_at) {
-            const next = new Date(s.last_retry_at);
-            next.setDate(next.getDate() + 6);
-            nextRetryEligible = next.toISOString();
-          } else if (s.payment_failed_at) {
-            nextRetryEligible = "Eligible now";
-          }
-        }
-
-        return {
-          id: s.id,
-          email: s.email,
-          customer_name: s.customer_name,
-          amount: s.amount,
-          retry_count: s.retry_count ?? 0,
-          last_retry_at: s.last_retry_at,
-          payment_failed_at: s.payment_failed_at,
-          status: s.status,
-          plan_name: planMap.get(s.plan_id) || "Unknown Plan",
-          plan_id: s.plan_id,
-          next_retry_eligible: nextRetryEligible,
-        };
-      });
-
-      setSubscribers(mapped);
+      setSubscribers(data?.retryQueue || []);
     } catch (error) {
       console.error("Error fetching retry queue:", error);
       toast.error("Failed to load retry queue");
@@ -242,7 +202,7 @@ const DashboardRetryQueue = () => {
       setSubscribers(prev =>
         prev.map(s =>
           s.id === subscriber.id
-            ? { ...s, retry_count: 0, status: "active", last_retry_at: null, next_retry_eligible: "Eligible now" }
+            ? { ...s, retry_count: 0, status: "active", last_retry_at: null, next_retry_eligible: "eligible_now" }
             : s
         )
       );
@@ -298,7 +258,7 @@ const DashboardRetryQueue = () => {
     if (subscriber.status === "payment_failed" || subscriber.retry_count >= 3) {
       return <Badge variant="destructive" className="gap-1"><Ban className="h-3 w-3" /> Exhausted</Badge>;
     }
-    if (subscriber.next_retry_eligible === "Eligible now") {
+    if (subscriber.next_retry_eligible === "eligible_now") {
       return <Badge className="gap-1 bg-amber-500/90 hover:bg-amber-500"><Play className="h-3 w-3" /> Eligible Now</Badge>;
     }
     return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Scheduled</Badge>;
@@ -436,6 +396,7 @@ const DashboardRetryQueue = () => {
                             <TableHead>Amount</TableHead>
                             <TableHead>Retry Status</TableHead>
                             <TableHead>Attempts</TableHead>
+                            <TableHead>Live Status</TableHead>
                             <TableHead>Failed At</TableHead>
                             <TableHead>Last Retry</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -461,6 +422,16 @@ const DashboardRetryQueue = () => {
                                 <span className={`font-mono text-sm ${subscriber.retry_count >= 3 ? "text-destructive" : ""}`}>
                                   {subscriber.retry_count}/3
                                 </span>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-0.5">
+                                  <Badge variant="outline" className="text-xs w-fit">
+                                    {subscriber.paystack_subscription_status || "N/A"}
+                                  </Badge>
+                                  {!subscriber.has_authorization && (
+                                    <span className="text-xs text-destructive">No auth card</span>
+                                  )}
+                                </div>
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {formatDate(subscriber.payment_failed_at)}
