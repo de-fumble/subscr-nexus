@@ -29,6 +29,7 @@ import DashboardLogs from "./pages/DashboardLogs";
 import DashboardStaff from "./pages/DashboardStaff";
 import DashboardVerify from "./pages/DashboardVerify";
 import DashboardFailedPayments from "./pages/DashboardFailedPayments";
+import DashboardRetryQueue from "./pages/DashboardRetryQueue";
 import DashboardInvoices from "./pages/DashboardInvoices";
 import DashboardBillingProfiles from "./pages/DashboardBillingProfiles";
 import BillingProfileDetail from "./pages/BillingProfileDetail";
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/dashboard/staff" element={<ProtectedRoute><DashboardStaff /></ProtectedRoute>} />
           <Route path="/dashboard/verify" element={<ProtectedRoute><DashboardVerify /></ProtectedRoute>} />
           <Route path="/dashboard/failed-payments" element={<ProtectedRoute><DashboardFailedPayments /></ProtectedRoute>} />
+          <Route path="/dashboard/retry-queue" element={<ProtectedRoute><DashboardRetryQueue /></ProtectedRoute>} />
           <Route path="/dashboard/invoices" element={<ProtectedRoute><DashboardInvoices /></ProtectedRoute>} />
           <Route path="/dashboard/billing-profiles" element={<ProtectedRoute><DashboardBillingProfiles /></ProtectedRoute>} />
           <Route path="/dashboard/billing-profiles/:profileId" element={<ProtectedRoute><BillingProfileDetail /></ProtectedRoute>} />
