@@ -40,6 +40,7 @@ import {
   Play,
   CheckCircle2,
   AlertTriangle,
+  Zap,
 } from "lucide-react";
 
 interface RetrySubscriber {
@@ -55,8 +56,8 @@ interface RetrySubscriber {
   plan_id: string;
   next_retry_eligible: string | null;
   has_authorization: boolean;
-  paystack_subscription_status: string | null;
-  paystack_next_payment_date: string | null;
+  is_eligible_now: boolean;
+  is_exhausted: boolean;
 }
 
 interface Organization {
@@ -127,8 +128,8 @@ const DashboardRetryQueue = () => {
 
   const fetchRetryQueue = async (orgId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
-        body: { orgId, action: "retry_queue" },
+      const { data, error } = await supabase.functions.invoke("retry-failed-payments", {
+        body: { action: "status", orgId },
       });
 
       if (error) throw error;
@@ -137,6 +138,35 @@ const DashboardRetryQueue = () => {
     } catch (error) {
       console.error("Error fetching retry queue:", error);
       toast.error("Failed to load retry queue");
+    }
+  };
+
+  const handleManualRetry = async (subscriber: RetrySubscriber) => {
+    if (!subscriber.has_authorization) {
+      toast.error("No stored card authorization — cannot retry");
+      return;
+    }
+    setActionLoading(subscriber.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("retry-failed-payments", {
+        body: { action: "retry_one", subscriberId: subscriber.id },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(`Payment successful for ${subscriber.email}!`);
+        setSubscribers(prev => prev.filter(s => s.id !== subscriber.id));
+      } else {
+        toast.error(data?.message || "Retry failed");
+        // Refresh to get updated state
+        if (organization) await fetchRetryQueue(organization.id);
+      }
+    } catch (error) {
+      console.error("Error retrying payment:", error);
+      toast.error("Failed to retry payment");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -396,7 +426,7 @@ const DashboardRetryQueue = () => {
                             <TableHead>Amount</TableHead>
                             <TableHead>Retry Status</TableHead>
                             <TableHead>Attempts</TableHead>
-                            <TableHead>Live Status</TableHead>
+                            <TableHead>Card</TableHead>
                             <TableHead>Failed At</TableHead>
                             <TableHead>Last Retry</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -424,14 +454,15 @@ const DashboardRetryQueue = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                <div className="flex flex-col gap-0.5">
-                                  <Badge variant="outline" className="text-xs w-fit">
-                                    {subscriber.paystack_subscription_status || "N/A"}
+                                {subscriber.has_authorization ? (
+                                  <Badge variant="outline" className="text-xs gap-1">
+                                    <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Stored
                                   </Badge>
-                                  {!subscriber.has_authorization && (
-                                    <span className="text-xs text-destructive">No auth card</span>
-                                  )}
-                                </div>
+                                ) : (
+                                  <Badge variant="destructive" className="text-xs gap-1">
+                                    <XCircle className="h-3 w-3" /> None
+                                  </Badge>
+                                )}
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {formatDate(subscriber.payment_failed_at)}
@@ -441,6 +472,18 @@ const DashboardRetryQueue = () => {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center justify-end gap-1">
+                                  {subscriber.has_authorization && subscriber.status === "active" && subscriber.retry_count < 3 && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleManualRetry(subscriber)}
+                                      disabled={actionLoading === subscriber.id}
+                                      className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs"
+                                    >
+                                      <Zap className="h-3.5 w-3.5" />
+                                      Retry Now
+                                    </Button>
+                                  )}
                                   {subscriber.status === "active" && subscriber.retry_count < 3 && (
                                     <Button
                                       variant="ghost"
@@ -454,16 +497,30 @@ const DashboardRetryQueue = () => {
                                     </Button>
                                   )}
                                   {(subscriber.status === "payment_failed" || subscriber.retry_count >= 3) && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleResetRetry(subscriber)}
-                                      disabled={actionLoading === subscriber.id}
-                                      className="text-primary hover:text-primary hover:bg-primary/10 gap-1 text-xs"
-                                    >
-                                      <RotateCcw className="h-3.5 w-3.5" />
-                                      Reset
-                                    </Button>
+                                    <>
+                                      {subscriber.has_authorization && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleManualRetry(subscriber)}
+                                          disabled={actionLoading === subscriber.id}
+                                          className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs"
+                                        >
+                                          <Zap className="h-3.5 w-3.5" />
+                                          Retry Now
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleResetRetry(subscriber)}
+                                        disabled={actionLoading === subscriber.id}
+                                        className="text-primary hover:text-primary hover:bg-primary/10 gap-1 text-xs"
+                                      >
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                        Reset
+                                      </Button>
+                                    </>
                                   )}
                                   <Button
                                     variant="ghost"
