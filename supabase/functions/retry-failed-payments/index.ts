@@ -40,11 +40,12 @@ serve(async (req) => {
     if (action === "status" && orgId) {
       console.log("Fetching retry queue status for org:", orgId);
 
-      // Get org's plans
+      // Get org's ACTIVE plans only (exclude archived/deleted plans)
       const { data: plans } = await supabase
         .from("subscription_plans")
         .select("id, name")
-        .eq("org_id", orgId);
+        .eq("org_id", orgId)
+        .eq("is_active", true);
 
       if (!plans || plans.length === 0) {
         return new Response(
@@ -57,7 +58,7 @@ serve(async (req) => {
       plans.forEach(p => { planMap[p.id] = p.name; });
       const planIds = plans.map(p => p.id);
 
-      // Get ALL subscribers with failed payments (same fields the retry logic uses)
+      // Get subscribers with failed payments for active plans only, exclude abandoned
       const { data: allFailed, error: fetchError } = await supabase
         .from("subscribers")
         .select(`
@@ -66,7 +67,8 @@ serve(async (req) => {
           paystack_customer_code, paystack_authorization_code
         `)
         .in("plan_id", planIds)
-        .not("payment_failed_at", "is", null);
+        .not("payment_failed_at", "is", null)
+        .neq("status", "abandoned");
 
       if (fetchError) {
         console.error("Error fetching subscribers:", fetchError);
@@ -79,7 +81,31 @@ serve(async (req) => {
       const sixDaysAgo = new Date();
       sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
 
-      const retryQueue = (allFailed || []).map(s => {
+      // Filter out resolved failures: if a successful transaction exists AFTER payment_failed_at, skip
+      const subscriberIds = (allFailed || []).map(s => s.id);
+      let resolvedIds = new Set<string>();
+
+      if (subscriberIds.length > 0) {
+        const { data: successTxns } = await supabase
+          .from("transactions")
+          .select("subscriber_id, paid_at")
+          .in("subscriber_id", subscriberIds)
+          .eq("status", "success");
+
+        if (successTxns) {
+          const failedMap = new Map((allFailed || []).map(s => [s.id, s.payment_failed_at]));
+          for (const txn of successTxns) {
+            const failedAt = failedMap.get(txn.subscriber_id);
+            if (failedAt && txn.paid_at && new Date(txn.paid_at) > new Date(failedAt)) {
+              resolvedIds.add(txn.subscriber_id);
+            }
+          }
+        }
+      }
+
+      const unresolvedFailed = (allFailed || []).filter(s => !resolvedIds.has(s.id));
+
+      const retryQueue = unresolvedFailed.map(s => {
         const retryCount = s.retry_count ?? 0;
         const isExhausted = s.status === "payment_failed" || retryCount >= 3;
         const hasAuth = !!s.paystack_authorization_code;
@@ -263,12 +289,28 @@ serve(async (req) => {
     const sixDaysAgo = new Date();
     sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
 
+    // Only retry for active (non-archived) plans
+    const { data: activePlans } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("is_active", true);
+
+    const activePlanIds = (activePlans || []).map(p => p.id);
+
+    if (activePlanIds.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, results: { processed: 0, successful: 0, failed: 0, details: [] } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: failedSubscribers, error: fetchError } = await supabase
       .from("subscribers")
       .select(`
-        id, email, customer_name, amount, retry_count,
+        id, email, customer_name, amount, retry_count, payment_failed_at,
         paystack_customer_code, paystack_authorization_code, plan_id
       `)
+      .in("plan_id", activePlanIds)
       .not("payment_failed_at", "is", null)
       .lt("retry_count", 3)
       .eq("status", "active")
@@ -282,7 +324,30 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${failedSubscribers?.length || 0} subscribers to retry`);
+    // Filter out resolved failures (successful payment after the failure)
+    let bulkResolvedIds = new Set<string>();
+    const bulkSubIds = (failedSubscribers || []).map(s => s.id);
+    if (bulkSubIds.length > 0) {
+      const { data: successTxns } = await supabase
+        .from("transactions")
+        .select("subscriber_id, paid_at")
+        .in("subscriber_id", bulkSubIds)
+        .eq("status", "success");
+
+      if (successTxns) {
+        const failedMap = new Map((failedSubscribers || []).map(s => [s.id, s.payment_failed_at]));
+        for (const txn of successTxns) {
+          const failedAt = failedMap.get(txn.subscriber_id);
+          if (failedAt && txn.paid_at && new Date(txn.paid_at) > new Date(failedAt)) {
+            bulkResolvedIds.add(txn.subscriber_id);
+          }
+        }
+      }
+    }
+
+    const eligibleSubscribers = (failedSubscribers || []).filter(s => !bulkResolvedIds.has(s.id));
+
+    console.log(`Found ${eligibleSubscribers.length} eligible subscribers to retry (${bulkResolvedIds.size} resolved skipped)`);
 
     const results = {
       processed: 0,
@@ -291,7 +356,7 @@ serve(async (req) => {
       details: [] as Array<{ email: string; status: string; message: string }>,
     };
 
-    for (const subscriber of failedSubscribers || []) {
+    for (const subscriber of eligibleSubscribers) {
       results.processed++;
       const orgPaystackKey = paystackSecretKey;
 
