@@ -852,7 +852,7 @@ const Index = () => {
           </p>
           <Button
             className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 font-semibold"
-            onClick={() => setShowRecurraIQDialog(true)}
+            onClick={() => window.open('https://iq.recurrra.com', '_blank')}
           >
             Learn more about Recurra IQ
             <ArrowRight className="ml-2 h-4 w-4" />
