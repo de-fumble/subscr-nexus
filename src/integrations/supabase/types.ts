@@ -213,6 +213,10 @@ export type Database = {
           email: string
           expires_at: string
           id: string
+          last_requested_at: string | null
+          otp_attempts: number | null
+          otp_code: string | null
+          request_count: number | null
           token: string
           user_id: string
           verified_at: string | null
@@ -222,6 +226,10 @@ export type Database = {
           email: string
           expires_at: string
           id?: string
+          last_requested_at?: string | null
+          otp_attempts?: number | null
+          otp_code?: string | null
+          request_count?: number | null
           token: string
           user_id: string
           verified_at?: string | null
@@ -231,6 +239,10 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          last_requested_at?: string | null
+          otp_attempts?: number | null
+          otp_code?: string | null
+          request_count?: number | null
           token?: string
           user_id?: string
           verified_at?: string | null

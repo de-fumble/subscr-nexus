@@ -56,6 +56,7 @@ import Terms from "./pages/Terms";
 import CookiePolicy from "./pages/CookiePolicy";
 import GDPR from "./pages/GDPR";
 import VerifyEmail from "./pages/VerifyEmail";
+import VerifyOTP from "./pages/VerifyOTP";
 import PlansHub from "./pages/PlansHub";
 import FindOrganizations from "./pages/FindOrganizations";
 import UserVerifyTransaction from "./pages/UserVerifyTransaction";
@@ -77,6 +78,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/user-dashboard" element={<UserDashboard />} />
           <Route path="/find-organizations" element={<FindOrganizations />} />
           <Route path="/verify-transaction" element={<UserVerifyTransaction />} />
