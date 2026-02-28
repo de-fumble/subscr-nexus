@@ -9,18 +9,21 @@ export const TeamSection = () => {
             title: "System's Architect/Founder",
             image: "/team-founder.jpg",
             icon: User,
+            imagePosition: "object-top",
         },
         {
             name: "Okiefe Gift",
             title: "Software Engineer/QA Tester",
             image: "/team-qa.jpg",
             icon: ShieldCheck,
+            imagePosition: "object-top",
         },
         {
             name: "Funsho Gbenga",
             title: "Software Engineer",
             image: "/team-engineer.jpg",
             icon: Code,
+            imagePosition: "object-center",
         },
     ];
 
@@ -37,15 +40,37 @@ export const TeamSection = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 max-w-3xl mx-auto">
+                {/* Mobile: Round avatars in a row */}
+                <div className="flex md:hidden justify-center gap-6 max-w-sm mx-auto">
+                    {team.map((member, index) => (
+                        <div key={index} className="flex flex-col items-center text-center group">
+                            <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-accent/20 shadow-md mb-3 group-hover:border-accent/50 transition-all duration-300">
+                                {/* Fallback Icon */}
+                                <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-muted-foreground">
+                                    <member.icon className="w-8 h-8 opacity-20" />
+                                </div>
+                                <img
+                                    src={member.image !== "placeholder" ? member.image : "/placeholder.svg"}
+                                    alt={member.name}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className={`w-full h-full object-cover ${member.imagePosition} relative z-10`}
+                                />
+                            </div>
+                            <h3 className="font-bold text-xs text-foreground font-mono leading-tight">{member.name}</h3>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono leading-tight">{member.title}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop: Card layout */}
+                <div className="hidden md:grid md:grid-cols-3 gap-5 max-w-3xl mx-auto">
                     {team.map((member, index) => (
                         <Card key={index} className="overflow-hidden border-border/50 hover:shadow-lg transition-all duration-300 group">
                             <div className="aspect-[3/4] bg-muted/50 relative flex items-center justify-center overflow-hidden">
-                                {/* Fallback Icon if image fails or for placeholder */}
                                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-muted-foreground">
                                     <member.icon className="w-14 h-14 opacity-20" />
                                 </div>
-                                {/* Actual Image - optimized with lazy loading */}
                                 <img
                                     src={member.image !== "placeholder" ? member.image : "/placeholder.svg"}
                                     alt={member.name}
@@ -54,9 +79,9 @@ export const TeamSection = () => {
                                     className="w-full h-full object-cover object-top relative z-10 transition-transform duration-500 group-hover:scale-105"
                                 />
                             </div>
-                            <div className="p-3 sm:p-4 text-center">
-                                <h3 className="font-bold text-sm sm:text-base text-foreground font-mono">{member.name}</h3>
-                                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 font-mono">{member.title}</p>
+                            <div className="p-4 text-center">
+                                <h3 className="font-bold text-base text-foreground font-mono">{member.name}</h3>
+                                <p className="text-sm text-muted-foreground mt-0.5 font-mono">{member.title}</p>
                                 <div className="w-8 h-0.5 bg-accent/30 mx-auto mt-2 rounded-full" />
                             </div>
                         </Card>

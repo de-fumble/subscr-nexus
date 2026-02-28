@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, ArrowDown, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2 } from "lucide-react";
+import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, ArrowDown, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2, Dumbbell } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import dashboardPreview from "@/assets/dashboard-preview.png";
@@ -283,14 +283,14 @@ const Index = () => {
     <Navbar />
 
     {/* Hero Section - Premium Centered Layout - White Background */}
-    <section className="relative overflow-hidden pt-24 pb-8 md:pt-28 md:pb-16 lg:pt-36 lg:pb-24 bg-white">
+    <section className="relative overflow-hidden pt-8 pb-8 md:pt-12 md:pb-16 lg:pt-16 lg:pb-24 bg-white border-t border-border/30">
       {/* Background Elements removed for clean white look */}
 
       <div className="container relative mx-auto px-4 sm:px-5 md:px-6 lg:px-8" style={{ maxWidth: '100%', boxSizing: 'border-box' }}>
         <div className="grid lg:grid-cols-2 gap-8 md:gap-10 lg:gap-16 items-center">
           {/* Left Content - Centered on mobile */}
-          <div className="order-2 lg:order-1 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5 md:mb-6 animate-fade-in">
+          <div className="order-2 lg:order-1 text-left">
+            <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5 md:mb-6 animate-fade-in">
               <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
               <span className="text-sm font-medium text-accent">Trusted by leading institutions</span>
             </div>
@@ -302,27 +302,24 @@ const Index = () => {
               </span>
             </h1>
 
-            <p className="mt-5 md:mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0 animate-fade-in font-mono">
+            <p className="mt-5 md:mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl animate-fade-in font-mono">
               Hundreds of businesses trust Recurra to automate billing, reduce churn, and scale revenue operations.
             </p>
 
-            {/* CTA Buttons - Stacked on mobile like Chargebee */}
-            <div className="mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start animate-fade-in">
-              <Button size="lg" onClick={() => setShowDemoDialog(true)} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 h-14 md:h-16 px-8 text-base md:text-lg font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/25 rounded-full font-mono">
+            {/* CTA Buttons - Side by side like Paystack */}
+            <div className="mt-8 md:mt-10 flex flex-row items-center gap-4 justify-start animate-fade-in">
+              <Button size="lg" onClick={() => setShowDemoDialog(true)} className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 sm:h-14 md:h-16 px-6 sm:px-8 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/25 rounded-full font-mono">
                 Get a Demo
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <Link to="/auth" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full border-2 border-border hover:border-accent/50 h-14 md:h-16 px-8 text-base md:text-lg font-semibold transition-all duration-300 hover:bg-accent/5 rounded-full font-mono">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+              <Link to="/auth" className="text-accent hover:text-accent/80 font-semibold text-sm sm:text-base font-mono transition-colors">
+                or Start Free Trial
               </Link>
             </div>
 
             {/* Trust Indicators - Compact inline display */}
             <div className="mt-8 md:mt-12 pt-6 border-t border-border/30 animate-fade-in">
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-start gap-4 md:gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-foreground text-lg md:text-xl">50+</span>
                   <span className="font-mono">businesses globally</span>
@@ -480,43 +477,47 @@ const Index = () => {
     {/* Integrations Section - How Recurra Connects */}
     <section className="py-10 md:py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
-        <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
+        <div className="max-w-3xl mx-auto mb-8 md:mb-16 text-center">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Process</span>
           <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
             How Recurra connects to your business
           </h2>
+          <p className="mt-3 text-sm md:text-base text-muted-foreground font-mono max-w-lg mx-auto">
+            Pre-built tools and simple integrations to get you collecting payments in minutes
+          </p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row items-center gap-0 md:gap-8 max-w-5xl mx-auto">
           {/* Pre-built Integrations Card */}
           <div className="w-full md:flex-1">
-            <div className="bg-zinc-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 h-full">
+            <div className="bg-zinc-900 rounded-2xl p-5 sm:p-6 md:p-8 h-full">
+              <p className="text-center text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 md:hidden">Your tools</p>
               <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {/* Row 1 */}
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-green-500" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <CreditCard className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-green-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Globe className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-400" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <Globe className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-400" />
                 </div>
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-500" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <TrendingUp className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Shield className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-purple-500" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <Shield className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-purple-500" />
                 </div>
                 {/* Row 2 */}
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-sky-400" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <BarChart3 className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-sky-400" />
                 </div>
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Users className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-500" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <Users className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Bell className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-red-500" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <Bell className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-red-500" />
                 </div>
-                <div className="bg-zinc-800 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 flex items-center justify-center aspect-square">
-                  <Zap className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-emerald-500" />
+                <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
+                  <Zap className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-emerald-500" />
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-2 text-center">
@@ -526,26 +527,34 @@ const Index = () => {
                 <span className="text-xs text-zinc-400">Security</span>
               </div>
             </div>
-            <p className="text-center text-muted-foreground font-medium mt-3">Pre-built integrations</p>
+            <p className="text-center text-muted-foreground font-medium mt-3 hidden md:block">Pre-built integrations</p>
           </div>
 
-          {/* Connection Arrow */}
-          <div className="flex-shrink-0 text-muted-foreground/30 z-10">
-            <ArrowRight className="hidden md:block w-8 h-8 md:w-12 md:h-12" />
-            <ArrowDown className="md:hidden w-8 h-8" />
+          {/* Connection Arrow - Premium styled */}
+          <div className="flex-shrink-0 z-10 py-2 md:py-0">
+            <ArrowRight className="hidden md:block w-8 h-8 md:w-12 md:h-12 text-muted-foreground/30" />
+            <div className="md:hidden flex flex-col items-center gap-1">
+              <div className="w-px h-4 bg-gradient-to-b from-zinc-700 to-accent/40" />
+              <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+                <ArrowDown className="w-4 h-4 text-accent animate-bounce" style={{ animationDuration: '2s' }} />
+              </div>
+              <div className="w-px h-3 bg-gradient-to-b from-accent/40 to-zinc-700" />
+              <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">connects to</span>
+              <div className="w-px h-2 bg-zinc-700/50" />
+            </div>
           </div>
 
           {/* Integration Methods Card */}
           <div className="w-full md:flex-1">
-            <div className="bg-zinc-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 flex flex-col md:flex-row gap-3 sm:gap-4 overflow-hidden h-full">
+            <div className="bg-zinc-900 rounded-2xl p-4 sm:p-4 md:p-6 flex flex-col md:flex-row gap-4 overflow-hidden h-full">
               {/* Code Preview */}
-              <div className="flex-1 bg-zinc-950 rounded-lg p-2 sm:p-3 md:p-4 font-mono text-xs overflow-hidden">
+              <div className="flex-1 bg-zinc-950 rounded-xl p-3 sm:p-3 md:p-4 font-mono text-xs overflow-hidden border border-zinc-800/50">
                 <div className="flex gap-1.5 mb-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                 </div>
-                <pre className="text-zinc-400 text-[9px] sm:text-[10px] md:text-xs leading-relaxed overflow-hidden whitespace-pre-wrap break-all">
+                <pre className="text-zinc-400 text-[10px] sm:text-[10px] md:text-xs leading-relaxed overflow-hidden whitespace-pre-wrap break-all">
                   <span className="text-zinc-500">{"<!-- Include Recurra.js -->"}</span>
                   {"\n"}<span className="text-purple-400">{"<script"}</span> <span className="text-blue-300">src</span>=<span className="text-green-400">"https://js.recurra..."</span>
                   {"\n"}
@@ -559,7 +568,7 @@ const Index = () => {
               </div>
 
               {/* Checkout Preview */}
-              <div className="flex-1 bg-white rounded-lg p-2 sm:p-3 md:p-4 text-zinc-900">
+              <div className="flex-1 bg-white rounded-xl p-3 sm:p-3 md:p-4 text-zinc-900 border border-zinc-200/50">
                 <p className="text-accent font-semibold text-xs mb-1">Checkout: Order summary</p>
                 <p className="text-2xl font-bold mb-3">₦12,840 <span className="text-xs font-normal text-zinc-500">NGN</span></p>
 
@@ -579,138 +588,214 @@ const Index = () => {
                 <p className="text-[10px] text-zinc-400 mt-2">Powered by Recurra</p>
               </div>
             </div>
-            <p className="text-center text-muted-foreground font-medium mt-3">Integration methods</p>
+            <p className="text-center text-muted-foreground font-medium mt-3 hidden md:block">Integration methods</p>
           </div>
         </div>
       </div>
     </section>
 
-    {/* Use Case 1: Schools Section */}
+    {/* Use Cases Section */}
     <section id="use-cases" className="py-10 md:py-16 lg:py-24 relative overflow-hidden">
       {/* Background Elements - Hidden on mobile */}
       <div className="hidden md:block absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
 
       <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         {/* Use Cases Header */}
-        <div className="text-center mb-10 md:mb-16">
+        <div className="text-center mb-8 md:mb-16">
           <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Use Cases</span>
           <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
             Built for Every Business
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono max-w-2xl mx-auto">
+          <p className="mt-3 text-sm md:text-lg text-muted-foreground font-mono max-w-2xl mx-auto">
             See how Recurra powers subscription management across industries
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-20 items-center">
-          {/* Left: Image */}
-          <div className="relative">
-            <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
-              <img
-                src={usecaseSchool}
-                alt="School Fee Management Dashboard"
-                className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover"
-              />
-            </div>
-          </div>
-
-          {/* Right: Content */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
-              <GraduationCap className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent">For Schools</span>
-            </div>
-
-            <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-6 font-mono">
-              Streamline School Fees with{" "}
-              <span className="text-accent">Automated Billing</span>
-            </h2>
-
-            <p className="text-sm md:text-lg text-muted-foreground mb-5 md:mb-8 leading-relaxed">
-              Eliminate manual fee collection. Recurra automates tuition payments and provides real-time tracking.
-            </p>
-
-            {/* Feature Points - Compact on mobile */}
-            <div className="grid gap-2.5 md:gap-4 mb-5 md:mb-8">
-              {[
-                { icon: CalendarCheck, title: "Automated Term Billing" },
-                { icon: Bell, title: "Smart Payment Reminders" },
-                { icon: TrendingUp, title: "Real-time Fee Tracking" },
-                { icon: RefreshCw, title: "Failed Payment Recovery" },
-              ].map((feature, index) => (
-                <div key={index} className="flex items-center gap-3 p-2.5 md:p-3 rounded-lg bg-muted/50">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <feature.icon className="w-4 h-4 text-accent" />
+        {/* Mobile: Compact premium cards */}
+        <div className="md:hidden space-y-4 max-w-sm mx-auto">
+          {[
+            {
+              icon: GraduationCap,
+              label: "Schools",
+              title: "Automate School Fees",
+              desc: "Eliminate manual fee collection with automated billing, reminders, and real-time tracking.",
+              features: ["Term billing automation", "Payment reminders"],
+              cta: "Get Started",
+            },
+            {
+              icon: Landmark,
+              label: "Cooperatives",
+              title: "Smart Loan Recovery",
+              desc: "Automate repayments and reduce defaulters with intelligent retry mechanisms.",
+              features: ["Auto loan deductions", "Defaulter management"],
+              cta: "Get Started",
+            },
+            {
+              icon: Dumbbell,
+              label: "Gyms & Fitness",
+              title: "Manage Memberships",
+              desc: "Automate gym membership billing, track renewals, and reduce churn effortlessly.",
+              features: ["Recurring memberships", "Auto renewal alerts"],
+              cta: "Get Started",
+            },
+          ].map((useCase, index) => (
+            <div key={index} className="relative group">
+              <div className="absolute -inset-px bg-gradient-to-r from-accent/20 to-accent/5 rounded-2xl blur-[1px]" />
+              <div className="relative bg-card rounded-2xl border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-accent/30">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <useCase.icon className="w-5 h-5 text-accent" />
                   </div>
-                  <span className="text-sm font-medium text-foreground">{feature.title}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] text-accent font-mono uppercase tracking-widest">{useCase.label}</span>
+                    <h3 className="text-base font-bold text-foreground font-mono mt-0.5">{useCase.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{useCase.desc}</p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {useCase.features.map((f, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-[10px] font-mono text-accent bg-accent/5 px-2 py-1 rounded-full">
+                          <Check className="w-3 h-3" />
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
+                <Link to="/auth" className="mt-4 flex items-center gap-1 text-sm font-semibold text-accent font-mono hover:gap-2 transition-all">
+                  {useCase.cta}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
-
-            <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground h-12 md:h-14 px-6 text-base font-semibold rounded-full">
-                Get Started for Schools
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
+          ))}
         </div>
-      </div>
-    </section>
 
-    {/* Use Case 2: Loan Cooperatives Section */}
-    <section className="py-10 md:py-16 lg:py-24 relative overflow-hidden bg-muted/20">
-      <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
-        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-20 items-center">
-          {/* Left: Content (Reversed order on desktop) */}
-          <div className="order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
-              <Landmark className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent">For Cooperatives</span>
+        {/* Desktop: Full detailed grids */}
+        <div className="hidden md:block space-y-16 lg:space-y-24">
+          {/* Schools */}
+          <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-center">
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
+                <img src={usecaseSchool} alt="School Fee Management Dashboard" className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover" />
+              </div>
             </div>
-
-            <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-6 font-mono">
-              Simplify Loan Repayments with{" "}
-              <span className="text-accent">Smart Recovery</span>
-            </h2>
-
-            <p className="text-sm md:text-lg text-muted-foreground mb-5 md:mb-8 leading-relaxed">
-              Transform your cooperative's loan management. Automate repayments and reduce defaulters with intelligent retry mechanisms.
-            </p>
-
-            {/* Feature Points - Compact on mobile */}
-            <div className="grid gap-2.5 md:gap-4 mb-5 md:mb-8">
-              {[
-                { icon: CreditCard, title: "Automated Loan Deductions" },
-                { icon: RefreshCw, title: "Intelligent Retry System" },
-                { icon: Users, title: "Member Portal Access" },
-                { icon: Shield, title: "Defaulter Management" },
-              ].map((feature, index) => (
-                <div key={index} className="flex items-center gap-3 p-2.5 md:p-3 rounded-lg bg-card/50">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <feature.icon className="w-4 h-4 text-accent" />
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                <GraduationCap className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-accent">For Schools</span>
+              </div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
+                Streamline School Fees with <span className="text-accent">Automated Billing</span>
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                Eliminate manual fee collection. Recurra automates tuition payments and provides real-time tracking.
+              </p>
+              <div className="grid gap-4 mb-8">
+                {[
+                  { icon: CalendarCheck, title: "Automated Term Billing" },
+                  { icon: Bell, title: "Smart Payment Reminders" },
+                  { icon: TrendingUp, title: "Real-time Fee Tracking" },
+                  { icon: RefreshCw, title: "Failed Payment Recovery" },
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <feature.icon className="w-4 h-4 text-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{feature.title}</span>
                   </div>
-                  <span className="text-sm font-medium text-foreground">{feature.title}</span>
-                </div>
-              ))}
+                ))}
+              </div>
+              <Link to="/auth">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-14 px-6 text-base font-semibold rounded-full">
+                  Get Started for Schools
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
-
-            <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground h-12 md:h-14 px-6 text-base font-semibold rounded-full">
-                Get Started for Cooperatives
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
           </div>
 
-          {/* Right: Image */}
-          <div className="relative order-1 lg:order-2">
-            <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
-              <img
-                src={usecaseCooperative}
-                alt="Cooperative Loan Management System"
-                className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover"
-              />
+          {/* Cooperatives */}
+          <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                <Landmark className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-accent">For Cooperatives</span>
+              </div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
+                Simplify Loan Repayments with <span className="text-accent">Smart Recovery</span>
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                Transform your cooperative's loan management. Automate repayments and reduce defaulters with intelligent retry mechanisms.
+              </p>
+              <div className="grid gap-4 mb-8">
+                {[
+                  { icon: CreditCard, title: "Automated Loan Deductions" },
+                  { icon: RefreshCw, title: "Intelligent Retry System" },
+                  { icon: Users, title: "Member Portal Access" },
+                  { icon: Shield, title: "Defaulter Management" },
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-card/50">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <feature.icon className="w-4 h-4 text-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{feature.title}</span>
+                  </div>
+                ))}
+              </div>
+              <Link to="/auth">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-14 px-6 text-base font-semibold rounded-full">
+                  Get Started for Cooperatives
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
+                <img src={usecaseCooperative} alt="Cooperative Loan Management System" className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover" />
+              </div>
+            </div>
+          </div>
+
+          {/* Gyms */}
+          <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-center">
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
+                <div className="w-full h-[350px] rounded-lg bg-gradient-to-br from-accent/10 via-accent/5 to-transparent flex items-center justify-center">
+                  <Dumbbell className="w-24 h-24 text-accent/30" />
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                <Dumbbell className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-accent">For Gyms & Fitness</span>
+              </div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
+                Manage Memberships with <span className="text-accent">Zero Hassle</span>
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                Automate gym membership billing, track renewals, and reduce churn so you can focus on your members.
+              </p>
+              <div className="grid gap-4 mb-8">
+                {[
+                  { icon: RefreshCw, title: "Recurring Membership Billing" },
+                  { icon: Bell, title: "Auto Renewal Alerts" },
+                  { icon: Users, title: "Member Management" },
+                  { icon: TrendingUp, title: "Revenue Analytics" },
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <feature.icon className="w-4 h-4 text-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{feature.title}</span>
+                  </div>
+                ))}
+              </div>
+              <Link to="/auth">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-14 px-6 text-base font-semibold rounded-full">
+                  Get Started for Gyms
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -1012,14 +1097,14 @@ const Index = () => {
           Join hundreds of businesses already managing their subscriptions with Recurra.
           Start your free trial today, no credit card required.
         </p>
-        <div className="mt-6 md:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
+        <div className="mt-6 md:mt-10 flex flex-row items-center justify-center gap-3 md:gap-4">
           <Link to="/auth">
-            <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl font-mono">
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl font-mono">
+              Start Free Trial
+              <ArrowRight className="ml-1.5 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </Link>
-          <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="w-full sm:w-auto border-white/30 text-white px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold transition-all duration-300 bg-accent font-mono">
+          <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="border-white/30 text-white px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 bg-accent font-mono">
             Contact Sales
           </Button>
         </div>

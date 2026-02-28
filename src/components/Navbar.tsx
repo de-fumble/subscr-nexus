@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { X, Repeat, ArrowRight } from "lucide-react";
+import { X, Menu, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
@@ -119,7 +119,14 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="absolute top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Recurra IQ Banner - above navbar */}
+      <div className="bg-accent text-accent-foreground text-center text-xs sm:text-sm py-2 px-4 font-mono w-full relative z-50">
+        <a href="https://iq.recurrra.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          🚀 Discover Recurra IQ — AI-powered subscription intelligence
+          <ArrowRight className="h-3.5 w-3.5" />
+        </a>
+      </div>
+      <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex items-center justify-between px-5 md:px-6 py-3 md:py-4">
           <Link to="/" className="flex items-center gap-2.5 transition-transform duration-300 hover:scale-105">
             <img src={logoImage} alt="Recurra Logo" className="h-10 w-10 md:h-12 md:w-12 object-cover rounded-xl" />
@@ -158,20 +165,14 @@ const Navbar = () => {
           </div>
 
           <button
-            className="md:hidden flex flex-col items-center justify-center gap-0.5 p-1 transition-transform active:scale-95"
+            className="md:hidden flex items-center justify-center p-2 rounded-lg hover:bg-muted/50 transition-colors active:scale-95"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
             {isOpen ? (
-              <>
-                <X className="h-5 w-5 text-foreground" />
-                <span className="text-[10px] font-mono leading-none text-foreground uppercase tracking-wider">Close</span>
-              </>
+              <X className="h-6 w-6 text-foreground" />
             ) : (
-              <>
-                <Repeat className="h-5 w-5 text-foreground" />
-                <span className="text-[10px] font-mono leading-none text-foreground uppercase tracking-wider">Menu</span>
-              </>
+              <Menu className="h-6 w-6 text-foreground" />
             )}
           </button>
         </div>

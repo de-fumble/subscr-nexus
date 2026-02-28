@@ -66,14 +66,14 @@ const DashboardHeader = ({
     state
   } = useSidebar();
   const isCollapsed = state === "collapsed";
-  return <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-border/30 bg-background/95 backdrop-blur-sm px-4">
-    <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity" />
-    <div className="flex-1 flex items-center gap-3">
-      <h1 className="text-base font-semibold text-foreground tracking-tight">
+  return <header className="sticky top-0 z-10 flex h-14 w-full shrink-0 items-center gap-2 sm:gap-3 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
+    <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+    <div className="flex-1 flex items-center gap-2 sm:gap-3 min-w-0">
+      <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight truncate">
         {isCollapsed ? orgName || "Dashboard" : "Dashboard"}
       </h1>
     </div>
-    {orgId && <NotificationIcon orgId={orgId} />}
+    {orgId && <div className="shrink-0 relative z-50 flex items-center pr-1 sm:pr-0"><NotificationIcon orgId={orgId} /></div>}
   </header>;
 };
 
@@ -698,7 +698,7 @@ const Dashboard = () => {
       <SidebarInset className="flex-1">
         <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
         <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-6 py-6">
+          <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
 
             {/* Setup Progress Card - Only shows when setup is incomplete */}
             {organization && (
@@ -711,159 +711,157 @@ const Dashboard = () => {
             )}
 
             {/* Top Stats Row - 4 Cards */}
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
               {/* Toggle for hiding values */}
-              <div className="col-span-full flex justify-end mb-2 gap-2">
+              <div className="col-span-full flex justify-start sm:justify-end mb-2 gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide w-full items-center">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
                   onClick={() => toast.info("Guided tour coming soon!")}
                 >
-                  <PlayCircle className="h-4 w-4" />
-                  Guided Tour
+                  <PlayCircle className="h-3 sm:h-4 w-3 sm:w-4" />
+                  Tour
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
                   onClick={() => toast.info("No new updates")}
                 >
-                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  <Sparkles className="h-3 sm:h-4 w-3 sm:w-4 text-indigo-500" />
                   What's New
                   <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
                 </Button>
-                <div className="h-4 w-px bg-border/50 my-auto mx-1" />
+                <div className="h-3 sm:h-4 w-px bg-border/50 my-auto mx-0.5 sm:mx-1 shrink-0" />
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
                   onClick={() => setHideValues(!hideValues)}
                 >
-                  {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  {hideValues ? "Show Values" : "Hide Values"}
+                  {hideValues ? <EyeOff className="h-3 sm:h-4 w-3 sm:w-4" /> : <Eye className="h-3 sm:h-4 w-3 sm:w-4" />}
+                  {hideValues ? "Show" : "Hide"}
                 </Button>
               </div>
 
               {/* Total Revenue (MTD) */}
-              <Card className="p-5 dashboard-stat-card">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="stat-label">Total Revenue</span>
-                      <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs gap-1.5 opacity-70 hover:opacity-100 transition-opacity" onClick={handleExportRevenue} disabled={exportingRevenue}>
-                        {exportingRevenue ? <>
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Exporting...
-                        </> : <>
-                          <Download className="h-3 w-3" />
-                          Export
-                        </>}
+              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
+                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <span className="stat-label text-xs sm:text-sm font-medium">Revenue</span>
+                      <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-accent hover:text-accent/80 text-[10px] sm:text-xs gap-1 opacity-70 hover:opacity-100 transition-opacity" onClick={handleExportRevenue} disabled={exportingRevenue}>
+                        {exportingRevenue ? <Loader2 className="h-3 sm:h-3.5 w-3 sm:w-3.5 animate-spin" /> : <Download className="h-3 sm:h-3.5 w-3 sm:w-3.5" />}
                       </Button>
                     </div>
-                    <p className="text-3xl stat-value text-foreground mb-2">
-                      {hideValues ? "₦•••••••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}`}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
-                      <ArrowUp className="h-3 w-3" />
-                      <span>Live data</span>
+                    <div>
+                      <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">
+                        {hideValues ? "₦•••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}`}
+                      </p>
+                      <div className="flex items-center gap-1 text-emerald-600 text-[10px] sm:text-xs font-medium">
+                        <ArrowUp className="h-3 w-3" />
+                        <span>Live</span>
+                      </div>
                     </div>
                   </div>
-                  <CircularProgress percentage={75} color="hsl(152, 69%, 40%)" />
+                  <div className="hidden sm:block"><CircularProgress percentage={75} color="hsl(152, 69%, 40%)" /></div>
                 </div>
               </Card>
 
               {/* Active Subscribers */}
-              <Card className="p-5 dashboard-stat-card">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="stat-label">Active Subscribers</span>
-                      <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs" onClick={() => navigate("/dashboard/subscribers")}>
-                        View All
+              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
+                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <span className="stat-label text-xs sm:text-sm font-medium">Active Subscriptions</span>
+                      <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-accent hover:text-accent/80 text-[10px] sm:text-xs" onClick={() => navigate("/dashboard/subscribers")}>
+                        View
                       </Button>
                     </div>
-                    <p className="text-3xl font-bold text-foreground mb-2">
-                      {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()} total</span>
-                      <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                            <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[350px]">
-                          <DialogHeader>
-                            <DialogTitle>Edit Total Subscribers</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 pt-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="total">Total Subscribers Count</Label>
-                              <Input id="total" type="number" placeholder="Enter total subscribers" value={newTotalSubscribers} onChange={e => setNewTotalSubscribers(e.target.value)} />
-                            </div>
-                            <Button onClick={handleUpdateTotalSubscribers} className="w-full">
-                              Update
+                    <div>
+                      <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">
+                        {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()}</span>
+                        <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                              <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                             </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[350px]">
+                            <DialogHeader>
+                              <DialogTitle>Edit Total Subscribers</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="total">Total Subscribers Count</Label>
+                                <Input id="total" type="number" placeholder="Enter total subscribers" value={newTotalSubscribers} onChange={e => setNewTotalSubscribers(e.target.value)} />
+                              </div>
+                              <Button onClick={handleUpdateTotalSubscribers} className="w-full">
+                                Update
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </div>
-                  <CircularProgress percentage={stats.totalSubscribers > 0 ? Math.round(stats.activeSubscribers / stats.totalSubscribers * 100) : 0} color="hsl(35, 92%, 50%)" />
+                  <div className="hidden sm:block"><CircularProgress percentage={stats.totalSubscribers > 0 ? Math.round(stats.activeSubscribers / stats.totalSubscribers * 100) : 0} color="hsl(35, 92%, 50%)" /></div>
                 </div>
               </Card>
 
               {/* Failed Payments */}
-              <Card className="p-5 dashboard-stat-card">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Failed Payments</span>
+              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
+                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <span className="stat-label text-xs sm:text-sm font-medium">Failed</span>
                       <FailedPaymentsDialog>
-                        <Button variant="ghost" size="sm" className="h-auto p-0 text-destructive hover:text-destructive/80 text-xs">
+                        <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-destructive hover:text-destructive/80 text-[10px] sm:text-xs">
                           Manage
                         </Button>
                       </FailedPaymentsDialog>
                     </div>
-                    <p className="text-3xl font-bold text-foreground mb-2">
-                      {hideValues ? "•••" : stats.totalFailedPayments}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <div className="h-2 w-2 rounded-full bg-amber-500" />
-                        Abandoned: {hideValues ? "•••" : stats.abandonedCheckouts}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <div className="h-2 w-2 rounded-full bg-destructive" />
-                        Failed: {hideValues ? "•••" : stats.failedPayments}
-                      </span>
+                    <div>
+                      <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">
+                        {hideValues ? "•••" : stats.totalFailedPayments}
+                      </p>
+                      <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
+                        <span className="flex items-center gap-1 shrink-0">
+                          <div className="h-2 w-2 rounded-full bg-amber-500" />
+                          {hideValues ? "••" : stats.abandonedCheckouts}
+                        </span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          <div className="h-2 w-2 rounded-full bg-destructive" />
+                          {hideValues ? "••" : stats.failedPayments}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <MiniPieChart data={failedPaymentsPieData} />
+                  <div className="hidden sm:block"><MiniPieChart data={failedPaymentsPieData} /></div>
                 </div>
               </Card>
 
               {/* Upcoming Payouts */}
-              <Card className="p-5 dashboard-stat-card">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="stat-label">Upcoming Payouts</span>
-                    <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs" onClick={() => setShowPayoutDialog(true)}>
+              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
+                <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <span className="stat-label text-xs sm:text-sm font-medium">Payouts</span>
+                    <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-accent hover:text-accent/80 text-[10px] sm:text-xs" onClick={() => setShowPayoutDialog(true)}>
                       Manage
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Pending</span>
-                      <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${pendingPayouts.toLocaleString()}`}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
+                  <div className="space-y-1 sm:space-y-2 mt-auto">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Pending</span>
+                      <span className="font-semibold text-xs sm:text-base truncate">{hideValues ? "₦•••" : `₦${pendingPayouts.toLocaleString()}`}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Paid Out</span>
-                      <span className="font-semibold">{hideValues ? "₦•••••••" : `₦${totalPaidOut.toLocaleString()}`}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Complete</span>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Paid</span>
+                      <span className="font-semibold text-xs sm:text-base truncate">{hideValues ? "₦•••" : `₦${totalPaidOut.toLocaleString()}`}</span>
                     </div>
                   </div>
                 </div>
@@ -871,25 +869,25 @@ const Dashboard = () => {
             </div>
 
             {/* Charts Row */}
-            <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mb-6">
-              {/* Collections Over Time - Takes 2/3 */}
-              <Card className="lg:col-span-2 p-6 dashboard-stat-card">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-lg font-bold text-foreground">Collections Over Time</h3>
-                  <div className="flex gap-1 bg-muted rounded-lg p-1">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-3 mb-4 sm:mb-6">
+              {/* Collections Over Time - Takes 2/3, Hidden on mobile */}
+              <Card className="hidden lg:col-span-2 p-3 sm:p-6 dashboard-stat-card lg:block">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-5 gap-2">
+                  <h3 className="text-sm sm:text-lg font-bold text-foreground">Collections Over Time</h3>
+                  <div className="flex gap-0.5 sm:gap-1 bg-muted rounded-lg p-0.5 sm:p-1 self-start sm:self-auto">
                     {(['7D', '30D', '90D'] as const).map(period => (
                       <Button
                         key={period}
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-3 text-xs"
+                        className="h-6 sm:h-7 px-2.5 sm:px-3 text-[10px] sm:text-xs"
                       >
                         {period}
                       </Button>
                     ))}
                   </div>
                 </div>
-                <div className="h-64">
+                <div className="h-40 sm:h-64">
                   {timeSeriesData.length > 0 ? <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={timeSeriesData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -897,8 +895,8 @@ const Dashboard = () => {
                         fontSize: 10
                       }} interval="preserveStartEnd" />
                       <YAxis stroke="hsl(var(--muted-foreground))" tick={{
-                        fontSize: 12
-                      }} tickFormatter={value => value > 0 ? `₦${(value / 1000).toFixed(0)}K` : '₦0'} />
+                        fontSize: 10
+                      }} width={45} tickFormatter={value => value > 0 ? `₦${(value / 1000).toFixed(0)}K` : '₦0'} />
                       <Tooltip contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
@@ -913,17 +911,16 @@ const Dashboard = () => {
               </Card>
 
               {/* Revenue Distribution by Plan - Takes 1/3 */}
-              <Card className="p-6 dashboard-stat-card cursor-pointer" onClick={() => setShowRevenueDetailsDialog(true)}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-foreground">Revenue by Plan</h3>
+              <Card className="p-3 sm:p-6 dashboard-stat-card cursor-pointer" onClick={() => setShowRevenueDetailsDialog(true)}>
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <h3 className="text-sm sm:text-base font-semibold text-foreground">Revenue by Plan</h3>
                   <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
                     <Eye className="h-3 w-3 mr-1" />
                     Details
                   </Button>
                 </div>
-                <div className="flex flex-col items-center">
+                <div className="flex flex-row items-start gap-3 sm:flex-col sm:items-center">
                   {(() => {
-                    // Show only top 2 plans on overview, sorted by revenue descending
                     const topPlans = [...revenueByPlan].sort((a, b) => b.value - a.value).slice(0, 2);
                     const othersValue = revenueByPlan
                       .sort((a, b) => b.value - a.value)
@@ -934,31 +931,31 @@ const Dashboard = () => {
                       : topPlans;
 
                     return <>
-                      <div className="relative h-40 w-40 mb-4">
+                      <div className="relative h-24 w-24 sm:h-40 sm:w-40 shrink-0 mb-0 sm:mb-4">
                         {displayPlans.length > 0 ? <>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={displayPlans} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
+                              <Pie data={displayPlans} cx="50%" cy="50%" innerRadius={22} outerRadius={42} paddingAngle={2} dataKey="value">
                                 {displayPlans.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                               </Pie>
                             </PieChart>
                           </ResponsiveContainer>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
+                            <span className="text-[10px] sm:text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
                           </div>
-                        </> : <div className="flex items-center justify-center h-full text-muted-foreground text-sm text-center">
-                          No revenue data yet
+                        </> : <div className="flex items-center justify-center h-full text-muted-foreground text-xs sm:text-sm text-center">
+                          No data
                         </div>}
                       </div>
-                      <div className="space-y-2 w-full">
-                        {displayPlans.map((item, index) => <div key={index} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded-full shrink-0" style={{
+                      <div className="space-y-1 sm:space-y-2 w-full min-w-0">
+                        {displayPlans.map((item, index) => <div key={index} className="flex items-center justify-between gap-1 sm:gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                            <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full shrink-0" style={{
                               backgroundColor: item.color
                             }} />
-                            <span className="text-sm text-muted-foreground truncate">{item.name}</span>
+                            <span className="text-[10px] sm:text-sm text-muted-foreground truncate">{item.name}</span>
                           </div>
-                          <span className="text-sm font-medium">₦{item.value.toLocaleString()}</span>
+                          <span className="text-[10px] sm:text-sm font-medium whitespace-nowrap">₦{item.value.toLocaleString()}</span>
                         </div>)}
                       </div>
                     </>;
@@ -1045,49 +1042,50 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Transactions Table */}
-            <Card className="p-6 dashboard-stat-card">
-              <div className="flex items-center justify-between mb-5">
+            <Card className="p-3 sm:p-6 dashboard-stat-card">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-5 gap-3">
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">Recent Transactions</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Last 48 hours</p>
+                  <h3 className="text-sm sm:text-base font-semibold text-foreground">Recent Transactions</h3>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Last 48 hours</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-2 text-xs h-8 opacity-80 hover:opacity-100 transition-opacity" onClick={() => setShowTransactionFilterDialog(true)}>
-                    <Filter className="h-3.5 w-3.5" />
-                    Filter & Export
+                <div className="flex gap-2 self-start sm:self-auto">
+                  <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 text-[10px] sm:text-xs h-7 sm:h-8 opacity-80 hover:opacity-100 transition-opacity" onClick={() => setShowTransactionFilterDialog(true)}>
+                    <Filter className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="hidden sm:inline">Filter & Export</span>
+                    <span className="sm:hidden">Filter</span>
                   </Button>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full premium-table">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full premium-table min-w-[600px]">
                   <thead>
                     <tr>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">REF</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PAYER</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TYPE</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">DATE</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">REF</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">PAYER</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">PLAN</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">AMOUNT</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">TYPE</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">STATUS</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">DATE</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentTransactions.length > 0 ? recentTransactions.map(txn => <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="py-4 px-4 text-sm font-mono">{txn.reference}</td>
-                      <td className="py-4 px-4 text-sm">{txn.payer_name}</td>
-                      <td className="py-4 px-4 text-sm">{txn.plan_name}</td>
-                      <td className="py-4 px-4 text-sm font-medium">₦{txn.amount.toLocaleString()}</td>
-                      <td className="py-4 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                          {txn.type === 'subscription' ? 'Subscription' : 'One-Time'}
+                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm font-mono whitespace-nowrap">{txn.reference}</td>
+                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap">{txn.payer_name}</td>
+                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap">{txn.plan_name}</td>
+                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap">₦{txn.amount.toLocaleString()}</td>
+                      <td className="py-3 sm:py-4 px-2 sm:px-4">
+                        <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                          {txn.type === 'subscription' ? 'Sub' : 'One-Time'}
                         </span>
                       </td>
-                      <td className="py-4 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <td className="py-3 sm:py-4 px-2 sm:px-4">
+                        <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                           {txn.status === 'success' ? 'Success' : 'Failed'}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-sm text-muted-foreground">
+                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                         {new Date(txn.paid_at).toLocaleDateString()}
                       </td>
                     </tr>) : <tr>
