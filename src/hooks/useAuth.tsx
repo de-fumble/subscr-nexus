@@ -28,6 +28,10 @@ export const useAuth = () => {
   }, []);
 
   const signOut = async () => {
+    // Send logout notification email before signing out (fire-and-forget, org owners only)
+    supabase.functions.invoke("send-notification-email", {
+      body: { event_type: "logout" }
+    }).catch(() => {});
     await supabase.auth.signOut();
     navigate("/auth");
   };

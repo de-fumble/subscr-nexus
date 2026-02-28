@@ -100,6 +100,10 @@ const Auth = () => {
             navigate("/suspended");
             return;
           }
+          // Send login notification email (fire-and-forget, org owners only)
+          supabase.functions.invoke("send-notification-email", {
+            body: { event_type: "login" }
+          }).catch(() => {});
           toast.success("Welcome back!");
           navigate("/dashboard");
         }
@@ -131,6 +135,12 @@ const Auth = () => {
             }
             return;
           }
+          // Send signup notification email (fire-and-forget, org owners only)
+          setTimeout(() => {
+            supabase.functions.invoke("send-notification-email", {
+              body: { event_type: "signup" }
+            }).catch(() => {});
+          }, 2000);
           toast.success("Account created successfully!");
         } else {
           // User account signup
