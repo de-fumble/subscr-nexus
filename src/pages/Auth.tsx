@@ -59,12 +59,20 @@ const Auth = () => {
     setIsLoading(true);
     try {
       if (authMode === "forgot-password") {
-        const {
-          error
-        } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`
-        });
-        if (error) throw error;
+        // Use custom Resend-powered reset email
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-reset-password`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ email }),
+          }
+        );
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Failed to send reset email");
         setResetEmailSent(true);
         toast.success("Password reset email sent! Check your inbox.");
         return;
@@ -115,6 +123,7 @@ const Auth = () => {
             return;
           }
           const {
+            data: signupData,
             error
           } = await supabase.auth.signUp({
             email,
@@ -135,16 +144,36 @@ const Auth = () => {
             }
             return;
           }
-          // Send signup notification email (fire-and-forget, org owners only)
-          setTimeout(() => {
+          
+          const newUserId = signupData.user?.id;
+          if (newUserId) {
+            // Send OTP for email verification
+            await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-otp`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                },
+                body: JSON.stringify({ email, user_id: newUserId }),
+              }
+            );
+            // Send signup notification email (fire-and-forget)
             supabase.functions.invoke("send-notification-email", {
               body: { event_type: "signup" }
             }).catch(() => {});
-          }, 2000);
-          toast.success("Account created successfully!");
+          }
+          
+          toast.success("Account created! Please verify your email.");
+          // Sign out to prevent auto-login before verification
+          await supabase.auth.signOut();
+          navigate(`/verify-otp?email=${encodeURIComponent(email)}&uid=${newUserId}`);
+          return;
         } else {
           // User account signup
           const {
+            data: userSignupData,
             error
           } = await supabase.auth.signUp({
             email,
@@ -154,7 +183,7 @@ const Auth = () => {
               data: {
                 full_name: fullName,
                 user_type: "user",
-                is_staff: true // Prevent organization creation trigger
+                is_staff: true
               }
             }
           });
@@ -166,7 +195,27 @@ const Auth = () => {
             }
             return;
           }
-          toast.success("Account created successfully!");
+          
+          const newUserId = userSignupData.user?.id;
+          if (newUserId) {
+            // Send OTP for email verification
+            await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-otp`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                },
+                body: JSON.stringify({ email, user_id: newUserId }),
+              }
+            );
+          }
+          
+          toast.success("Account created! Please verify your email.");
+          await supabase.auth.signOut();
+          navigate(`/verify-otp?email=${encodeURIComponent(email)}&uid=${newUserId}`);
+          return;
         }
       }
     } catch (error: any) {
