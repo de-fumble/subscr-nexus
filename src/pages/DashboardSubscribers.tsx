@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -225,12 +226,7 @@ export default function DashboardSubscribers() {
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading subscribers...</p>
-              </div>
-            </div>
+            <PremiumLoader message="Loading subscribers..." />
           </SidebarInset>
         </div>
       </SidebarProvider>
