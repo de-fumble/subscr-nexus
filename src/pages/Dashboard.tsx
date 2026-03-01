@@ -870,8 +870,8 @@ const Dashboard = () => {
 
             {/* Charts Row */}
             <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-3 mb-4 sm:mb-6">
-              {/* Collections Over Time - Takes 2/3, Hidden on mobile */}
-              <Card className="hidden lg:col-span-2 p-3 sm:p-6 dashboard-stat-card lg:block">
+              {/* Collections Over Time - Takes 2/3 on desktop, full width on mobile */}
+              <Card className="lg:col-span-2 p-3 sm:p-6 dashboard-stat-card">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-5 gap-2">
                   <h3 className="text-sm sm:text-lg font-bold text-foreground">Collections Over Time</h3>
                   <div className="flex gap-0.5 sm:gap-1 bg-muted rounded-lg p-0.5 sm:p-1 self-start sm:self-auto">
@@ -904,7 +904,7 @@ const Dashboard = () => {
                       }} formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} />
                       <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                     </LineChart>
-                  </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
+                  </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground text-xs sm:text-sm">
                     No transaction data available for this period
                   </div>}
                 </div>

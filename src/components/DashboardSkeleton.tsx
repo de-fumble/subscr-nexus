@@ -1,4 +1,5 @@
 import { Skeleton, SkeletonStatCard, SkeletonTable, SkeletonChart } from "@/components/ui/skeleton";
+import { PremiumLoader } from "@/components/PremiumLoader";
 
 interface DashboardSkeletonProps {
   showSidebar?: boolean;
@@ -6,39 +7,38 @@ interface DashboardSkeletonProps {
 
 export function DashboardSkeleton({ showSidebar = false }: DashboardSkeletonProps) {
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-8">
+    <div className="flex-1 overflow-auto p-3 sm:p-6 space-y-4 sm:space-y-8">
       {/* Header skeleton */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <Skeleton variant="shimmer" className="h-8 w-48" />
-          <Skeleton variant="shimmer" className="h-4 w-64" />
+          <Skeleton variant="shimmer" className="h-6 sm:h-8 w-32 sm:w-48" />
+          <Skeleton variant="shimmer" className="h-3 sm:h-4 w-48 sm:w-64" />
         </div>
-        <div className="flex gap-3">
+        <div className="hidden sm:flex gap-3">
           <Skeleton variant="glass" className="h-10 w-32 rounded-lg" />
           <Skeleton variant="glass" className="h-10 w-32 rounded-lg" />
         </div>
       </div>
 
       {/* Stats grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <SkeletonStatCard key={i} style={{ animationDelay: `${i * 100}ms` }} />
         ))}
       </div>
 
       {/* Charts section */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <SkeletonChart />
         <SkeletonChart />
       </div>
 
       {/* Table section */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
-          <Skeleton variant="shimmer" className="h-6 w-40" />
+          <Skeleton variant="shimmer" className="h-5 sm:h-6 w-28 sm:w-40" />
           <div className="flex gap-2">
-            <Skeleton variant="glass" className="h-9 w-24 rounded-lg" />
-            <Skeleton variant="glass" className="h-9 w-24 rounded-lg" />
+            <Skeleton variant="glass" className="h-8 sm:h-9 w-20 sm:w-24 rounded-lg" />
           </div>
         </div>
         <SkeletonTable rows={5} />
@@ -48,21 +48,7 @@ export function DashboardSkeleton({ showSidebar = false }: DashboardSkeletonProp
 }
 
 export function PageLoadingSkeleton() {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="relative mx-auto">
-          {/* Premium animated loader */}
-          <div className="h-16 w-16 rounded-2xl glass-card border border-accent/30 flex items-center justify-center animate-pulse shadow-[0_0_30px_hsl(var(--accent)/0.2)]">
-            <div className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          </div>
-          {/* Glow effect */}
-          <div className="absolute inset-0 rounded-2xl bg-accent/10 blur-xl animate-pulse" />
-        </div>
-        <Skeleton variant="shimmer" className="h-4 w-32 mx-auto" />
-      </div>
-    </div>
-  );
+  return <PremiumLoader message="Loading..." size="lg" />;
 }
 
 export function SettingsPageSkeleton() {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Card } from "@/components/ui/card";
@@ -258,11 +259,7 @@ const DashboardFailedPayments = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-      </div>
-    );
+    return <PremiumLoader message="Loading failed payments..." />;
   }
 
   return (

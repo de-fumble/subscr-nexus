@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -270,12 +271,7 @@ const Plans = () => {
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading plans...</p>
-              </div>
-            </div>
+            <PremiumLoader message="Loading plans..." />
           </SidebarInset>
         </div>
       </SidebarProvider>

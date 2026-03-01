@@ -1,4 +1,5 @@
  import { useEffect, useState } from "react";
+ import { PremiumLoader } from "@/components/PremiumLoader";
  import { useParams, useNavigate } from "react-router-dom";
  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
  import { Button } from "@/components/ui/button";
@@ -385,12 +386,7 @@ interface BillingProfile {
          <div className="flex min-h-screen w-full">
            <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
            <SidebarInset>
-             <div className="flex min-h-screen items-center justify-center">
-               <div className="text-center">
-                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-                 <p className="text-muted-foreground">Loading billing profile...</p>
-               </div>
-             </div>
+             <PremiumLoader message="Loading billing profile..." />
            </SidebarInset>
          </div>
        </SidebarProvider>

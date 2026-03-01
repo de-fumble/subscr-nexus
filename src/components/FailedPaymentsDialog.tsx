@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import {
   Dialog,
   DialogContent,
@@ -411,9 +412,7 @@ export function FailedPaymentsDialog({ children }: FailedPaymentsDialogProps) {
 
         <ScrollArea className="h-[350px] pr-4">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-            </div>
+            <PremiumLoader size="sm" fullScreen={false} />
           ) : failedPayments.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">

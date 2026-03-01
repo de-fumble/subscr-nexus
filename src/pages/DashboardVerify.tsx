@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -87,12 +88,7 @@ export default function DashboardVerify() {
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading...</p>
-              </div>
-            </div>
+            <PremiumLoader message="Loading..." />
           </SidebarInset>
         </div>
       </SidebarProvider>
