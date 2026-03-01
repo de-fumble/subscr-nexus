@@ -172,7 +172,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Recurra <onboarding@resend.dev>",
+        from: "Recurra <no-reply@support.recurrra.com>",
         to: [recipientEmail],
         subject,
         html: htmlBody,

@@ -181,7 +181,7 @@ async function sendOTPEmail(apiKey: string, email: string, otp: string) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      from: "Recurra <onboarding@resend.dev>",
+      from: "Recurra <no-reply@support.recurrra.com>",
       to: [email],
       subject: "Your Recurra Verification Code",
       html: htmlBody,
