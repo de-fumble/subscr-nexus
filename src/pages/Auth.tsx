@@ -19,6 +19,7 @@ const Auth = () => {
   const [orgName, setOrgName] = useState("");
   const [fullName, setFullName] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
     const checkUser = async () => {
@@ -43,7 +44,7 @@ const Auth = () => {
         subscription
       }
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
+      if (event === "SIGNED_IN" && session && !isSigningUp) {
         const userType = session.user.user_metadata?.user_type;
         if (userType === "user") {
           navigate("/user-dashboard");
@@ -53,7 +54,7 @@ const Auth = () => {
       }
     });
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isSigningUp]);
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -122,6 +123,7 @@ const Auth = () => {
             toast.error("Organization name is required");
             return;
           }
+          setIsSigningUp(true);
           const {
             data: signupData,
             error
@@ -184,6 +186,7 @@ const Auth = () => {
           return;
         } else {
           // User account signup
+          setIsSigningUp(true);
           const {
             data: userSignupData,
             error
