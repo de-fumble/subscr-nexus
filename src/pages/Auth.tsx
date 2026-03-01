@@ -146,8 +146,9 @@ const Auth = () => {
           }
           
           const newUserId = signupData.user?.id;
+          const sessionToken = signupData.session?.access_token;
           if (newUserId) {
-            // Send OTP for email verification
+            // Send OTP for email verification (no auth needed)
             await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-otp`,
               {
@@ -159,10 +160,21 @@ const Auth = () => {
                 body: JSON.stringify({ email, user_id: newUserId }),
               }
             );
-            // Send signup notification email (fire-and-forget)
-            supabase.functions.invoke("send-notification-email", {
-              body: { event_type: "signup" }
-            }).catch(() => {});
+            // Send signup notification email using the session token before signing out
+            if (sessionToken) {
+              fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notification-email`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                    Authorization: `Bearer ${sessionToken}`,
+                  },
+                  body: JSON.stringify({ event_type: "signup" }),
+                }
+              ).catch(() => {});
+            }
           }
           
           toast.success("Account created! Please verify your email.");
