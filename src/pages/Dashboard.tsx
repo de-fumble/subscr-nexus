@@ -682,7 +682,7 @@ const Dashboard = () => {
   const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   if (loading) {
-    return <SidebarProvider defaultOpen={true}>
+    return <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset>
@@ -692,7 +692,7 @@ const Dashboard = () => {
       </div>
     </SidebarProvider>;
   }
-  return <SidebarProvider defaultOpen={true}>
+  return <SidebarProvider defaultOpen={false}>
     <div className="flex min-h-screen w-full bg-background">
       <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
       <SidebarInset className="flex-1">
@@ -1041,7 +1041,7 @@ const Dashboard = () => {
               </Dialog>
             </div>
 
-            {/* Recent Transactions Table */}
+            {/* Recent Transactions */}
             <Card className="p-3 sm:p-6 dashboard-stat-card">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-5 gap-3">
                 <div>
@@ -1056,36 +1056,67 @@ const Dashboard = () => {
                   </Button>
                 </div>
               </div>
-              <div className="overflow-x-auto w-full">
+
+              {/* Mobile card layout */}
+              <div className="sm:hidden space-y-2">
+                {recentTransactions.length > 0 ? recentTransactions.map(txn => (
+                  <div key={txn.id} className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium truncate max-w-[50%]">{txn.payer_name}</span>
+                      <span className="text-xs font-bold">₦{txn.amount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[50%]">{txn.plan_name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'}`}>
+                          {txn.type === 'subscription' ? 'Sub' : 'One-Time'}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${txn.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                          {txn.status === 'success' ? '✓' : '✗'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span className="font-mono">{txn.reference}</span>
+                      <span>{new Date(txn.paid_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="py-8 text-center text-muted-foreground text-xs">No recent transactions</div>
+                )}
+              </div>
+
+              {/* Desktop table layout */}
+              <div className="hidden sm:block overflow-x-auto w-full">
                 <table className="w-full premium-table min-w-[600px]">
                   <thead>
                     <tr>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">REF</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">PAYER</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">PLAN</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">AMOUNT</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">TYPE</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">STATUS</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-sm font-medium text-muted-foreground">DATE</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">REF</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PAYER</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TYPE</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">DATE</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentTransactions.length > 0 ? recentTransactions.map(txn => <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm font-mono whitespace-nowrap">{txn.reference}</td>
-                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap">{txn.payer_name}</td>
-                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap">{txn.plan_name}</td>
-                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap">₦{txn.amount.toLocaleString()}</td>
-                      <td className="py-3 sm:py-4 px-2 sm:px-4">
-                        <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                      <td className="py-4 px-4 text-sm font-mono whitespace-nowrap">{txn.reference}</td>
+                      <td className="py-4 px-4 text-sm whitespace-nowrap">{txn.payer_name}</td>
+                      <td className="py-4 px-4 text-sm whitespace-nowrap">{txn.plan_name}</td>
+                      <td className="py-4 px-4 text-sm font-medium whitespace-nowrap">₦{txn.amount.toLocaleString()}</td>
+                      <td className="py-4 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
                           {txn.type === 'subscription' ? 'Sub' : 'One-Time'}
                         </span>
                       </td>
-                      <td className="py-3 sm:py-4 px-2 sm:px-4">
-                        <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <td className="py-4 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                           {txn.status === 'success' ? 'Success' : 'Failed'}
                         </span>
                       </td>
-                      <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="py-4 px-4 text-sm text-muted-foreground whitespace-nowrap">
                         {new Date(txn.paid_at).toLocaleDateString()}
                       </td>
                     </tr>) : <tr>
