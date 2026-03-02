@@ -83,7 +83,7 @@ const DashboardInvoices = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
         <AppSidebar 
           organization={organization} 
@@ -106,7 +106,7 @@ const DashboardInvoices = () => {
             </div>
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-4 sm:p-6">
             <div className="max-w-4xl mx-auto space-y-6">
               {/* Create Invoice Card */}
               <Card className="p-8 glass-card">

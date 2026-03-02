@@ -84,7 +84,7 @@ export default function DashboardVerify() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -96,7 +96,7 @@ export default function DashboardVerify() {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
@@ -109,7 +109,7 @@ export default function DashboardVerify() {
           </header>
           
           <main className="flex-1 overflow-auto">
-            <div className="container max-w-3xl py-8 px-6">
+            <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
               <VerifyTransactionCard organization={organization} />
             </div>
           </main>

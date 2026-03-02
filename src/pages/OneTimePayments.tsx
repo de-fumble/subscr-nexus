@@ -314,7 +314,7 @@ const OneTimePayments = () => {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -326,22 +326,23 @@ const OneTimePayments = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
             <BackButton />
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">Standard Payments</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Standard Payments</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => fetchPayments(true)}
                 disabled={refreshing}
+                className="h-8 w-8 sm:h-9 sm:w-9"
               >
                 {refreshing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -352,23 +353,25 @@ const OneTimePayments = () => {
               {canCreatePlans && (
                 <Button
                   onClick={() => navigate("/payments/create")}
-                  className="bg-accent hover:bg-accent/90 gap-2"
+                  className="bg-accent hover:bg-accent/90 gap-2 text-sm"
+                  size="sm"
                 >
                   <Plus className="h-4 w-4" />
-                  Create Payment
+                  <span className="hidden sm:inline">Create Payment</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               )}
             </div>
           </header>
 
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8">
+            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
               <div className="mb-6">
-                <p className="text-muted-foreground">Manage standard payment links</p>
+                <p className="text-sm sm:text-base text-muted-foreground">Manage standard payment links</p>
               </div>
 
               {/* Analytics Section */}
-              <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="mb-6 sm:mb-8 grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
                 <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
@@ -387,7 +390,7 @@ const OneTimePayments = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">₦{totalCollected.toLocaleString()}</div>
+                    <div className="text-lg sm:text-2xl font-bold">₦{totalCollected.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">{paidPayments.length} payments received</p>
                   </CardContent>
                 </Card>
@@ -398,7 +401,7 @@ const OneTimePayments = () => {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">₦{totalPending.toLocaleString()}</div>
+                    <div className="text-lg sm:text-2xl font-bold">₦{totalPending.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">{pendingPayments.length} awaiting payment</p>
                   </CardContent>
                 </Card>
@@ -409,7 +412,7 @@ const OneTimePayments = () => {
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{totalPayments}</div>
+                    <div className="text-lg sm:text-2xl font-bold">{totalPayments}</div>
                     <p className="text-xs text-muted-foreground">Links created</p>
                   </CardContent>
                 </Card>
@@ -420,7 +423,7 @@ const OneTimePayments = () => {
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{conversionRate}%</div>
+                    <div className="text-lg sm:text-2xl font-bold">{conversionRate}%</div>
                     <p className="text-xs text-muted-foreground">Paid vs created</p>
                   </CardContent>
                 </Card>

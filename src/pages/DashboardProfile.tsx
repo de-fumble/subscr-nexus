@@ -163,7 +163,7 @@ export default function DashboardProfile() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -180,7 +180,7 @@ export default function DashboardProfile() {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
@@ -193,24 +193,24 @@ export default function DashboardProfile() {
           </header>
           
           <main className="flex-1 overflow-auto">
-            <div className="container max-w-3xl py-8 px-6">
+            <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
               <div className="space-y-6">
                 {/* Profile Card */}
                 <Card className="glass-card border-0 shadow-[var(--shadow-medium)] overflow-hidden">
-                  <div className="h-24 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent" />
-                  <CardHeader className="-mt-12 pb-4">
-                    <div className="flex items-end gap-6">
+                  <div className="h-16 sm:h-24 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent" />
+                  <CardHeader className="-mt-8 sm:-mt-12 pb-4">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6">
                       <ProfilePictureUpload
                         currentLogoUrl={organization?.logo_url}
                         orgName={organization?.org_name || ""}
                         onUploadComplete={handleLogoUpload}
                       />
-                      <div className="flex-1 pb-2">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-2xl">{organization?.org_name}</CardTitle>
+                      <div className="flex-1 pb-2 text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                          <CardTitle className="text-xl sm:text-2xl">{organization?.org_name}</CardTitle>
                           <Sparkles className="h-5 w-5 text-accent" />
                         </div>
-                        <CardDescription className="flex items-center gap-2 mt-1">
+                        <CardDescription className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                           <Building2 className="h-4 w-4" />
                           Organization Profile
                         </CardDescription>
@@ -224,7 +224,7 @@ export default function DashboardProfile() {
                           <User className="h-4 w-4 text-muted-foreground" />
                           Organization Name
                         </Label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Input
                             id="org_name"
                             value={organization?.org_name || ""}
@@ -232,16 +232,16 @@ export default function DashboardProfile() {
                             className="bg-muted/50 flex-1"
                           />
                           {pendingNameRequest ? (
-                            <Badge variant="secondary" className="h-10 px-3 flex items-center gap-1">
+                            <Badge variant="secondary" className="h-10 px-3 flex items-center gap-1 shrink-0">
                               <Clock className="h-3 w-3" />
-                              Pending: {pendingNameRequest.requested_name}
+                              <span className="truncate max-w-[120px]">Pending: {pendingNameRequest.requested_name}</span>
                             </Badge>
                           ) : (
                             <NameChangeRequestDialog
                               orgId={organization?.id || ""}
                               currentName={organization?.org_name || ""}
                             >
-                              <Button variant="outline" className="gap-2">
+                              <Button variant="outline" className="gap-2 shrink-0">
                                 <Edit3 className="h-4 w-4" />
                                 Request Change
                               </Button>

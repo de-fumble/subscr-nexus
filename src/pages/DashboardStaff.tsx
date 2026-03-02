@@ -327,7 +327,7 @@ export default function DashboardStaff() {
 
   if (!canManageStaff) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar organization={organization} />
           <SidebarInset className="flex-1">
@@ -336,7 +336,7 @@ export default function DashboardStaff() {
               <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
             </header>
             <main className="flex-1 overflow-auto">
-              <div className="container mx-auto px-6 py-8">
+              <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <Shield className="h-12 w-12 text-muted-foreground mb-4" />
@@ -355,7 +355,7 @@ export default function DashboardStaff() {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={undefined} canAccessSettings={canManageStaff} />
         <SidebarInset className="flex-1">
@@ -363,11 +363,11 @@ export default function DashboardStaff() {
             <SidebarTrigger />
             <BackButton />
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-foreground">Staff Management</h1>
             </div>
           </header>
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8 space-y-6">
+            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

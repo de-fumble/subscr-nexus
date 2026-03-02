@@ -270,7 +270,7 @@ interface BillingProfile {
  
    if (loading) {
      return (
-       <SidebarProvider defaultOpen={true}>
+       <SidebarProvider defaultOpen={false}>
          <div className="flex min-h-screen w-full">
            <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
            <SidebarInset>
@@ -282,7 +282,7 @@ interface BillingProfile {
    }
  
    return (
-     <SidebarProvider defaultOpen={true}>
+     <SidebarProvider defaultOpen={false}>
        <div className="flex min-h-screen w-full bg-background">
          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
          <SidebarInset className="flex-1">
@@ -323,7 +323,7 @@ interface BillingProfile {
            </header>
  
            <main className="flex-1 overflow-auto">
-             <div className="container mx-auto px-6 py-8 space-y-8">
+             <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
                <div>
                  <p className="text-muted-foreground">
                    Universal customer identity across all billing and payment history
@@ -378,87 +378,81 @@ interface BillingProfile {
                        </p>
                      </div>
                    ) : (
-                     <Table>
-                       <TableHeader>
-                         <TableRow>
-                           <TableHead>Name</TableHead>
-                           <TableHead>Email</TableHead>
-                           <TableHead>Profile ID</TableHead>
-                           <TableHead>Active Plans</TableHead>
-                           <TableHead>Total Paid</TableHead>
-                           <TableHead>Latest Payment</TableHead>
-                           <TableHead className="text-right">Actions</TableHead>
-                         </TableRow>
-                       </TableHeader>
-                       <TableBody>
+                     <>
+                       {/* Mobile card layout */}
+                       <div className="sm:hidden space-y-3">
                          {filteredProfiles.map((profile) => (
-                           <TableRow key={profile.id}>
-                             <TableCell className="font-medium">
-                               {profile.full_name || "—"}
-                             </TableCell>
-                             <TableCell>{profile.email}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <code className="text-sm font-bold bg-muted px-2 py-1 rounded">
-                                    #{profile.profile_number || "—"}
-                                  </code>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => copyToClipboard(profile.profile_number || profile.id)}
-                                  >
-                                    {copiedId === (profile.profile_number || profile.id) ? (
-                                      <CheckCircle className="h-3 w-3 text-green-500" />
-                                    ) : (
-                                      <Copy className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </TableCell>
-                             <TableCell>
-                               <Badge
-                                 variant={profile.active_plans_count > 0 ? "default" : "secondary"}
-                               >
-                                 {profile.active_plans_count}
+                           <div key={profile.id} className="p-4 rounded-lg border border-border/50 bg-card space-y-2" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
+                             <div className="flex items-start justify-between">
+                               <div className="min-w-0 flex-1">
+                                 <p className="font-medium text-sm truncate">{profile.full_name || "—"}</p>
+                                 <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                               </div>
+                               <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"} className="ml-2 shrink-0">
+                                 {profile.active_plans_count} plan{profile.active_plans_count !== 1 ? "s" : ""}
                                </Badge>
-                             </TableCell>
-                             <TableCell>{formatCurrency(profile.total_paid)}</TableCell>
-                             <TableCell>
-                               {profile.latest_payment_date ? (
-                                 <div className="flex flex-col">
-                                   <Badge
-                                     variant={
-                                       profile.latest_payment_status === "success"
-                                         ? "default"
-                                         : "destructive"
-                                     }
-                                     className="w-fit mb-1"
-                                   >
-                                     {profile.latest_payment_status}
-                                   </Badge>
-                                   <span className="text-xs text-muted-foreground">
-                                     {new Date(profile.latest_payment_date).toLocaleDateString()}
-                                   </span>
-                                 </div>
-                               ) : (
-                                 <span className="text-muted-foreground">—</span>
-                               )}
-                             </TableCell>
-                             <TableCell className="text-right">
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}
-                               >
-                                 <Eye className="h-4 w-4 mr-1" />
-                                 View
-                               </Button>
-                             </TableCell>
-                           </TableRow>
+                             </div>
+                             <div className="flex items-center justify-between text-sm">
+                               <code className="text-xs font-bold bg-muted px-2 py-0.5 rounded">#{profile.profile_number || "—"}</code>
+                               <span className="font-medium">{formatCurrency(profile.total_paid)}</span>
+                             </div>
+                           </div>
                          ))}
-                       </TableBody>
-                     </Table>
+                       </div>
+                       {/* Desktop table layout */}
+                       <div className="hidden sm:block">
+                         <Table>
+                           <TableHeader>
+                             <TableRow>
+                               <TableHead>Name</TableHead>
+                               <TableHead>Email</TableHead>
+                               <TableHead>Profile ID</TableHead>
+                               <TableHead>Active Plans</TableHead>
+                               <TableHead>Total Paid</TableHead>
+                               <TableHead>Latest Payment</TableHead>
+                               <TableHead className="text-right">Actions</TableHead>
+                             </TableRow>
+                           </TableHeader>
+                           <TableBody>
+                             {filteredProfiles.map((profile) => (
+                               <TableRow key={profile.id}>
+                                 <TableCell className="font-medium">{profile.full_name || "—"}</TableCell>
+                                 <TableCell>{profile.email}</TableCell>
+                                 <TableCell>
+                                   <div className="flex items-center gap-2">
+                                     <code className="text-sm font-bold bg-muted px-2 py-1 rounded">#{profile.profile_number || "—"}</code>
+                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(profile.profile_number || profile.id)}>
+                                       {copiedId === (profile.profile_number || profile.id) ? <CheckCircle className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                                     </Button>
+                                   </div>
+                                 </TableCell>
+                                 <TableCell>
+                                   <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"}>{profile.active_plans_count}</Badge>
+                                 </TableCell>
+                                 <TableCell>{formatCurrency(profile.total_paid)}</TableCell>
+                                 <TableCell>
+                                   {profile.latest_payment_date ? (
+                                     <div className="flex flex-col">
+                                       <Badge variant={profile.latest_payment_status === "success" ? "default" : "destructive"} className="w-fit mb-1">
+                                         {profile.latest_payment_status}
+                                       </Badge>
+                                       <span className="text-xs text-muted-foreground">{new Date(profile.latest_payment_date).toLocaleDateString()}</span>
+                                     </div>
+                                   ) : (
+                                     <span className="text-muted-foreground">—</span>
+                                   )}
+                                 </TableCell>
+                                 <TableCell className="text-right">
+                                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
+                                     <Eye className="h-4 w-4 mr-1" /> View
+                                   </Button>
+                                 </TableCell>
+                               </TableRow>
+                             ))}
+                           </TableBody>
+                         </Table>
+                       </div>
+                     </>
                    )}
                  </CardContent>
                </Card>
