@@ -174,7 +174,7 @@ export default function DashboardAnalytics() {
     }
   };
   if (loading) {
-    return <SidebarProvider defaultOpen={true}>
+    return <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -190,7 +190,7 @@ export default function DashboardAnalytics() {
         </div>
       </SidebarProvider>;
   }
-  return <SidebarProvider defaultOpen={true}>
+  return <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
@@ -202,10 +202,9 @@ export default function DashboardAnalytics() {
             </div>
           </header>
           
-          <main className="flex-1 overflow-auto">
-            <div className="container py-8 px-6 space-y-8">
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">Track your business performance and growth</p>
+           <main className="flex-1 overflow-auto">
+            <div className="container py-6 sm:py-8 px-4 sm:px-6 space-y-6 sm:space-y-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 {canResetAnalytics && organization && <AnalyticsResetDialog orgId={organization.id} orgEmail={organization.email} orgName={organization.org_name} analyticsData={{
                 totalRevenue: stats.totalRevenue,
                 activeSubscribers: stats.activeSubscribers,
@@ -215,14 +214,14 @@ export default function DashboardAnalytics() {
               </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₦{stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-lg sm:text-2xl font-bold">₦{stats.totalRevenue.toLocaleString()}</div>
             <p className="text-xs flex items-center text-green-600 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
               +{stats.revenueGrowth}% from last month
@@ -236,7 +235,7 @@ export default function DashboardAnalytics() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
+            <div className="text-lg sm:text-2xl font-bold">{stats.activeSubscribers}</div>
             <p className="text-xs flex items-center text-green-600 mt-1">
               <ArrowUpRight className="h-3 w-3 mr-1" />
               +{stats.subscriberGrowth}% from last month
@@ -250,7 +249,7 @@ export default function DashboardAnalytics() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₦{Math.round(stats.averageRevenue).toLocaleString()}</div>
+            <div className="text-lg sm:text-2xl font-bold">₦{Math.round(stats.averageRevenue).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">Per active subscriber</p>
           </CardContent>
         </Card>
@@ -261,7 +260,7 @@ export default function DashboardAnalytics() {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.churnRate}%</div>
+            <div className="text-lg sm:text-2xl font-bold">{stats.churnRate}%</div>
             <p className="text-xs flex items-center text-red-600 mt-1">
               <ArrowDownRight className="h-3 w-3 mr-1" />
               Monthly churn rate
@@ -271,14 +270,14 @@ export default function DashboardAnalytics() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Revenue Trend</CardTitle>
-            <CardDescription>Monthly revenue over the last 12 months</CardDescription>
+          <CardHeader className="pb-2 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">Revenue Trend</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Monthly revenue over the last 12 months</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={220}>
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
@@ -297,12 +296,12 @@ export default function DashboardAnalytics() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Subscriber Growth</CardTitle>
-            <CardDescription>Active subscribers over time</CardDescription>
+          <CardHeader className="pb-2 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">Subscriber Growth</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Active subscribers over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={subscriberTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
@@ -346,7 +345,7 @@ export default function DashboardAnalytics() {
       </Card>
 
       {/* AI Insights */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
         <h3 className="text-lg font-semibold">AI Insights</h3>
         <EphemeralAIDialog analyticsData={{
                 totalRevenue: stats.totalRevenue,

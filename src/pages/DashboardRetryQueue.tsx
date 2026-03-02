@@ -311,7 +311,7 @@ const DashboardRetryQueue = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
         <AppSidebar
           organization={organization}
@@ -338,8 +338,8 @@ const DashboardRetryQueue = () => {
             </Button>
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="flex-1 overflow-auto p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Card className="glass-card">
@@ -414,128 +414,145 @@ const DashboardRetryQueue = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Subscriber</TableHead>
-                            <TableHead>Plan</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Retry Status</TableHead>
-                            <TableHead>Attempts</TableHead>
-                            <TableHead>Card</TableHead>
-                            <TableHead>Failed At</TableHead>
-                            <TableHead>Last Retry</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filtered.map((subscriber) => (
-                            <TableRow key={subscriber.id}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium">{subscriber.customer_name || "—"}</p>
-                                  <p className="text-sm text-muted-foreground">{subscriber.email}</p>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{subscriber.plan_name}</Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                ₦{(subscriber.amount / 100).toLocaleString()}
-                              </TableCell>
-                              <TableCell>{getRetryStatusBadge(subscriber)}</TableCell>
-                              <TableCell>
-                                <span className={`font-mono text-sm ${subscriber.retry_count >= 3 ? "text-destructive" : ""}`}>
-                                  {subscriber.retry_count}/3
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                {subscriber.has_authorization ? (
-                                  <Badge variant="outline" className="text-xs gap-1">
-                                    <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Stored
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="destructive" className="text-xs gap-1">
-                                    <XCircle className="h-3 w-3" /> None
-                                  </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {formatDate(subscriber.payment_failed_at)}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {formatDate(subscriber.last_retry_at)}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center justify-end gap-1">
-                                  {subscriber.has_authorization && subscriber.status === "active" && subscriber.retry_count < 3 && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleManualRetry(subscriber)}
-                                      disabled={actionLoading === subscriber.id}
-                                      className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs"
-                                    >
-                                      <Zap className="h-3.5 w-3.5" />
-                                      Retry Now
+                    <>
+                      {/* Mobile card layout */}
+                      <div className="sm:hidden space-y-3">
+                        {filtered.map((subscriber) => (
+                          <div key={subscriber.id} className="p-4 rounded-lg border border-border/50 bg-card space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm">{subscriber.customer_name || "—"}</p>
+                                <p className="text-xs text-muted-foreground truncate">{subscriber.email}</p>
+                              </div>
+                              {getRetryStatusBadge(subscriber)}
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <Badge variant="outline" className="text-xs">{subscriber.plan_name}</Badge>
+                              <span className="font-medium">₦{(subscriber.amount / 100).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Attempts: <span className={`font-mono ${subscriber.retry_count >= 3 ? "text-destructive" : ""}`}>{subscriber.retry_count}/3</span></span>
+                              <span>Failed: {formatDate(subscriber.payment_failed_at)}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 pt-1 border-t border-border/30">
+                              {subscriber.has_authorization && subscriber.status === "active" && subscriber.retry_count < 3 && (
+                                <Button variant="ghost" size="sm" onClick={() => handleManualRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs h-7">
+                                  <Zap className="h-3 w-3" /> Retry
+                                </Button>
+                              )}
+                              {subscriber.status === "active" && subscriber.retry_count < 3 && (
+                                <Button variant="ghost" size="sm" onClick={() => handleCancelRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 text-xs h-7">
+                                  <Ban className="h-3 w-3" /> Cancel
+                                </Button>
+                              )}
+                              {(subscriber.status === "payment_failed" || subscriber.retry_count >= 3) && (
+                                <>
+                                  {subscriber.has_authorization && (
+                                    <Button variant="ghost" size="sm" onClick={() => handleManualRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs h-7">
+                                      <Zap className="h-3 w-3" /> Retry
                                     </Button>
                                   )}
-                                  {subscriber.status === "active" && subscriber.retry_count < 3 && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleCancelRetry(subscriber)}
-                                      disabled={actionLoading === subscriber.id}
-                                      className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 text-xs"
-                                    >
-                                      <Ban className="h-3.5 w-3.5" />
-                                      Cancel
-                                    </Button>
-                                  )}
-                                  {(subscriber.status === "payment_failed" || subscriber.retry_count >= 3) && (
-                                    <>
-                                      {subscriber.has_authorization && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleManualRetry(subscriber)}
-                                          disabled={actionLoading === subscriber.id}
-                                          className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs"
-                                        >
-                                          <Zap className="h-3.5 w-3.5" />
-                                          Retry Now
-                                        </Button>
-                                      )}
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleResetRetry(subscriber)}
-                                        disabled={actionLoading === subscriber.id}
-                                        className="text-primary hover:text-primary hover:bg-primary/10 gap-1 text-xs"
-                                      >
-                                        <RotateCcw className="h-3.5 w-3.5" />
-                                        Reset
-                                      </Button>
-                                    </>
-                                  )}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleClearFailedState(subscriber)}
-                                    disabled={actionLoading === subscriber.id}
-                                    className="text-emerald-600 hover:text-emerald-600 hover:bg-emerald-500/10 gap-1 text-xs"
-                                  >
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Clear
+                                  <Button variant="ghost" size="sm" onClick={() => handleResetRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-primary hover:text-primary hover:bg-primary/10 gap-1 text-xs h-7">
+                                    <RotateCcw className="h-3 w-3" /> Reset
                                   </Button>
-                                </div>
-                              </TableCell>
+                                </>
+                              )}
+                              <Button variant="ghost" size="sm" onClick={() => handleClearFailedState(subscriber)} disabled={actionLoading === subscriber.id} className="text-emerald-600 hover:text-emerald-600 hover:bg-emerald-500/10 gap-1 text-xs h-7">
+                                <CheckCircle2 className="h-3 w-3" /> Clear
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Desktop table layout */}
+                      <div className="hidden sm:block overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Subscriber</TableHead>
+                              <TableHead>Plan</TableHead>
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Retry Status</TableHead>
+                              <TableHead>Attempts</TableHead>
+                              <TableHead>Card</TableHead>
+                              <TableHead>Failed At</TableHead>
+                              <TableHead>Last Retry</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          </TableHeader>
+                          <TableBody>
+                            {filtered.map((subscriber) => (
+                              <TableRow key={subscriber.id}>
+                                <TableCell>
+                                  <div>
+                                    <p className="font-medium">{subscriber.customer_name || "—"}</p>
+                                    <p className="text-sm text-muted-foreground">{subscriber.email}</p>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">{subscriber.plan_name}</Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  ₦{(subscriber.amount / 100).toLocaleString()}
+                                </TableCell>
+                                <TableCell>{getRetryStatusBadge(subscriber)}</TableCell>
+                                <TableCell>
+                                  <span className={`font-mono text-sm ${subscriber.retry_count >= 3 ? "text-destructive" : ""}`}>
+                                    {subscriber.retry_count}/3
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  {subscriber.has_authorization ? (
+                                    <Badge variant="outline" className="text-xs gap-1">
+                                      <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Stored
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="destructive" className="text-xs gap-1">
+                                      <XCircle className="h-3 w-3" /> None
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {formatDate(subscriber.payment_failed_at)}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {formatDate(subscriber.last_retry_at)}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center justify-end gap-1">
+                                    {subscriber.has_authorization && subscriber.status === "active" && subscriber.retry_count < 3 && (
+                                      <Button variant="ghost" size="sm" onClick={() => handleManualRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs">
+                                        <Zap className="h-3.5 w-3.5" /> Retry Now
+                                      </Button>
+                                    )}
+                                    {subscriber.status === "active" && subscriber.retry_count < 3 && (
+                                      <Button variant="ghost" size="sm" onClick={() => handleCancelRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 text-xs">
+                                        <Ban className="h-3.5 w-3.5" /> Cancel
+                                      </Button>
+                                    )}
+                                    {(subscriber.status === "payment_failed" || subscriber.retry_count >= 3) && (
+                                      <>
+                                        {subscriber.has_authorization && (
+                                          <Button variant="ghost" size="sm" onClick={() => handleManualRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-amber-600 hover:text-amber-600 hover:bg-amber-500/10 gap-1 text-xs">
+                                            <Zap className="h-3.5 w-3.5" /> Retry Now
+                                          </Button>
+                                        )}
+                                        <Button variant="ghost" size="sm" onClick={() => handleResetRetry(subscriber)} disabled={actionLoading === subscriber.id} className="text-primary hover:text-primary hover:bg-primary/10 gap-1 text-xs">
+                                          <RotateCcw className="h-3.5 w-3.5" /> Reset
+                                        </Button>
+                                      </>
+                                    )}
+                                    <Button variant="ghost" size="sm" onClick={() => handleClearFailedState(subscriber)} disabled={actionLoading === subscriber.id} className="text-emerald-600 hover:text-emerald-600 hover:bg-emerald-500/10 gap-1 text-xs">
+                                      <CheckCircle2 className="h-3.5 w-3.5" /> Clear
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>

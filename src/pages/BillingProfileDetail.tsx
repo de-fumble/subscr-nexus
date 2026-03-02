@@ -382,7 +382,7 @@ interface BillingProfile {
  
    if (loading) {
      return (
-       <SidebarProvider defaultOpen={true}>
+       <SidebarProvider defaultOpen={false}>
          <div className="flex min-h-screen w-full">
            <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
            <SidebarInset>
@@ -401,7 +401,7 @@ interface BillingProfile {
    const failedPlans = plans.filter((p) => p.status === "payment_failed");
  
    return (
-     <SidebarProvider defaultOpen={true}>
+     <SidebarProvider defaultOpen={false}>
        <div className="flex min-h-screen w-full bg-background">
          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
          <SidebarInset className="flex-1">
@@ -414,17 +414,17 @@ interface BillingProfile {
            </header>
  
            <main className="flex-1 overflow-auto">
-             <div className="container mx-auto px-6 py-8 space-y-8">
+             <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
                {/* Profile Summary Card */}
                <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                  <CardHeader>
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-4">
-                       <div className="h-14 w-14 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                         <User className="h-7 w-7 text-accent" />
-                       </div>
-                       <div>
-                         <CardTitle className="text-2xl">
+                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center shrink-0">
+                          <User className="h-6 w-6 sm:h-7 sm:w-7 text-accent" />
+                        </div>
+                        <div className="min-w-0">
+                          <CardTitle className="text-xl sm:text-2xl truncate">
                            {profile.full_name || profile.email}
                          </CardTitle>
                           <CardDescription className="flex items-center gap-2 mt-1">
@@ -498,7 +498,7 @@ interface BillingProfile {
                        </div>
                      </div>
                    ) : (
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                        <div className="flex items-center gap-3">
                          <Mail className="h-5 w-5 text-muted-foreground" />
                          <div>

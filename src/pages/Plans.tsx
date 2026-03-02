@@ -267,7 +267,7 @@ const Plans = () => {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -279,22 +279,23 @@ const Plans = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
             <BackButton />
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">Subscription Plans</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Subscription Plans</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => fetchPlans(true)}
                 disabled={refreshing}
+                className="h-8 w-8 sm:h-9 sm:w-9"
               >
                 {refreshing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -305,17 +306,19 @@ const Plans = () => {
               {canCreatePlans && (
                 <Button
                   onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90 gap-2"
+                  className="bg-accent hover:bg-accent/90 gap-2 text-sm"
+                  size="sm"
                 >
                   <Plus className="h-4 w-4" />
-                  Create Plan
+                  <span className="hidden sm:inline">Create Plan</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               )}
             </div>
           </header>
 
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8">
+            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
               <div className="mb-6">
                 <p className="text-muted-foreground">Manage your recurring payment plans</p>
               </div>

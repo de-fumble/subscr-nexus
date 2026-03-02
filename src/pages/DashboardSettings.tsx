@@ -162,7 +162,7 @@ export default function DashboardSettings() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -186,7 +186,7 @@ export default function DashboardSettings() {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
@@ -199,30 +199,30 @@ export default function DashboardSettings() {
           </header>
           
           <main className="flex-1 overflow-auto">
-            <div className="container max-w-3xl py-8 px-6">
+            <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
               {/* Paystack Connection Status Card */}
               <Card className={`mb-6 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 ${hasExistingKeys ? 'border-l-green-500' : 'border-l-amber-500'}`}>
                 <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${hasExistingKeys ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${hasExistingKeys ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
                       {hasExistingKeys ? (
                         <Link2 className="h-6 w-6 text-green-500" />
                       ) : (
                         <Link2Off className="h-6 w-6 text-amber-500" />
                       )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg flex items-center gap-2">
                         Paystack Connection
                         {hasExistingKeys && <Shield className="h-4 w-4 text-green-500" />}
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-xs sm:text-sm">
                         {hasExistingKeys 
-                          ? "Your Paystack account is connected. You have unlimited plans and your own payment processing."
-                          : "Connect your Paystack API keys to unlock unlimited plans and use your own payment processing."}
+                          ? "Your Paystack account is connected."
+                          : "Connect your Paystack API keys to unlock unlimited plans."}
                       </CardDescription>
                     </div>
-                    <div>
+                    <div className="shrink-0">
                       {hasExistingKeys ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-600">
                           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>

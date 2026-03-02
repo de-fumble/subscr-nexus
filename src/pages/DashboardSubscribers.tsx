@@ -222,7 +222,7 @@ export default function DashboardSubscribers() {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -234,7 +234,7 @@ export default function DashboardSubscribers() {
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
@@ -259,8 +259,8 @@ export default function DashboardSubscribers() {
             </Button>
           </header>
           
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8 space-y-8">
+           <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
               <div>
                 <p className="text-muted-foreground">View your subscription customers from Paystack</p>
               </div>
@@ -289,56 +289,96 @@ export default function DashboardSubscribers() {
                       </p>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Plans</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Since</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <>
+                      {/* Mobile card layout */}
+                      <div className="sm:hidden space-y-3">
                         {deduplicatedSubscribers.map((sub) => (
-                          <TableRow key={sub.email}>
-                            <TableCell className="font-medium">
-                              {sub.customer_name || "N/A"}
-                            </TableCell>
-                            <TableCell>{sub.email}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {sub.plans.map((plan, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-xs">
-                                    {plan.plan_name}
-                                  </Badge>
-                                ))}
+                          <div key={sub.email} className="p-4 rounded-lg border border-border/50 bg-card space-y-2">
+                            <div className="flex items-start justify-between">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm truncate">{sub.customer_name || "N/A"}</p>
+                                <p className="text-xs text-muted-foreground truncate">{sub.email}</p>
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={getStatusVariant(sub.latest_status)}>
+                              <Badge variant={getStatusVariant(sub.latest_status)} className="ml-2 shrink-0">
                                 {sub.latest_status}
                               </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(sub.earliest_date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right">
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {sub.plans.map((plan, idx) => (
+                                <Badge key={idx} variant="outline" className="text-[10px]">
+                                  {plan.plan_name}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex items-center justify-between pt-1">
+                              <span className="text-xs text-muted-foreground">Since {new Date(sub.earliest_date).toLocaleDateString()}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="gap-1"
+                                className="gap-1 h-7 text-xs"
                                 onClick={() => handleViewDetails(sub)}
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-3 w-3" />
                                 Details
                               </Button>
-                            </TableCell>
-                          </TableRow>
+                            </div>
+                          </div>
                         ))}
-                      </TableBody>
-                    </Table>
+                      </div>
+                      {/* Desktop table layout */}
+                      <div className="hidden sm:block">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Customer</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Plans</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Since</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {deduplicatedSubscribers.map((sub) => (
+                              <TableRow key={sub.email}>
+                                <TableCell className="font-medium">
+                                  {sub.customer_name || "N/A"}
+                                </TableCell>
+                                <TableCell>{sub.email}</TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-1">
+                                    {sub.plans.map((plan, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">
+                                        {plan.plan_name}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={getStatusVariant(sub.latest_status)}>
+                                    {sub.latest_status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(sub.earliest_date).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="gap-1"
+                                    onClick={() => handleViewDetails(sub)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    Details
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
