@@ -221,21 +221,39 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
     const { toggleSidebar } = useSidebar();
 
     return (
-      <Button
-        ref={ref}
-        data-sidebar="trigger"
-        variant="ghost"
-        size="icon"
-        className={cn("h-7 w-7", className)}
-        onClick={(event) => {
-          onClick?.(event);
-          toggleSidebar();
-        }}
-        {...props}
-      >
-        <PanelLeft />
-        <span className="sr-only">Toggle Sidebar</span>
-      </Button>
+      <>
+        {/* Desktop: default icon */}
+        <Button
+          ref={ref}
+          data-sidebar="trigger"
+          variant="ghost"
+          size="icon"
+          className={cn("h-7 w-7 hidden md:inline-flex", className)}
+          onClick={(event) => {
+            onClick?.(event);
+            toggleSidebar();
+          }}
+          {...props}
+        >
+          <PanelLeft />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+        {/* Mobile: custom staggered hamburger */}
+        <button
+          className={cn("md:hidden p-1.5 opacity-60 hover:opacity-100 transition-opacity", className)}
+          onClick={(event) => {
+            onClick?.(event as any);
+            toggleSidebar();
+          }}
+        >
+          <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect y="0" width="20" height="2" rx="1" fill="currentColor" />
+            <rect y="6" width="15" height="2" rx="1" fill="currentColor" />
+            <rect y="12" width="10" height="2" rx="1" fill="currentColor" />
+          </svg>
+          <span className="sr-only">Toggle Sidebar</span>
+        </button>
+      </>
     );
   },
 );
