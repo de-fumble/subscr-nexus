@@ -63,6 +63,7 @@ import UserVerifyTransaction from "./pages/UserVerifyTransaction";
 import UserSettings from "./pages/UserSettings";
 
 import { ThemeProvider } from "./components/ThemeProvider";
+import { MobileBottomNav } from "./components/MobileBottomNav";
 
 const queryClient = new QueryClient();
 
@@ -133,6 +134,7 @@ const App = () => (
           <Route path="/gdpr" element={<GDPR />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <MobileBottomNav />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
