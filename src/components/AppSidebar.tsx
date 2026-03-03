@@ -51,7 +51,8 @@ interface AppSidebarProps {
 export function AppSidebar({ organization, role, userEmail, canAccessSettings = true }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { open } = useSidebar();
+  const { open, isMobile, openMobile } = useSidebar();
+  const isExpanded = isMobile ? openMobile : open;
 
   const menuItems = [
     { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
@@ -96,8 +97,8 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
       <SidebarContent className="px-2">
         {/* Premium Header */}
         <SidebarGroup className="pt-4">
-          <div className={`flex items-center gap-3 px-2 py-2 mb-2 transition-all duration-300 ${open ? 'justify-start' : 'justify-center'}`}>
-            {open ? (
+          <div className={`flex items-center gap-3 px-2 py-2 mb-2 transition-all duration-300 ${isExpanded ? 'justify-start' : 'justify-center'}`}>
+            {isExpanded ? (
               <div className="w-full bg-gradient-to-b from-sidebar-accent/50 to-sidebar-accent/30 border border-sidebar-border/50 rounded-xl p-2 shadow-sm group-hover:border-primary/20 transition-all duration-300 flex items-center gap-3 relative overflow-hidden">
                 <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
                 <div className="relative shrink-0">
@@ -128,12 +129,12 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
           </div>
         </SidebarGroup>
 
-        {open && <Separator className="mx-2 my-2 bg-border/30" />}
+        {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
 
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium px-2 mb-1">
-            {open ? "Navigation" : ""}
+            {isExpanded ? "Navigation" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
@@ -149,7 +150,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
                       }`}
                   >
                     <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-primary' : ''}`} />
-                    {open && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
+                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -157,12 +158,12 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {open && <Separator className="mx-2 my-2 bg-border/30" />}
+        {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
 
         {/* Account Section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium px-2 mb-1">
-            {open ? "Account" : ""}
+            {isExpanded ? "Account" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
@@ -178,7 +179,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
                       }`}
                   >
                     <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-primary' : ''}`} />
-                    {open && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
+                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -188,17 +189,17 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
       </SidebarContent>
 
       <SidebarFooter className="p-2">
-        <div className={`rounded-lg bg-muted/30 border border-border/30 p-2.5 ${open ? '' : 'p-2'}`}>
+        <div className={`rounded-lg bg-muted/30 border border-border/30 p-2.5 ${isExpanded ? '' : 'p-2'}`}>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div className={`flex items-center gap-2.5 mb-2 ${open ? '' : 'justify-center'}`}>
+              <div className={`flex items-center gap-2.5 mb-2 ${isExpanded ? '' : 'justify-center'}`}>
                 <Avatar className="h-8 w-8 ring-1 ring-border/40">
                   <AvatarImage src={organization?.logo_url || undefined} alt={displayName || ''} />
                   <AvatarFallback className="bg-primary/90 text-primary-foreground text-xs font-medium">
                     {displayName?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                {open && (
+                {isExpanded && (
                   <div className="flex-1 overflow-hidden">
                     <p className="text-[13px] font-medium truncate">{displayName}</p>
                     <p className="text-[11px] text-muted-foreground truncate">{displayEmail}</p>
@@ -213,7 +214,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
                 className="rounded-md hover:bg-destructive/8 hover:text-destructive text-muted-foreground transition-colors text-[13px]"
               >
                 <LogOut className="h-4 w-4" />
-                {open && <span>Sign Out</span>}
+                {isExpanded && <span>Sign Out</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
