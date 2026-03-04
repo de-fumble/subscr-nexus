@@ -7,7 +7,7 @@ import { TrendingUp, TrendingDown, DollarSign, Users, ArrowUpRight, ArrowDownRig
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { BackButton } from "@/components/BackButton";
+
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { AIInsightsCard } from "@/components/AIInsightsCard";
 import { AnalyticsResetDialog } from "@/components/AnalyticsResetDialog";
@@ -174,13 +174,12 @@ export default function DashboardAnalytics() {
     }
   };
   if (loading) {
-    return <SidebarProvider defaultOpen={false}>
+    return <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
               <SidebarTrigger />
-              <BackButton />
               <div className="flex-1">
                 <h1 className="text-xl font-bold text-foreground">Analytics</h1>
               </div>
@@ -190,13 +189,13 @@ export default function DashboardAnalytics() {
         </div>
       </SidebarProvider>;
   }
-  return <SidebarProvider defaultOpen={false}>
+  return <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">Analytics</h1>
             </div>

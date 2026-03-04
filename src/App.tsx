@@ -62,6 +62,7 @@ import FindOrganizations from "./pages/FindOrganizations";
 import UserVerifyTransaction from "./pages/UserVerifyTransaction";
 import UserSettings from "./pages/UserSettings";
 
+import DashboardSetup from "./pages/DashboardSetup";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 
@@ -88,6 +89,7 @@ const App = () => (
           <Route path="/subscribe/:planId" element={<Subscribe />} />
           <Route path="/subscription-callback" element={<SubscriptionCallback />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/setup" element={<ProtectedRoute><DashboardSetup /></ProtectedRoute>} />
           <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
           <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><OneTimePayments /></ProtectedRoute>} />

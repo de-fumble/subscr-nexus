@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { BackButton } from "@/components/BackButton";
+
 import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 import { PlanManagementDialog } from "@/components/PlanManagementDialog";
 
@@ -267,7 +267,7 @@ const Plans = () => {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -279,13 +279,13 @@ const Plans = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Subscription Plans</h1>
             </div>

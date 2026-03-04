@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { BackButton } from "@/components/BackButton";
+
 import { useOrgRole } from "@/hooks/useOrgRole";
 
 const planSchema = z.object({
@@ -190,7 +190,7 @@ const CreatePlan = () => {
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">Create Subscription Plan</h1>
             </div>

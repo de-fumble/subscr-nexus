@@ -23,7 +23,7 @@ import {
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
-import { BackButton } from "@/components/BackButton";
+
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { KYCSection } from "@/components/KYCSection";
@@ -163,7 +163,7 @@ export default function DashboardProfile() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -180,13 +180,13 @@ export default function DashboardProfile() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1 flex items-center gap-3">
               <h1 className="text-xl font-bold text-foreground">Profile Settings</h1>
             </div>

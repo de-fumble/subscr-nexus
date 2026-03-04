@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSuperadmin } from "@/hooks/useSuperadmin";
-import { BackButton } from "@/components/BackButton";
+
 import { ArrowLeft, Edit3, CheckCircle2, XCircle, Clock, RefreshCw, Building } from "lucide-react";
 
 interface NameChangeRequest {
