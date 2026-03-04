@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
-import { SetupProgressCard } from "@/components/SetupProgressCard";
+
 import { NotificationIcon } from "@/components/NotificationIcon";
 interface Organization {
   id: string;
@@ -682,7 +682,7 @@ const Dashboard = () => {
   const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   if (loading) {
-    return <SidebarProvider defaultOpen={false}>
+    return <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset>
@@ -692,7 +692,7 @@ const Dashboard = () => {
       </div>
     </SidebarProvider>;
   }
-  return <SidebarProvider defaultOpen={false}>
+  return <SidebarProvider>
     <div className="flex min-h-screen w-full bg-background">
       <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
       <SidebarInset className="flex-1">
@@ -700,15 +700,6 @@ const Dashboard = () => {
         <main className="flex-1 overflow-auto">
           <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
 
-            {/* Setup Progress Card - Only shows when setup is incomplete */}
-            {organization && (
-              <SetupProgressCard
-                hasPaymentProvider={!!organization?.paystack_secret_key}
-                hasPlans={plans.length > 0}
-                orgId={organization?.id}
-                orgName={organization?.org_name}
-              />
-            )}
 
             {/* Top Stats Row - 4 Cards */}
             <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">

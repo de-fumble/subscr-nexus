@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { Loader2, Shield, User, UserPlus, Trash2, Users, ChevronDown, ChevronUp, Mail, Calendar, Hash } from "lucide-react";
-import { BackButton } from "@/components/BackButton";
+
 
 interface Organization {
   id: string;
@@ -327,7 +327,7 @@ export default function DashboardStaff() {
 
   if (!canManageStaff) {
     return (
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider>
         <div className="flex min-h-screen w-full bg-background">
           <AppSidebar organization={organization} />
           <SidebarInset className="flex-1">
@@ -355,13 +355,13 @@ export default function DashboardStaff() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={undefined} canAccessSettings={canManageStaff} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1">
               <h1 className="text-lg sm:text-xl font-bold text-foreground">Staff Management</h1>
             </div>

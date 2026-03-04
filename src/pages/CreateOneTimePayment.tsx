@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { BackButton } from "@/components/BackButton";
+
 import { useOrgRole } from "@/hooks/useOrgRole";
 
 const paymentSchema = z.object({
@@ -145,7 +145,7 @@ const CreateOneTimePayment = () => {
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">Create Standard Payment</h1>
             </div>

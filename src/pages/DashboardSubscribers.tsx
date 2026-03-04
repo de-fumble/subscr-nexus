@@ -18,7 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { BackButton } from "@/components/BackButton";
+
 
 interface Subscriber {
   id: string;
@@ -222,7 +222,7 @@ export default function DashboardSubscribers() {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
@@ -234,13 +234,13 @@ export default function DashboardSubscribers() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">Subscribers</h1>
             </div>

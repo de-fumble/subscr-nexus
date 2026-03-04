@@ -21,9 +21,12 @@ import {
   Search, 
   X, 
   Download,
-  ArrowLeft
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import * as XLSX from "xlsx";
+
+const ITEMS_PER_PAGE = 30;
 
 interface FailedPayment {
   id: string;
@@ -60,6 +63,7 @@ const DashboardFailedPayments = () => {
   const [searchReference, setSearchReference] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchData();
@@ -192,6 +196,17 @@ const DashboardFailedPayments = () => {
     });
   }, [failedPayments, statusFilter, searchName, searchReference, dateFrom, dateTo]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchName, searchReference, dateFrom, dateTo]);
+
+  const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+  const paginatedPayments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredPayments.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPayments, currentPage]);
+
   const failedCount = useMemo(() => failedPayments.filter(p => p.status === "failed").length, [failedPayments]);
   const abandonedCount = useMemo(() => failedPayments.filter(p => p.status === "abandoned").length, [failedPayments]);
 
@@ -201,6 +216,7 @@ const DashboardFailedPayments = () => {
     setSearchReference("");
     setDateFrom("");
     setDateTo("");
+    setCurrentPage(1);
   };
 
   const hasActiveFilters = statusFilter !== "all" || searchName || searchReference || dateFrom || dateTo;
@@ -263,7 +279,7 @@ const DashboardFailedPayments = () => {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
         <AppSidebar 
           organization={organization} 
@@ -272,18 +288,12 @@ const DashboardFailedPayments = () => {
           canAccessSettings={canAccessSettings}
         />
         <SidebarInset className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            <div className="flex-1 flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                Failed Payments
-              </h1>
-            </div>
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
+            <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+            <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              Failed Payments
+            </h1>
           </header>
 
           <main className="flex-1 overflow-auto p-4 sm:p-6">
@@ -419,61 +429,97 @@ const DashboardFailedPayments = () => {
                   )}
                 </Card>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {filteredPayments.map((payment) => (
-                    <Card
-                      key={payment.id}
-                      className="p-4 glass-card border border-destructive/20 space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                            <User className="h-5 w-5 text-destructive" />
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {paginatedPayments.map((payment) => (
+                      <Card
+                        key={payment.id}
+                        className="p-4 glass-card border border-destructive/20 space-y-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                              <User className="h-5 w-5 text-destructive" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{payment.customer_name || "Unknown"}</p>
+                              <p className="text-sm text-muted-foreground">{payment.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{payment.customer_name || "Unknown"}</p>
-                            <p className="text-sm text-muted-foreground">{payment.email}</p>
+                          {getStatusBadge(payment.status)}
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
+                          <div className="flex items-start gap-2">
+                            {getFailureIcon(payment.failure_reason || "")}
+                            <div>
+                              <p className="text-sm font-medium text-destructive">Failure Reason</p>
+                              <p className="text-sm text-muted-foreground mt-0.5">
+                                {payment.failure_reason || "Unknown error"}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        {getStatusBadge(payment.status)}
-                      </div>
 
-                      <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-                        <div className="flex items-start gap-2">
-                          {getFailureIcon(payment.failure_reason || "")}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-sm font-medium text-destructive">Failure Reason</p>
-                            <p className="text-sm text-muted-foreground mt-0.5">
-                              {payment.failure_reason || "Unknown error"}
+                            <p className="text-muted-foreground">Plan</p>
+                            <p className="font-medium">{payment.plan_name}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Amount</p>
+                            <p className="font-medium">₦{payment.amount.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Failed On</p>
+                            <p className="font-medium flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(payment.failed_at).toLocaleDateString()}
                             </p>
                           </div>
+                          <div>
+                            <p className="text-muted-foreground">Reference</p>
+                            <p className="font-mono text-xs truncate">{payment.reference}</p>
+                          </div>
                         </div>
-                      </div>
+                      </Card>
+                    ))}
+                  </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Plan</p>
-                          <p className="font-medium">{payment.plan_name}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Amount</p>
-                          <p className="font-medium">₦{payment.amount.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Failed On</p>
-                          <p className="font-medium flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(payment.failed_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Reference</p>
-                          <p className="font-mono text-xs truncate">{payment.reference}</p>
-                        </div>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} of {filteredPayments.length}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="gap-1"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          <span className="hidden sm:inline">Previous</span>
+                        </Button>
+                        <span className="text-sm font-medium px-2">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="gap-1"
+                        >
+                          <span className="hidden sm:inline">Next</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </Card>
-                  ))}
-                </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </main>

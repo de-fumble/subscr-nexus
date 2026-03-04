@@ -26,10 +26,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
     return null;
   }
   
-  // Don't show if all steps are complete (payment provider connected and plans created)
-  if (hasPaymentProvider && hasPlans) {
-    return null;
-  }
+  // Always render — the parent page controls visibility
 
   const steps = [
     {

@@ -9,7 +9,7 @@ const navItems = [
 ];
 
 const dashboardPaths = [
-  "/dashboard", "/plans", "/payments",
+  "/dashboard", "/dashboard/setup", "/plans", "/payments",
   "/dashboard/failed-payments", "/dashboard/retry-queue",
   "/dashboard/subscribers", "/dashboard/billing-profiles",
   "/dashboard/analytics", "/dashboard/logs", "/dashboard/staff",

@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Key, Save, Shield, Lock, FileCheck, Building2, Link2, Link2Off } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
-import { BackButton } from "@/components/BackButton";
+
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { PasswordVerificationDialog } from "@/components/PasswordVerificationDialog";
@@ -162,13 +162,12 @@ export default function DashboardSettings() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
           <SidebarInset>
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
               <SidebarTrigger />
-              <BackButton />
               <div className="flex-1 flex items-center gap-3">
                 <h1 className="text-xl font-bold text-foreground">Settings</h1>
               </div>
@@ -186,13 +185,13 @@ export default function DashboardSettings() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            <BackButton />
+            
             <div className="flex-1 flex items-center gap-3">
               <h1 className="text-xl font-bold text-foreground">Settings</h1>
             </div>
