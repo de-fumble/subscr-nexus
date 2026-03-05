@@ -312,6 +312,20 @@ const Dashboard = () => {
         navigate("/auth");
         return;
       }
+      // Check if setup is incomplete — redirect to setup page
+      const hasPaymentProvider = !!orgData.paystack_secret_key;
+      if (!hasPaymentProvider) {
+        const { count: planCount } = await supabase
+          .from("subscription_plans")
+          .select("*", { count: "exact", head: true })
+          .eq("org_id", orgData.id)
+          .eq("is_active", true);
+        if (!planCount || planCount === 0) {
+          navigate("/dashboard/setup");
+          return;
+        }
+      }
+
       setOrganization(orgData);
 
       // Fetch plans with subscriber counts
