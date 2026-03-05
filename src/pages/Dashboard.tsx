@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
-
+import { SetupProgressCard } from "@/components/SetupProgressCard";
 import { NotificationIcon } from "@/components/NotificationIcon";
 interface Organization {
   id: string;
@@ -312,20 +312,22 @@ const Dashboard = () => {
         navigate("/auth");
         return;
       }
-      // Check if setup is incomplete — redirect to setup page
+      // Check if setup is incomplete — optionally they can still view dashboard
       const hasPaymentProvider = !!orgData.paystack_secret_key;
-      if (!hasPaymentProvider) {
-        const { count: planCount } = await supabase
-          .from("subscription_plans")
-          .select("*", { count: "exact", head: true })
-          .eq("org_id", orgData.id)
-          .eq("is_active", true);
-        if (!planCount || planCount === 0) {
-          navigate("/dashboard/setup");
-          return;
-        }
+      let hasPlans = false;
+
+      const { count: planCount } = await supabase
+        .from("subscription_plans")
+        .select("*", { count: "exact", head: true })
+        .eq("org_id", orgData.id)
+        .eq("is_active", true);
+
+      if (planCount && planCount > 0) {
+        hasPlans = true;
       }
 
+      // We removed the forced redirect so "Continue to Dashboard" works.
+      // The SetupProgressCard will show instead.
       setOrganization(orgData);
 
       // Fetch plans with subscriber counts
@@ -714,6 +716,15 @@ const Dashboard = () => {
         <main className="flex-1 overflow-auto">
           <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
 
+            {/* Setup Progress Card - Only shows when setup is incomplete */}
+            {organization && (
+              <SetupProgressCard
+                hasPaymentProvider={!!organization?.paystack_secret_key}
+                hasPlans={plans.length > 0}
+                orgId={organization?.id}
+                orgName={organization?.org_name}
+              />
+            )}
 
             {/* Top Stats Row - 4 Cards */}
             <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
