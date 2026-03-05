@@ -216,52 +216,21 @@ interface BillingProfile {
  
        setPlans(formattedPlans);
  
-       // Fetch transactions for this profile in this org
-       const subscriberIds = (subscribers || []).map((s: any) => s.id);
- 
-       if (subscriberIds.length > 0) {
-         const { data: txData, error: txError } = await supabase
-           .from("transactions")
-           .select(`
-             id,
-             amount,
-             status,
-             paystack_reference,
-             created_at,
-             paid_at,
-             subscribers!inner (
-               subscription_plans!inner (name)
-             )
-           `)
-           .in("subscriber_id", subscriberIds)
-           .order("created_at", { ascending: false });
- 
-         if (txError) throw txError;
- 
-          const formattedTx: Transaction[] = (txData || []).map((t: any) => ({
-            id: t.id,
-            amount: t.amount / 100,
-            status: t.status,
-           paystack_reference: t.paystack_reference,
-           created_at: t.created_at,
-           paid_at: t.paid_at,
-           plan_name: t.subscribers?.subscription_plans?.name || "Unknown",
-         }));
- 
-         setTransactions(formattedTx);
- 
-         // Calculate spend
-         const successfulTx = formattedTx.filter((t) => t.status === "success");
-         const total = successfulTx.reduce((sum, t) => sum + t.amount, 0);
-         setTotalSpend(total);
- 
-         // Spend by plan
-         const byPlan: Record<string, number> = {};
-         successfulTx.forEach((t) => {
-           byPlan[t.plan_name] = (byPlan[t.plan_name] || 0) + t.amount;
-         });
-         setSpendByPlan(byPlan);
-       }
+        // Fetch live transactions from Paystack for this profile
+        const { data: txResult, error: txFnError } = await supabase.functions.invoke(
+          "fetch-billing-profile-transactions",
+          { body: { email: profileData.email } }
+        );
+
+        if (txFnError) {
+          console.error("Error fetching Paystack transactions:", txFnError);
+        } else if (txResult && !txResult.error) {
+          setTransactions(txResult.transactions || []);
+          setTotalSpend(txResult.totalSpend || 0);
+          setSpendByPlan(txResult.spendByPlan || {});
+        } else {
+          console.error("Edge function error:", txResult?.error);
+        }
      } catch (error: any) {
        console.error("Error fetching profile data:", error);
        toast.error(error.message || "Failed to load profile");
