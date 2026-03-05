@@ -139,6 +139,30 @@ All colors MUST be HSL.
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Global Premium Scrollbar Styling */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border) / 0.8) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
   /* Reset any potential overflow sources */
   img,
   video,
