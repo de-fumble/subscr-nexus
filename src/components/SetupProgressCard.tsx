@@ -67,30 +67,26 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
 
   return (
     <Card className="glass-card border-0 shadow-[var(--shadow-medium)] mb-6 border-accent/20">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-              Setup Your Payment System
-            </CardTitle>
-            <CardDescription className="mt-2 text-muted-foreground">
-              Complete these steps to start collecting payments from your customers
-            </CardDescription>
-          </div>
-        </div>
-        <div className="mt-4">
+      <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
+        <CardTitle className="text-base sm:text-xl font-bold text-foreground">
+          Setup Your Payment System
+        </CardTitle>
+        <CardDescription className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
+          Complete these steps to start collecting payments
+        </CardDescription>
+        <div className="mt-3 sm:mt-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">
-              Progress: {completedSteps} of 3 steps completed
+            <span className="text-xs sm:text-sm font-medium text-foreground">
+              Progress: {completedSteps} of 3 steps
             </span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               {Math.round(progressPercentage)}%
             </span>
           </div>
           <Progress value={progressPercentage} className="h-2" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
         {steps.map((step, index) => {
           const Icon = step.icon;
           const isCompleted = step.completed;
@@ -100,7 +96,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
             <div
               key={step.id}
               className={cn(
-                "flex items-start gap-4 p-4 rounded-lg border transition-all",
+                "flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-all",
                 isCompleted
                   ? "bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
                   : isDisabled
@@ -108,39 +104,53 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
                   : "bg-muted/30 border-border/50 hover:bg-muted/50"
               )}
             >
-              <div className="flex-shrink-0 mt-0.5">
-                {isCompleted ? (
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                ) : (
-                  <Circle className="h-6 w-6 text-muted-foreground" />
-                )}
+              <div className="flex items-start gap-3 sm:contents">
+                <div className="flex-shrink-0 mt-0.5">
+                  {isCompleted ? (
+                    <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <Circle className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 sm:hidden">
+                  <div className="flex items-center gap-2">
+                    <Icon className={cn(
+                      "h-4 w-4 shrink-0",
+                      isCompleted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                    )} />
+                    <h3 className={cn(
+                      "font-semibold text-sm text-foreground",
+                      isCompleted && "text-green-700 dark:text-green-300"
+                    )}>
+                      Step {step.id}: {step.title}
+                    </h3>
+                  </div>
+                </div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Icon className={cn(
-                        "h-5 w-5",
-                        isCompleted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                      )} />
-                      <h3 className={cn(
-                        "font-semibold text-foreground",
-                        isCompleted && "text-green-700 dark:text-green-300"
-                      )}>
-                        Step {step.id}: {step.title}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
+                <div className="hidden sm:flex items-center gap-2 mb-2">
+                  <Icon className={cn(
+                    "h-5 w-5",
+                    isCompleted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                  )} />
+                  <h3 className={cn(
+                    "font-semibold text-foreground",
+                    isCompleted && "text-green-700 dark:text-green-300"
+                  )}>
+                    Step {step.id}: {step.title}
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  {step.description}
+                </p>
+                <div className="mt-3 sm:mt-2 flex sm:justify-end">
                   <Button
                     variant={isCompleted ? "outline" : "default"}
                     size="sm"
                     onClick={step.onClick}
                     disabled={isDisabled || isCompleted}
                     className={cn(
-                      "shrink-0 gap-2",
+                      "w-full sm:w-auto gap-2 text-xs sm:text-sm",
                       isCompleted && "border-green-300 dark:border-green-700 text-green-700 dark:text-green-300"
                     )}
                   >
@@ -163,21 +173,21 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
         })}
         
         {hasPlans && orgId && (
-          <div className="mt-4 p-4 bg-accent/10 rounded-lg border border-accent/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground mb-1">
+          <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-accent/10 rounded-lg border border-accent/20">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-foreground mb-1">
                   Ready to share with customers?
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Your Plans Hub is available at: <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{window.location.origin}/plans-hub/{orgId}</code>
+                <p className="text-xs text-muted-foreground break-all">
+                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{window.location.origin}/plans-hub/{orgId}</code>
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/plans")}
-                className="gap-2 shrink-0"
+                className="gap-2 shrink-0 w-full sm:w-auto"
               >
                 <ExternalLink className="h-4 w-4" />
                 View Plans Hub
