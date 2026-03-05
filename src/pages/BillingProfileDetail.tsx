@@ -202,12 +202,12 @@ interface BillingProfile {
  
        if (subError) throw subError;
  
-       const formattedPlans: Plan[] = (subscribers || []).map((s: any) => ({
-         id: s.subscription_plans.id,
-         subscriber_id: s.id,
-         name: s.subscription_plans.name,
-         amount: s.amount,
-         interval: s.subscription_plans.interval,
+        const formattedPlans: Plan[] = (subscribers || []).map((s: any) => ({
+          id: s.subscription_plans.id,
+          subscriber_id: s.id,
+          name: s.subscription_plans.name,
+          amount: s.amount / 100,
+          interval: s.subscription_plans.interval,
          status: s.status,
          created_at: s.created_at,
          next_payment_date: s.next_payment_date,
@@ -238,10 +238,10 @@ interface BillingProfile {
  
          if (txError) throw txError;
  
-         const formattedTx: Transaction[] = (txData || []).map((t: any) => ({
-           id: t.id,
-           amount: t.amount,
-           status: t.status,
+          const formattedTx: Transaction[] = (txData || []).map((t: any) => ({
+            id: t.id,
+            amount: t.amount / 100,
+            status: t.status,
            paystack_reference: t.paystack_reference,
            created_at: t.created_at,
            paid_at: t.paid_at,
