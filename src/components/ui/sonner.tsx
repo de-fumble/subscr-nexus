@@ -19,42 +19,43 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: 4000,
         classNames: {
           toast:
-            "group toast group-[.toaster]:backdrop-blur-2xl group-[.toaster]:bg-background/60 dark:group-[.toaster]:bg-background/40 group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-border/30 dark:group-[.toaster]:border-accent/20 group-[.toaster]:shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_1px_rgba(255,255,255,0.05)_inset] dark:group-[.toaster]:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_40px_rgba(0,210,200,0.08),0_0_0_1px_rgba(255,255,255,0.05)_inset] group-[.toaster]:rounded-2xl group-[.toaster]:px-5 group-[.toaster]:py-4 group-[.toaster]:min-w-[320px]",
-          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-sm group-[.toast]:mt-1",
+            "group toast group-[.toaster]:glass-card group-[.toaster]:border-white/10 dark:group-[.toaster]:border-white/5 group-[.toaster]:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.3)] group-[.toaster]:rounded-2xl group-[.toaster]:px-5 group-[.toaster]:py-4 group-[.toaster]:min-w-[320px] overflow-hidden relative before:absolute before:inset-0 before:z-[-1] before:bg-gradient-to-br before:from-white/10 before:to-transparent before:opacity-0 group-[.toaster]:hover:before:opacity-100 before:transition-opacity",
+          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-xs sm:group-[.toast]:text-sm group-[.toast]:mt-1",
           actionButton:
-            "group-[.toast]:bg-accent/90 group-[.toast]:text-accent-foreground group-[.toast]:font-medium group-[.toast]:rounded-xl group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:backdrop-blur-sm group-[.toast]:shadow-sm",
+            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:font-medium group-[.toast]:rounded-xl group-[.toast]:px-4 group-[.toast]:py-2 hover:group-[.toast]:bg-primary/90 transition-colors shadow-sm",
           cancelButton:
-            "group-[.toast]:bg-muted/50 group-[.toast]:text-muted-foreground group-[.toast]:font-medium group-[.toast]:rounded-xl group-[.toast]:backdrop-blur-sm",
+            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:font-medium group-[.toast]:rounded-xl hover:group-[.toast]:bg-muted/80 transition-colors",
           closeButton:
-            "group-[.toast]:bg-background/50 group-[.toast]:backdrop-blur-sm group-[.toast]:border-border/30 group-[.toast]:text-muted-foreground group-[.toast]:hover:text-foreground group-[.toast]:hover:bg-muted/50 group-[.toast]:rounded-full group-[.toast]:transition-all group-[.toast]:duration-200",
+            "group-[.toast]:bg-background/40 group-[.toast]:backdrop-blur-md group-[.toast]:border-border/50 group-[.toast]:text-foreground/70 group-[.toast]:hover:text-foreground group-[.toast]:hover:bg-background/80 group-[.toast]:rounded-full group-[.toast]:transition-all group-[.toast]:shadow-sm group-[.toast]:-right-2 group-[.toast]:-top-2",
           success:
-            "group-[.toaster]:!bg-background/60 dark:group-[.toaster]:!bg-background/40 group-[.toaster]:border-green-500/30 dark:group-[.toaster]:border-green-400/30 group-[.toaster]:shadow-[0_8px_32px_rgba(34,197,94,0.15),0_0_0_1px_rgba(34,197,94,0.1)_inset] dark:group-[.toaster]:shadow-[0_8px_32px_rgba(34,197,94,0.2),0_0_40px_rgba(34,197,94,0.1),0_0_0_1px_rgba(34,197,94,0.15)_inset]",
+            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-emerald-500",
           error:
-            "group-[.toaster]:!bg-background/60 dark:group-[.toaster]:!bg-background/40 group-[.toaster]:border-red-500/30 dark:group-[.toaster]:border-red-400/30 group-[.toaster]:shadow-[0_8px_32px_rgba(239,68,68,0.15),0_0_0_1px_rgba(239,68,68,0.1)_inset] dark:group-[.toaster]:shadow-[0_8px_32px_rgba(239,68,68,0.2),0_0_40px_rgba(239,68,68,0.1),0_0_0_1px_rgba(239,68,68,0.15)_inset]",
+            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-rose-500",
           warning:
-            "group-[.toaster]:!bg-background/60 dark:group-[.toaster]:!bg-background/40 group-[.toaster]:border-yellow-500/30 dark:group-[.toaster]:border-yellow-400/30 group-[.toaster]:shadow-[0_8px_32px_rgba(234,179,8,0.15),0_0_0_1px_rgba(234,179,8,0.1)_inset] dark:group-[.toaster]:shadow-[0_8px_32px_rgba(234,179,8,0.2),0_0_40px_rgba(234,179,8,0.1),0_0_0_1px_rgba(234,179,8,0.15)_inset]",
-          info: "group-[.toaster]:!bg-background/60 dark:group-[.toaster]:!bg-background/40 group-[.toaster]:border-blue-500/30 dark:group-[.toaster]:border-blue-400/30 group-[.toaster]:shadow-[0_8px_32px_rgba(59,130,246,0.15),0_0_0_1px_rgba(59,130,246,0.1)_inset] dark:group-[.toaster]:shadow-[0_8px_32px_rgba(59,130,246,0.2),0_0_40px_rgba(59,130,246,0.1),0_0_0_1px_rgba(59,130,246,0.15)_inset]",
-          title: "group-[.toast]:font-semibold group-[.toast]:text-sm group-[.toast]:tracking-tight",
+            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-amber-500",
+          info:
+            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-blue-500",
+          title: "group-[.toast]:font-semibold group-[.toast]:text-sm sm:group-[.toast]:text-base group-[.toast]:tracking-tight group-[.toast]:text-foreground",
         },
       }}
       icons={{
         success: (
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 dark:bg-green-400/20">
-            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/15 dark:bg-emerald-400/10 ring-1 ring-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
         ),
         error: (
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 dark:bg-red-400/20">
-            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/15 dark:bg-rose-400/10 ring-1 ring-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.2)]">
+            <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
           </div>
         ),
         warning: (
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-500/20 dark:bg-yellow-400/20">
-            <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/15 dark:bg-amber-400/10 ring-1 ring-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           </div>
         ),
         info: (
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 dark:bg-blue-400/20">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/15 dark:bg-blue-400/10 ring-1 ring-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
         ),
