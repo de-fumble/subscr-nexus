@@ -91,16 +91,16 @@ const DashboardSetup = () => {
           </header>
 
           <main className="flex-1 overflow-auto">
-            <div className="mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-3xl space-y-6">
-              <div className="text-center space-y-2 mb-6">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 mb-4">
-                  <Rocket className="h-7 w-7 text-accent" />
+            <div className="mx-auto px-3 sm:px-6 py-4 sm:py-8 max-w-3xl space-y-4 sm:space-y-6">
+              <div className="text-center space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
+                <div className="mx-auto flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-accent/10 mb-3 sm:mb-4">
+                  <Rocket className="h-5 w-5 sm:h-7 sm:w-7 text-accent" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground">
                   Welcome to {organization?.org_name || "Recurra"}
                 </h2>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-                  Complete the steps below to start collecting payments from your customers.
+                <p className="text-xs sm:text-base text-muted-foreground max-w-md mx-auto px-2">
+                  Complete the steps below to start collecting payments.
                 </p>
               </div>
 
