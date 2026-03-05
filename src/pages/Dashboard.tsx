@@ -326,8 +326,11 @@ const Dashboard = () => {
         hasPlans = true;
       }
 
-      // We removed the forced redirect so "Continue to Dashboard" works.
-      // The SetupProgressCard will show instead.
+      // Redirect to setup ONLY if they haven't explicitly clicked "Continue to Dashboard"
+      if ((!hasPaymentProvider || !hasPlans) && sessionStorage.getItem("hasSeenSetup") !== "true") {
+        navigate("/dashboard/setup");
+        return;
+      }
       setOrganization(orgData);
 
       // Fetch plans with subscriber counts
@@ -716,15 +719,6 @@ const Dashboard = () => {
         <main className="flex-1 overflow-auto">
           <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
 
-            {/* Setup Progress Card - Only shows when setup is incomplete */}
-            {organization && (
-              <SetupProgressCard
-                hasPaymentProvider={!!organization?.paystack_secret_key}
-                hasPlans={plans.length > 0}
-                orgId={organization?.id}
-                orgName={organization?.org_name}
-              />
-            )}
 
             {/* Top Stats Row - 4 Cards */}
             <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">

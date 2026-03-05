@@ -114,7 +114,10 @@ const DashboardSetup = () => {
               <div className="flex justify-center pt-2">
                 <Button
                   size="lg"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => {
+                    sessionStorage.setItem("hasSeenSetup", "true");
+                    navigate("/dashboard");
+                  }}
                   className="gap-2 rounded-full px-8"
                 >
                   {setupComplete ? "Go to Dashboard" : "Continue to Dashboard"}
