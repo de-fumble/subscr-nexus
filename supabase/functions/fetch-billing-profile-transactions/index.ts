@@ -113,34 +113,55 @@ serve(async (req) => {
       otpIdToName.set(otp.id, otp.name);
     }
 
-    // Fetch ALL transactions from Paystack for this customer email
-    let allTransactions: any[] = [];
-    let page = 1;
-    let hasMore = true;
-
-    while (hasMore) {
-      const res = await fetch(
-        `https://api.paystack.co/transaction?customer=${encodeURIComponent(email)}&perPage=100&page=${page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${paystackSecretKey}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const data = await res.json();
-
-      if (!data.status || !data.data?.length) {
-        hasMore = false;
-        break;
+    // First, look up the Paystack customer code for this email
+    let customerCode = "";
+    const customerLookupRes = await fetch(
+      `https://api.paystack.co/customer/${encodeURIComponent(email)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          "Content-Type": "application/json",
+        },
       }
+    );
+    const customerLookup = await customerLookupRes.json();
+    if (customerLookup.status && customerLookup.data?.customer_code) {
+      customerCode = customerLookup.data.customer_code;
+    }
 
-      allTransactions = [...allTransactions, ...data.data];
+    console.log(`Customer lookup for ${email}: code=${customerCode}`);
 
-      if (data.data.length < 100) {
-        hasMore = false;
-      } else {
-        page++;
+    // Fetch ALL transactions from Paystack for this customer
+    let allTransactions: any[] = [];
+
+    if (customerCode) {
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await fetch(
+          `https://api.paystack.co/transaction?customer=${encodeURIComponent(customerCode)}&perPage=100&page=${page}`,
+          {
+            headers: {
+              Authorization: `Bearer ${paystackSecretKey}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await res.json();
+
+        if (!data.status || !data.data?.length) {
+          hasMore = false;
+          break;
+        }
+
+        allTransactions = [...allTransactions, ...data.data];
+
+        if (data.data.length < 100) {
+          hasMore = false;
+        } else {
+          page++;
+        }
       }
     }
 
