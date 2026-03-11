@@ -12,6 +12,7 @@ import usecaseCooperative from "@/assets/usecase-cooperative-v2.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
 import { TeamSection } from "@/components/TeamSection";
+import { useTheme } from "next-themes";
 
 // Step icons mapping
 const stepIcons = [UserPlus, Settings, Share2];
@@ -139,6 +140,25 @@ const Index = () => {
   const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
   const [showRecurraIQDialog, setShowRecurraIQDialog] = useState(false);
   const [heroWord, setHeroWord] = useState("Leader");
+  const { theme, setTheme } = useTheme();
+
+  // Store the user's dashboard theme preference when they arrive
+  // so we know what they were looking at before we forcefully change it to light.
+  const [originalTheme] = useState(theme);
+
+  useEffect(() => {
+    // 1. Force the page to light mode immediately on load
+    if (theme !== "light") {
+      setTheme("light");
+    }
+
+    // 2. Cleanup: When they leave the landing page (unmount), restore their original theme
+    return () => {
+      if (originalTheme && originalTheme !== "light") {
+        setTheme(originalTheme);
+      }
+    };
+  }, [setTheme, originalTheme, theme]);
 
   useEffect(() => {
     const words = ["Leader", "Engine", "Provider", "Toolkit"];
