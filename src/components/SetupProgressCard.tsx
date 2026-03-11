@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, ArrowRight, Key, CreditCard, Share2, ExternalLink, Webhook } from "lucide-react";
+import { CheckCircle2, Circle, ArrowRight, Key, CreditCard, Share2, ExternalLink, Webhook, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SetupProgressCardProps {
   hasPaymentProvider: boolean;
@@ -14,6 +15,7 @@ interface SetupProgressCardProps {
 
 export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName }: SetupProgressCardProps) {
   const navigate = useNavigate();
+  const webhookUrl = "https://hhldoattlleyetxylfav.supabase.co/functions/v1/paystack-webhook";
 
   // Calculate progress percentage
   // Step 4 (sharing) is automatically considered complete if plans exist
@@ -45,11 +47,19 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
       title: "Configure Webhook URL (Required)",
       description: hasPaymentProvider
         ? "Your webhook should be configured to receive payment alerts. Verify this in your Settings."
-        : "Copy your unique Webhook URL and paste it into your Paystack Dashboard to enable real-time payment syncing.",
+        : (
+          <span>
+            Copy this unique Webhook URL and paste it into your Paystack Dashboard to enable real-time payment syncing:
+            <code className="block mt-2 p-2 bg-muted rounded text-xs break-all border border-border">{webhookUrl}</code>
+          </span>
+        ),
       completed: hasPaymentProvider,
-      action: "Get Webhook URL",
+      action: "Copy Webhook URL",
       icon: Webhook,
-      onClick: () => navigate("/dashboard/settings"),
+      onClick: () => {
+        navigator.clipboard.writeText(webhookUrl);
+        toast.success("Webhook URL copied to clipboard!");
+      },
     },
     {
       id: 3,
@@ -174,7 +184,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
                     ) : (
                       <>
                         {step.action}
-                        <ArrowRight className="h-4 w-4" />
+                        {step.action.includes("Copy") ? <Copy className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                       </>
                     )}
                   </Button>

@@ -85,6 +85,9 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   const displayEmail = role === 'staff' ? userEmail : organization?.email;
 
   const handleSignOut = async () => {
+    // Reset theme to light mode on sign-out so the next login starts fresh
+    localStorage.removeItem("vite-ui-theme");
+
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
     navigate("/auth");

@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Search, 
-  Building2, 
-  LogOut, 
+import {
+  Search,
+  Building2,
+  LogOut,
   Loader2,
   Receipt,
   CheckCircle,
@@ -51,7 +51,7 @@ const UserDashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
-  
+
   // Subscriptions state
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
@@ -149,6 +149,9 @@ const UserDashboard = () => {
   };
 
   const handleSignOut = async () => {
+    // Reset theme to light mode on sign-out so the next login starts fresh
+    localStorage.removeItem("vite-ui-theme");
+
     await supabase.auth.signOut();
     navigate("/auth");
   };
@@ -193,7 +196,7 @@ const UserDashboard = () => {
               <p className="font-semibold text-foreground">{userName.toUpperCase()}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
@@ -383,7 +386,7 @@ const UserDashboard = () => {
                           {sub.currency} {sub.amount.toLocaleString()}
                         </p>
                         {daysUntil !== null && (
-                          <Badge 
+                          <Badge
                             variant={daysUntil <= 3 ? "destructive" : "secondary"}
                             className="text-[10px] mt-1"
                           >

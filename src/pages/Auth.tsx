@@ -97,6 +97,9 @@ const Auth = () => {
 
         // Check user type for proper routing
         const userType = authData.user?.user_metadata?.user_type;
+        // Reset theme to light mode on login so it always starts fresh
+        localStorage.removeItem("vite-ui-theme");
+
         if (userType === "user") {
           toast.success("Welcome back!");
           navigate("/user-dashboard");
