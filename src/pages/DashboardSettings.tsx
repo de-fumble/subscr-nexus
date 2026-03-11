@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Key, Save, Shield, Lock, FileCheck, Building2, Link2, Link2Off } from "lucide-react";
+import { Key, Save, Shield, Lock, FileCheck, Building2, Link2, Link2Off, Webhook, Copy } from "lucide-react";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 
@@ -118,6 +118,11 @@ export default function DashboardSettings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyWebhookUrl = () => {
+    navigator.clipboard.writeText("https://hhldoattlleyetxylfav.supabase.co/functions/v1/paystack-webhook");
+    toast.success("Webhook URL copied to clipboard");
   };
 
   const handleSaveSettings = async () => {
@@ -372,6 +377,43 @@ export default function DashboardSettings() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Webhook Configuration Card */}
+              {isVerified && hasExistingKeys && (
+                <Card className="mt-6 glass-card border-0 shadow-[var(--shadow-medium)]">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center">
+                        <Webhook className="h-6 w-6 text-purple-500" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Webhook Configuration</CardTitle>
+                        <CardDescription>
+                          Required to receive real-time payment alerts
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 rounded-xl border border-border/50 bg-background/50 space-y-4">
+                      <div>
+                        <p className="text-sm font-medium mb-1">Live Webhook URL <span className="text-red-500">*</span></p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Copy the link below and paste it into the <strong>Live Webhook URL</strong> field on your Paystack Dashboard Settings.
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 px-3 py-2 rounded bg-muted/50 text-xs font-mono break-all border border-border/50">
+                            https://hhldoattlleyetxylfav.supabase.co/functions/v1/paystack-webhook
+                          </code>
+                          <Button variant="outline" size="icon" onClick={copyWebhookUrl} className="shrink-0 h-9 w-9" title="Copy Webhook URL">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* KYC Status Card */}
               {organization && !organization.kyc_verified && (

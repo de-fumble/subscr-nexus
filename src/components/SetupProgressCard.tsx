@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, ArrowRight, Key, CreditCard, Share2, ExternalLink } from "lucide-react";
+import { CheckCircle2, Circle, ArrowRight, Key, CreditCard, Share2, ExternalLink, Webhook } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -14,18 +14,18 @@ interface SetupProgressCardProps {
 
 export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName }: SetupProgressCardProps) {
   const navigate = useNavigate();
-  
+
   // Calculate progress percentage
-  // Step 3 (sharing) is automatically considered complete if plans exist
-  const step3Completed = hasPlans; // Sharing is available once plans exist
-  const completedSteps = [hasPaymentProvider, hasPlans, step3Completed].filter(Boolean).length;
-  const progressPercentage = (completedSteps / 3) * 100;
-  
+  // Step 4 (sharing) is automatically considered complete if plans exist
+  const step4Completed = hasPlans; // Sharing is available once plans exist
+  const completedSteps = [hasPaymentProvider, hasPaymentProvider /* webhook implies keys */, hasPlans, step4Completed].filter(Boolean).length;
+  const progressPercentage = (completedSteps / 4) * 100;
+
   // If no orgId, don't show (still loading)
   if (!orgId) {
     return null;
   }
-  
+
   // Always render — the parent page controls visibility
 
   const steps = [
@@ -42,6 +42,17 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
     },
     {
       id: 2,
+      title: "Configure Webhook URL (Required)",
+      description: hasPaymentProvider
+        ? "Your webhook should be configured to receive payment alerts. Verify this in your Settings."
+        : "Copy your unique Webhook URL and paste it into your Paystack Dashboard to enable real-time payment syncing.",
+      completed: hasPaymentProvider,
+      action: "Get Webhook URL",
+      icon: Webhook,
+      onClick: () => navigate("/dashboard/settings"),
+    },
+    {
+      id: 3,
       title: "Create Your First Plan",
       description: hasPlans
         ? "You have successfully created subscription plans for your customers."
@@ -50,9 +61,10 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
       action: "Go to Plans",
       icon: CreditCard,
       onClick: () => navigate("/plans"),
+      disabled: !hasPaymentProvider, // Disable if keys aren't added
     },
     {
-      id: 3,
+      id: 4,
       title: "Share Your Plans Hub",
       description: hasPlans
         ? "Share your Plans Hub link or QR code with customers to enable them to view and subscribe to your plans. Access this from the Plans page."
@@ -77,7 +89,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
         <div className="mt-3 sm:mt-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs sm:text-sm font-medium text-foreground">
-              Progress: {completedSteps} of 3 steps
+              Progress: {completedSteps} of 4 steps
             </span>
             <span className="text-xs sm:text-sm text-muted-foreground">
               {Math.round(progressPercentage)}%
@@ -91,7 +103,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
           const Icon = step.icon;
           const isCompleted = step.completed;
           const isDisabled = step.disabled;
-          
+
           return (
             <div
               key={step.id}
@@ -100,8 +112,8 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
                 isCompleted
                   ? "bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
                   : isDisabled
-                  ? "bg-muted/30 border-border/50 opacity-60"
-                  : "bg-muted/30 border-border/50 hover:bg-muted/50"
+                    ? "bg-muted/30 border-border/50 opacity-60"
+                    : "bg-muted/30 border-border/50 hover:bg-muted/50"
               )}
             >
               <div className="flex items-start gap-3 sm:contents">
@@ -171,7 +183,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
             </div>
           );
         })}
-        
+
         {hasPlans && orgId && (
           <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-accent/10 rounded-lg border border-accent/20">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
