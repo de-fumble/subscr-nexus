@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -14,7 +13,6 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const email = searchParams.get("email") || "";
   const userId = searchParams.get("uid") || "";
-  useForceLightMode();
 
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -186,8 +184,8 @@ const VerifyOTP = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-background">
         <Card className="p-8 max-w-md w-full text-center border-border/50 shadow-xl rounded-2xl">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <ShieldCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <ShieldCheck className="h-8 w-8 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-foreground font-mono">Email Verified!</h2>
           <p className="mt-2 text-muted-foreground font-mono">

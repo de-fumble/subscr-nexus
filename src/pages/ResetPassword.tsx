@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
-  useForceLightMode();
 
   useEffect(() => {
     // Check if we have a valid session from password reset link
@@ -68,8 +66,8 @@ const ResetPassword = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-background">
         <Card className="p-8 max-w-md w-full text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold mb-2">Password Reset Successful</h2>
           <p className="text-muted-foreground mb-4">

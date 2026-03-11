@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -12,7 +11,6 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error" | "expired">("loading");
   const [message, setMessage] = useState("");
-  useForceLightMode();
 
   useEffect(() => {
     verifyToken();
@@ -86,8 +84,8 @@ const VerifyEmail = () => {
 
           {status === "success" && (
             <>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                <CheckCircle className="h-7 w-7 text-green-600 dark:text-green-400" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+                <CheckCircle className="h-7 w-7 text-green-600" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">Email Verified!</h2>
               <p className="mt-2 text-muted-foreground">{message}</p>
@@ -113,8 +111,8 @@ const VerifyEmail = () => {
 
           {status === "expired" && (
             <>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                <Mail className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+                <Mail className="h-7 w-7 text-amber-600" />
               </div>
               <h2 className="text-2xl font-bold text-foreground">Link Expired</h2>
               <p className="mt-2 text-muted-foreground">{message}</p>

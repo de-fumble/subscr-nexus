@@ -12,7 +12,6 @@ import usecaseCooperative from "@/assets/usecase-cooperative-v2.png";
 import BookDemoDialog from "@/components/BookDemoDialog";
 import ContactSalesDialog from "@/components/ContactSalesDialog";
 import { TeamSection } from "@/components/TeamSection";
-import { useForceLightMode } from "@/hooks/useForceLightMode";
 
 // Step icons mapping
 const stepIcons = [UserPlus, Settings, Share2];
@@ -140,9 +139,6 @@ const Index = () => {
   const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
   const [showRecurraIQDialog, setShowRecurraIQDialog] = useState(false);
   const [heroWord, setHeroWord] = useState("Leader");
-
-  // Force this page to always be light mode, dashboard theme is preserved on unmount
-  useForceLightMode();
 
   useEffect(() => {
     const words = ["Leader", "Engine", "Provider", "Toolkit"];
