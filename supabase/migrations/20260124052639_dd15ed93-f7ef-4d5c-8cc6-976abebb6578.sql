@@ -1,5 +1,5 @@
 -- Create notifications table for organization notifications
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -53,8 +53,8 @@ WITH CHECK (
 );
 
 -- Create index for faster queries
-CREATE INDEX idx_notifications_org_id ON public.notifications(org_id);
-CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_org_id ON public.notifications(org_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at DESC);
 
 -- Enable realtime for notifications
 ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;

@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { SetupProgressCard } from "@/components/SetupProgressCard";
 import { NotificationIcon } from "@/components/NotificationIcon";
+import { ThemeToggle } from "@/components/ThemeToggle";
 interface Organization {
   id: string;
   org_name: string;
@@ -73,7 +74,10 @@ const DashboardHeader = ({
         {isCollapsed ? orgName || "Dashboard" : "Dashboard"}
       </h1>
     </div>
-    {orgId && <div className="shrink-0 relative z-50 flex items-center pr-1 sm:pr-0"><NotificationIcon orgId={orgId} /></div>}
+    <div className="flex items-center gap-2 pr-1 sm:pr-0">
+      <ThemeToggle />
+      {orgId && <div className="shrink-0 relative z-50 flex items-center"><NotificationIcon orgId={orgId} /></div>}
+    </div>
   </header>;
 };
 
@@ -910,8 +914,8 @@ const Dashboard = () => {
                       <Tooltip contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
-                      }} formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} />
+                        borderRadius: "8px",
+                      }} itemStyle={{ color: "hsl(var(--foreground))" }} labelStyle={{ color: "hsl(var(--foreground))" }} formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} />
                       <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground text-xs sm:text-sm">
@@ -999,8 +1003,8 @@ const Dashboard = () => {
                           <Tooltip formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} contentStyle={{
                             backgroundColor: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px"
-                          }} />
+                            borderRadius: "8px",
+                          }} itemStyle={{ color: "hsl(var(--foreground))" }} labelStyle={{ color: "hsl(var(--foreground))" }} />
                         </PieChart>
                       </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
                         No revenue data available
@@ -1117,12 +1121,12 @@ const Dashboard = () => {
                       <td className="py-4 px-4 text-sm whitespace-nowrap">{txn.plan_name}</td>
                       <td className="py-4 px-4 text-sm font-medium whitespace-nowrap">₦{txn.amount.toLocaleString()}</td>
                       <td className="py-4 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400'}`}>
                           {txn.type === 'subscription' ? 'Sub' : 'One-Time'}
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}>
                           {txn.status === 'success' ? 'Success' : 'Failed'}
                         </span>
                       </td>

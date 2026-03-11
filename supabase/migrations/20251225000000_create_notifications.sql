@@ -1,5 +1,5 @@
 -- Create notifications table for superadmin messages to organizations
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -54,6 +54,6 @@ FOR SELECT
 USING (public.has_role(auth.uid(), 'superadmin'));
 
 -- Add index for faster lookups
-CREATE INDEX idx_notifications_org_id ON public.notifications(org_id);
-CREATE INDEX idx_notifications_is_read ON public.notifications(is_read);
-CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_org_id ON public.notifications(org_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at DESC);

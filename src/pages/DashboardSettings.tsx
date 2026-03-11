@@ -51,7 +51,7 @@ export default function DashboardSettings() {
   const fetchSettings = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         navigate("/auth");
         return;
@@ -84,7 +84,7 @@ export default function DashboardSettings() {
             .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name")
             .eq("id", membership.org_id)
             .maybeSingle();
-          
+
           orgData = memberOrg;
         }
       }
@@ -96,7 +96,7 @@ export default function DashboardSettings() {
 
       setOrganization(orgData);
       setHasExistingKeys(!!(orgData.paystack_public_key && orgData.paystack_secret_key));
-      
+
       // Fetch current license
       if (orgData) {
         const { data: licenseData } = await supabase
@@ -108,7 +108,7 @@ export default function DashboardSettings() {
           .order("expires_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        
+
         setCurrentLicense(licenseData);
       }
       // Don't load keys into form - they should only be updated, not viewed
@@ -139,6 +139,23 @@ export default function DashboardSettings() {
       if (error) throw error;
 
       toast.success("API keys updated successfully");
+
+      // Auto-sync Paystack data immediately after updating the keys
+      toast.info("Syncing Paystack data... This may take a moment.");
+
+      try {
+        // First sync subscribers and billing profiles
+        await supabase.functions.invoke("sync-billing-profiles");
+
+        // Then pre-fetch analytics to cache data
+        await supabase.functions.invoke("fetch-paystack-analytics");
+
+        toast.success("Paystack data synced successfully!");
+      } catch (syncError) {
+        console.error("Error auto-syncing Paystack data:", syncError);
+        toast.error("Keys saved, but automatic sync failed. We'll try again later.");
+      }
+
       setPublicKey("");
       setSecretKey("");
       setHasExistingKeys(true);
@@ -191,12 +208,12 @@ export default function DashboardSettings() {
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            
+
             <div className="flex-1 flex items-center gap-3">
               <h1 className="text-xl font-bold text-foreground">Settings</h1>
             </div>
           </header>
-          
+
           <main className="flex-1 overflow-auto">
             <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
               {/* Paystack Connection Status Card */}
@@ -216,7 +233,7 @@ export default function DashboardSettings() {
                         {hasExistingKeys && <Shield className="h-4 w-4 text-green-500" />}
                       </CardTitle>
                       <CardDescription className="text-xs sm:text-sm">
-                        {hasExistingKeys 
+                        {hasExistingKeys
                           ? "Your Paystack account is connected."
                           : "Connect your Paystack API keys to unlock unlimited plans."}
                       </CardDescription>
@@ -260,7 +277,7 @@ export default function DashboardSettings() {
                         <Shield className="h-4 w-4 text-muted-foreground" />
                       </CardTitle>
                       <CardDescription>
-                        {hasExistingKeys 
+                        {hasExistingKeys
                           ? "Your API keys are configured. You can update them below."
                           : "Configure your Paystack API keys to process payments"
                         }
@@ -279,7 +296,7 @@ export default function DashboardSettings() {
                       <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
                         For security, please verify your identity to access and update API keys.
                       </p>
-                      <Button 
+                      <Button
                         onClick={handleAccessApiSection}
                         className="bg-accent hover:bg-accent/90 gap-2"
                       >
@@ -301,7 +318,7 @@ export default function DashboardSettings() {
                           </p>
                         </div>
                       )}
-                      
+
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="public_key">New Public Key</Label>
@@ -326,10 +343,10 @@ export default function DashboardSettings() {
                           />
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
-                        <Button 
-                          onClick={handleSaveSettings} 
+                        <Button
+                          onClick={handleSaveSettings}
                           disabled={saving || !publicKey.trim() || !secretKey.trim()}
                           className="bg-accent hover:bg-accent/90 gap-2"
                         >
@@ -337,7 +354,7 @@ export default function DashboardSettings() {
                           {hasExistingKeys ? "Update Keys" : "Save Keys"}
                         </Button>
                       </div>
-                      
+
                       <div className="p-4 glass-card rounded-xl border-accent/20">
                         <p className="text-sm text-muted-foreground">
                           Get your Paystack API keys from your{" "}
@@ -367,8 +384,8 @@ export default function DashboardSettings() {
                       <div className="flex-1">
                         <CardTitle className="text-lg">Complete Your KYC</CardTitle>
                         <CardDescription>
-                          {organization.kyc_submitted_at 
-                            ? "Your KYC is pending review" 
+                          {organization.kyc_submitted_at
+                            ? "Your KYC is pending review"
                             : "Unlock full platform access by completing your KYC verification"}
                         </CardDescription>
                       </div>
@@ -396,7 +413,7 @@ export default function DashboardSettings() {
                           {currentLicense ? 'License Active' : 'No Active License'}
                         </CardTitle>
                         <CardDescription>
-                          {currentLicense 
+                          {currentLicense
                             ? `Your ${currentLicense.plan_type} license expires on ${new Date(currentLicense.expires_at).toLocaleDateString()}`
                             : 'Request a license to unlock premium features'}
                         </CardDescription>
@@ -416,8 +433,8 @@ export default function DashboardSettings() {
               {/* Company Bank Account Section */}
               {organization && (
                 <div className="mt-6">
-                  <CompanyAccountSection 
-                    organization={organization} 
+                  <CompanyAccountSection
+                    organization={organization}
                     onUpdate={fetchSettings}
                   />
                 </div>
@@ -426,7 +443,7 @@ export default function DashboardSettings() {
           </main>
         </SidebarInset>
       </div>
-      
+
       <PasswordVerificationDialog
         open={showVerificationDialog}
         onOpenChange={setShowVerificationDialog}
