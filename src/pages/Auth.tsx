@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const Auth = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const navigate = useNavigate();
+  useForceLightMode();
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -112,7 +114,7 @@ const Auth = () => {
           // Send login notification email (fire-and-forget, org owners only)
           supabase.functions.invoke("send-notification-email", {
             body: { event_type: "login" }
-          }).catch(() => {});
+          }).catch(() => { });
           toast.success("Welcome back!");
           navigate("/dashboard");
         }
@@ -146,7 +148,7 @@ const Auth = () => {
             }
             return;
           }
-          
+
           const newUserId = signupData.user?.id;
           const sessionToken = signupData.session?.access_token;
           if (newUserId) {
@@ -175,10 +177,10 @@ const Auth = () => {
                   },
                   body: JSON.stringify({ event_type: "signup" }),
                 }
-              ).catch(() => {});
+              ).catch(() => { });
             }
           }
-          
+
           toast.success("Account created! Please verify your email.");
           // Sign out to prevent auto-login before verification
           await supabase.auth.signOut();
@@ -210,7 +212,7 @@ const Auth = () => {
             }
             return;
           }
-          
+
           const newUserId = userSignupData.user?.id;
           if (newUserId) {
             // Send OTP for email verification
@@ -226,7 +228,7 @@ const Auth = () => {
               }
             );
           }
-          
+
           toast.success("Account created! Please verify your email.");
           await supabase.auth.signOut();
           navigate(`/verify-otp?email=${encodeURIComponent(email)}&uid=${newUserId}`);

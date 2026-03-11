@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
+  useForceLightMode();
 
   useEffect(() => {
     // Check if we have a valid session from password reset link
@@ -30,7 +32,7 @@ const ResetPassword = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -51,7 +53,7 @@ const ResetPassword = () => {
 
       setIsSuccess(true);
       toast.success("Password updated successfully!");
-      
+
       setTimeout(() => {
         navigate("/auth");
       }, 2000);
@@ -87,9 +89,9 @@ const ResetPassword = () => {
         </Link>
 
         <div className="flex items-center gap-3 mb-8">
-          <img 
-            src={logoImage} 
-            alt="Recurra Logo" 
+          <img
+            src={logoImage}
+            alt="Recurra Logo"
             className="h-10 w-10 object-cover rounded-xl"
           />
           <span className="text-xl font-bold text-foreground">Recurra</span>

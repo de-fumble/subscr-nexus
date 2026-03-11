@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error" | "expired">("loading");
   const [message, setMessage] = useState("");
+  useForceLightMode();
 
   useEffect(() => {
     verifyToken();
@@ -18,7 +20,7 @@ const VerifyEmail = () => {
 
   const verifyToken = async () => {
     const token = searchParams.get("token");
-    
+
     if (!token) {
       setStatus("error");
       setMessage("Invalid verification link");
@@ -35,7 +37,7 @@ const VerifyEmail = () => {
       if (data.success) {
         setStatus("success");
         setMessage("Your email has been verified successfully!");
-        
+
         // Redirect to dashboard after 3 seconds
         setTimeout(() => {
           navigate("/dashboard");
@@ -63,9 +65,9 @@ const VerifyEmail = () => {
         </Link>
 
         <div className="flex items-center gap-3 mb-8">
-          <img 
-            src={logoImage} 
-            alt="Recurra Logo" 
+          <img
+            src={logoImage}
+            alt="Recurra Logo"
             className="h-10 w-10 object-cover rounded-xl"
           />
           <span className="text-xl font-bold text-foreground">Recurra</span>

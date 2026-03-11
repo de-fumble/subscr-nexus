@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useForceLightMode } from "@/hooks/useForceLightMode";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -13,16 +14,17 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const email = searchParams.get("email") || "";
   const userId = searchParams.get("uid") || "";
-  
+  useForceLightMode();
+
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [verified, setVerified] = useState(false);
-  
+
   // Countdown timer (5 minutes = 300 seconds)
   const [countdown, setCountdown] = useState(300);
   const [canResend, setCanResend] = useState(false);
-  
+
   // Rate limiting
   const [requestCount, setRequestCount] = useState(1);
   const [rateLimited, setRateLimited] = useState(false);
@@ -45,7 +47,7 @@ const VerifyOTP = () => {
   // Countdown timer
   useEffect(() => {
     if (verified || rateLimited) return;
-    
+
     const interval = setInterval(() => {
       if (expiresAt) {
         const remaining = Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
@@ -62,7 +64,7 @@ const VerifyOTP = () => {
   // Rate limit countdown
   useEffect(() => {
     if (!rateLimited || !rateLimitEnd) return;
-    
+
     const interval = setInterval(() => {
       if (new Date() >= rateLimitEnd) {
         setRateLimited(false);
