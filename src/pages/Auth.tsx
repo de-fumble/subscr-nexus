@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Shield, Zap, BarChart3, Building2, User, Mail } from "lucide-react";
 import logoImage from "@/assets/logo.png";
+import { logAuditEvent } from "@/utils/auditLogger";
 type AccountType = "institution" | "user";
 type AuthMode = "login" | "signup" | "forgot-password";
 const Auth = () => {
@@ -104,10 +105,10 @@ const Auth = () => {
           toast.success("Welcome back!");
           navigate("/user-dashboard");
         } else {
-          // Check if organization is suspended
+          // Check if organization is suspended and get ID for audit log
           const {
             data: org
-          } = await supabase.from("organizations").select("is_suspended").eq("user_id", authData.user.id).maybeSingle();
+          } = await supabase.from("organizations").select("id, is_suspended").eq("user_id", authData.user.id).maybeSingle();
           if (org?.is_suspended) {
             navigate("/suspended");
             return;
@@ -116,6 +117,11 @@ const Auth = () => {
           supabase.functions.invoke("send-notification-email", {
             body: { event_type: "login" }
           }).catch(() => { });
+
+          if (org?.id) {
+            logAuditEvent("login", "organization", org.id, "auth", { email: authData.user.email }, "Owner");
+          }
+
           toast.success("Welcome back!");
           navigate("/dashboard");
         }

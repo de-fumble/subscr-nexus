@@ -21,6 +21,7 @@ export default function DashboardLogs() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     fetchOrganization();
@@ -29,7 +30,7 @@ export default function DashboardLogs() {
   const fetchOrganization = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         navigate("/auth");
         return;
@@ -57,6 +58,21 @@ export default function DashboardLogs() {
         if (membership?.organizations) {
           setOrganization(membership.organizations as unknown as Organization);
         }
+      }
+
+      // Fetch current license to determine if premium
+      const activeOrgId = orgData?.id || (membership?.organizations as any)?.id;
+      if (activeOrgId) {
+        const { data: licenseData } = await supabase
+          .from("licenses")
+          .select("id")
+          .eq("org_id", activeOrgId)
+          .eq("status", "active")
+          .gte("expires_at", new Date().toISOString())
+          .limit(1)
+          .maybeSingle();
+
+        setIsPremium(!!licenseData);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -90,7 +106,7 @@ export default function DashboardLogs() {
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            
+
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">
                 Activity Logs
@@ -100,7 +116,7 @@ export default function DashboardLogs() {
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
               {organization && (
-                <AuditLogViewer orgId={organization.id} />
+                <AuditLogViewer orgId={organization.id} isPremium={isPremium} />
               )}
             </div>
           </main>

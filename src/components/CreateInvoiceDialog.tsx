@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { FileText, Download, Mail, Loader2, Plus, Trash2 } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 import { InvoicePDFDocument } from "@/components/InvoicePDFDocument";
+import { logAuditEvent } from "@/utils/auditLogger";
+import { useOrgRole } from "@/hooks/useOrgRole";
 
 interface InvoiceItem {
   description: string;
@@ -37,6 +39,7 @@ export function CreateInvoiceDialog({
   orgName,
   orgEmail,
 }: CreateInvoiceDialogProps) {
+  const { role } = useOrgRole();
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -116,6 +119,14 @@ export function CreateInvoiceDialog({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+
+      logAuditEvent("create_invoice", "invoice", invoiceNumber, "invoices", {
+        customer: customerName,
+        email: customerEmail,
+        total,
+        action: "downloaded"
+      }, role || "User");
+
       toast.success("Invoice downloaded successfully");
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -135,7 +146,7 @@ export function CreateInvoiceDialog({
     try {
       // Generate PDF blob
       const blob = await generatePDF();
-      
+
       // Convert blob to base64
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
@@ -160,6 +171,13 @@ export function CreateInvoiceDialog({
       });
 
       if (error) throw error;
+
+      logAuditEvent("create_invoice", "invoice", invoiceNumber, "invoices", {
+        customer: customerName,
+        email: customerEmail,
+        total,
+        action: "emailed"
+      }, role || "User");
 
       toast.success(`Invoice sent to ${customerEmail}`);
       resetForm();

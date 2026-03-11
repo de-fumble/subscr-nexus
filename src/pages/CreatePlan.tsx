@@ -21,6 +21,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 
 import { useOrgRole } from "@/hooks/useOrgRole";
+import { logAuditEvent } from "@/utils/auditLogger";
 
 const planSchema = z.object({
   name: z.string().trim().min(1, "Plan name is required").max(100),
@@ -64,7 +65,7 @@ const CreatePlan = () => {
   const fetchOrganization = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         navigate("/auth");
         return;
@@ -97,7 +98,7 @@ const CreatePlan = () => {
             .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key")
             .eq("id", membership.org_id)
             .maybeSingle();
-          
+
           orgData = memberOrg;
           orgId = memberOrg?.id;
         }
@@ -113,7 +114,7 @@ const CreatePlan = () => {
           .select("*", { count: "exact", head: true })
           .eq("org_id", orgId)
           .eq("is_active", true);
-        
+
         setPlanCount(count || 0);
       }
     } catch (error) {
@@ -136,7 +137,7 @@ const CreatePlan = () => {
       });
 
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         toast.error("You must be logged in to create a plan");
         navigate("/auth");
@@ -169,6 +170,14 @@ const CreatePlan = () => {
         return;
       }
 
+      if (organization) {
+        logAuditEvent("create_plan", "plan", data.plan.id || "new_plan", "plans", {
+          name: validated.name,
+          price: validated.price,
+          interval: validated.interval
+        }, role || "User");
+      }
+
       toast.success("Plan created successfully!");
       navigate("/plans");
     } catch (error) {
@@ -190,7 +199,7 @@ const CreatePlan = () => {
         <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
-            
+
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">Create Subscription Plan</h1>
             </div>

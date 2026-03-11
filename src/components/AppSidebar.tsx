@@ -18,6 +18,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { logAuditEvent } from "@/utils/auditLogger";
 import {
   Sidebar,
   SidebarContent,
@@ -39,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 
 interface AppSidebarProps {
   organization: {
+    id?: string;
     org_name: string;
     email: string;
     logo_url?: string | null;
@@ -87,6 +89,10 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   const handleSignOut = async () => {
     // Reset theme to light mode on sign-out so the next login starts fresh
     localStorage.removeItem("vite-ui-theme");
+
+    if (organization) {
+      await logAuditEvent("logout", "organization", organization.id || "unknown", "auth", { email: displayEmail }, role || "Owner");
+    }
 
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
