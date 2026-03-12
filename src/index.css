@@ -32,8 +32,9 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 30% 90%;
-    --input: 210 30% 90%;
+    --border: 210 30% 84%;
+    /* Slightly darker for more visibility */
+    --input: 210 30% 84%;
     --ring: 180 97% 32%;
 
     --radius: 0.75rem;
@@ -95,7 +96,7 @@ All colors MUST be HSL.
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 12%;
+    --border: 0 0% 20%;
     --input: 0 0% 12%;
     --ring: 180 97% 42%;
 
@@ -213,7 +214,8 @@ All colors MUST be HSL.
     background: linear-gradient(135deg,
         hsl(var(--background) / 0.85) 0%,
         hsl(var(--background) / 0.75) 100%);
-    border: 1px solid hsl(var(--border) / 0.5);
+    border: 1px solid hsl(var(--border) / 0.8);
+    /* Increased from 0.5 to 0.8 for visibility */
     box-shadow:
       0 1px 2px hsl(var(--foreground) / 0.02),
       0 2px 4px hsl(var(--foreground) / 0.02),
@@ -225,7 +227,8 @@ All colors MUST be HSL.
     background: linear-gradient(180deg,
         hsl(var(--background) / 0.95) 0%,
         hsl(var(--background) / 0.9) 100%);
-    border-right: 1px solid hsl(var(--border) / 0.4);
+    border-right: 1px solid hsl(var(--border) / 0.7);
+    /* Increased from 0.4 to 0.7 */
   }
 
   .premium-shadow {

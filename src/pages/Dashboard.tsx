@@ -17,10 +17,13 @@ import { useOrgRole } from "@/hooks/useOrgRole";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DashboardSplash } from "@/components/DashboardSplash";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { SetupProgressCard } from "@/components/SetupProgressCard";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FloatingSupport } from "@/components/FloatingSupport";
+import { FounderInsight } from "@/components/FounderInsight";
 interface Organization {
   id: string;
   org_name: string;
@@ -209,84 +212,69 @@ const Dashboard = () => {
       startDate.setDate(now.getDate() - 90);
     }
 
-    // Fetch subscription transactions
-    const {
-      data: planIds
-    } = await supabase.from("subscription_plans").select("id").eq("org_id", organization.id);
-    const planIdList = planIds?.map(p => p.id) || [];
-    let subscriptionTransactions: any[] = [];
+    // Parallel Fetch Phase 1: Get plan and OTP IDs
+    const [
+      { data: planIdsData },
+      { data: otpIdsData }
+    ] = await Promise.all([
+      supabase.from("subscription_plans").select("id").eq("org_id", organization.id),
+      supabase.from("one_time_payments").select("id").eq("org_id", organization.id)
+    ]);
+
+    const planIdList = planIdsData?.map(p => p.id) || [];
+    const otpIdList = otpIdsData?.map(p => p.id) || [];
+
+    // Phase 2: Fetch Subscribers (only if we have plans)
+    let subscriberIds: string[] = [];
     if (planIdList.length > 0) {
-      const {
-        data: subscribers
-      } = await supabase.from("subscribers").select("id").in("plan_id", planIdList);
-      const subscriberIds = subscribers?.map(s => s.id) || [];
-      if (subscriberIds.length > 0) {
-        const {
-          data: txns
-        } = await supabase.from("transactions").select("amount, paid_at").in("subscriber_id", subscriberIds).eq("status", "success").gte("paid_at", startDate.toISOString()).order("paid_at", {
-          ascending: true
-        });
-        subscriptionTransactions = txns || [];
-      }
+      const { data: subscribers } = await supabase.from("subscribers").select("id").in("plan_id", planIdList);
+      subscriberIds = subscribers?.map(s => s.id) || [];
     }
 
-    // Fetch one-time payment transactions
-    const {
-      data: otpIds
-    } = await supabase.from("one_time_payments").select("id").eq("org_id", organization.id);
-    const otpIdList = otpIds?.map(p => p.id) || [];
-    let oneTimeTransactions: any[] = [];
-    if (otpIdList.length > 0) {
-      const {
-        data: otpTxns
-      } = await supabase.from("one_time_payment_transactions").select("amount, paid_at").in("payment_id", otpIdList).gte("paid_at", startDate.toISOString()).order("paid_at", {
-        ascending: true
-      });
-      oneTimeTransactions = otpTxns || [];
-    }
+    // Phase 3: Parallel Fetch Transactions
+    const [
+      { data: subscriptionTxns },
+      { data: otpTxns }
+    ] = await Promise.all([
+      subscriberIds.length > 0
+        ? supabase.from("transactions").select("amount, paid_at").in("subscriber_id", subscriberIds).eq("status", "success").gte("paid_at", startDate.toISOString())
+        : Promise.resolve({ data: [] }),
+      otpIdList.length > 0
+        ? supabase.from("one_time_payment_transactions").select("amount, paid_at").in("payment_id", otpIdList).gte("paid_at", startDate.toISOString())
+        : Promise.resolve({ data: [] })
+    ]);
 
-    // Combine and group by date
-    const allTransactions = [...subscriptionTransactions.map(t => ({
-      amount: Number(t.amount),
-      paid_at: t.paid_at
-    })), ...oneTimeTransactions.map(t => ({
-      amount: Number(t.amount),
-      paid_at: t.paid_at
-    }))];
+    // Combine and group by date locally (fast)
+    const allTransactions = [
+      ...(subscriptionTxns || []).map(t => ({ amount: Number(t.amount), paid_at: t.paid_at })),
+      ...(otpTxns || []).map(t => ({ amount: Number(t.amount), paid_at: t.paid_at }))
+    ];
+
     const grouped: Record<string, number> = {};
     allTransactions.forEach(txn => {
-      const date = new Date(txn.paid_at).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      });
+      const date = new Date(txn.paid_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       grouped[date] = (grouped[date] || 0) + txn.amount;
     });
 
     // Fill in missing dates
-    const result: Array<{
-      date: string;
-      value: number;
-    }> = [];
+    const result: Array<{ date: string; value: number; }> = [];
     const current = new Date(startDate);
+
     while (current <= now) {
-      const dateKey = current.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      });
+      const dateKey = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       result.push({
         date: dateKey,
         value: grouped[dateKey] || 0
       });
       current.setDate(current.getDate() + 1);
     }
+
     setTimeSeriesData(result);
   };
   const fetchDashboardData = async () => {
     try {
       const {
-        data: {
-          user
-        }
+        data: { user }
       } = await supabase.auth.getUser();
       if (!user) {
         navigate("/auth");
@@ -316,7 +304,7 @@ const Dashboard = () => {
         navigate("/auth");
         return;
       }
-      // Check if setup is incomplete — optionally they can still view dashboard
+
       const hasPaymentProvider = !!orgData.paystack_secret_key;
       let hasPlans = false;
 
@@ -330,181 +318,173 @@ const Dashboard = () => {
         hasPlans = true;
       }
 
-      // Redirect to setup ONLY if they haven't explicitly clicked "Continue to Dashboard"
       if ((!hasPaymentProvider || !hasPlans) && sessionStorage.getItem("hasSeenSetup") !== "true") {
         navigate("/dashboard/setup");
         return;
       }
+
       setOrganization(orgData);
 
-      // Fetch plans with subscriber counts
-      const {
-        data: plansData,
-        error: plansError
-      } = await supabase.from("subscription_plans").select("*").eq("org_id", orgData.id).eq("is_active", true);
-      if (plansError) {
-        console.error("Error fetching plans:", plansError);
-      } else {
-        const plansWithCounts = await Promise.all(plansData.map(async plan => {
-          const {
-            count
-          } = await supabase.from("subscribers").select("*", {
-            count: "exact",
-            head: true
-          }).eq("plan_id", plan.id).eq("status", "active");
-          return {
-            ...plan,
-            subscriber_count: count || 0
-          };
-        }));
-        setPlans(plansWithCounts);
+      // PARALLEL FETCH PHASE 1: Fetch Plans, Subscribers, Overviews, and Wallet Info simultaneously
+      const [
+        { data: plansData },
+        { data: subscribersData },
+        { data: otpPaymentsData },
+        { data: payoutData },
+        { data: licenseData },
+      ] = await Promise.all([
+        supabase.from("subscription_plans").select("id, name, price, interval").eq("org_id", orgData.id).eq("is_active", true),
+        supabase.from("subscribers").select("id, status, plan_id, subscription_plans!inner(org_id)").eq("subscription_plans.org_id", orgData.id),
+        supabase.from("one_time_payments").select("id").eq("org_id", orgData.id),
+        supabase.from("payout_requests").select("amount, status").eq("org_id", orgData.id),
+        supabase.from("licenses").select("*").eq("org_id", orgData.id).eq("status", "active").order("expires_at", { ascending: false }).limit(1).maybeSingle()
+      ]);
 
-        // Calculate revenue by plan
-        const revenueData: RevenueByPlan[] = [];
-        let totalRevenueAmount = 0;
-        for (let i = 0; i < plansWithCounts.length; i++) {
-          const plan = plansWithCounts[i];
+      const plans = plansData || [];
+      const subscribers = subscribersData || [];
+      const otpPayments = otpPaymentsData || [];
 
-          // Get subscribers for this plan
-          const {
-            data: subs
-          } = await supabase.from("subscribers").select("id").eq("plan_id", plan.id);
-          const subIds = subs?.map(s => s.id) || [];
-          let planRevenue = 0;
-          if (subIds.length > 0) {
-            const {
-              data: txns
-            } = await supabase.from("transactions").select("amount").in("subscriber_id", subIds).eq("status", "success");
-            planRevenue = txns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-          }
-          if (planRevenue > 0) {
-            revenueData.push({
-              name: plan.name,
-              value: planRevenue,
-              color: CHART_COLORS[i % CHART_COLORS.length]
-            });
-            totalRevenueAmount += planRevenue;
-          }
+      // Process Subscriber Counts Locally (0 ms)
+      const totalSubsCount = subscribers.length;
+      let totalActiveSubscribers = 0;
+
+      const plansWithCounts = plans.map(plan => {
+        const count = subscribers.filter(s => s.plan_id === plan.id && s.status === 'active').length;
+        totalActiveSubscribers += count;
+        return { ...plan, subscriber_count: count };
+      });
+      setPlans(plansWithCounts);
+
+      // Extract IDs for next Parallel Fetch Phase
+      const activeSubscriberIds = subscribers.filter(s => s.status === 'active').map(s => s.id);
+      const otpPaymentIds = otpPayments.map(p => p.id);
+
+      // PARALLEL FETCH PHASE 2: Transactions
+      // If we have subscribers or standard payments, fetch their transactions simultaneously
+      const [
+        { data: subscriptionTxns },
+        { data: otpTxns }
+      ] = await Promise.all([
+        activeSubscriberIds.length > 0
+          ? supabase.from("transactions").select("amount, subscriber_id").in("subscriber_id", activeSubscriberIds).eq("status", "success")
+          : Promise.resolve({ data: [] }),
+        otpPaymentIds.length > 0
+          ? supabase.from("one_time_payment_transactions").select("amount").in("payment_id", otpPaymentIds)
+          : Promise.resolve({ data: [] })
+      ]);
+
+      // Calculate Revenue Locally (0 ms)
+      const revenueData: RevenueByPlan[] = [];
+      let totalRevenueAmount = 0;
+
+      for (let i = 0; i < plans.length; i++) {
+        const plan = plans[i];
+        const planSubIds = subscribers.filter(s => s.plan_id === plan.id && s.status === 'active').map(s => s.id);
+
+        let planRevenue = 0;
+        if (subscriptionTxns && subscriptionTxns.length > 0) {
+          const planTxns = subscriptionTxns.filter(t => planSubIds.includes(t.subscriber_id));
+          planRevenue = planTxns.reduce((sum, t) => sum + Number(t.amount), 0);
         }
 
-        // Add one-time payments revenue
-        const {
-          data: otpPayments
-        } = await supabase.from("one_time_payments").select("id").eq("org_id", orgData.id);
-        const otpIds = otpPayments?.map(p => p.id) || [];
-        if (otpIds.length > 0) {
-          const {
-            data: otpTxns
-          } = await supabase.from("one_time_payment_transactions").select("amount").in("payment_id", otpIds);
-          const otpRevenue = otpTxns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-          if (otpRevenue > 0) {
-            revenueData.push({
-              name: 'Standard Payments',
-              value: otpRevenue,
-              color: CHART_COLORS[revenueData.length % CHART_COLORS.length]
-            });
-            totalRevenueAmount += otpRevenue;
-          }
+        if (planRevenue > 0) {
+          revenueData.push({
+            name: plan.name,
+            value: planRevenue,
+            color: CHART_COLORS[i % CHART_COLORS.length]
+          });
+          totalRevenueAmount += planRevenue;
         }
-        setRevenueByPlan(revenueData);
+      }
 
-        // Calculate total and active subscribers
-        const totalActiveSubscribers = plansWithCounts.reduce((sum, p) => sum + (p.subscriber_count || 0), 0);
+      // Add Standard Payments Revenue
+      const otpRevenue = otpTxns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+      if (otpRevenue > 0) {
+        revenueData.push({
+          name: 'Standard Payments',
+          value: otpRevenue,
+          color: CHART_COLORS[revenueData.length % CHART_COLORS.length]
+        });
+        totalRevenueAmount += otpRevenue;
+      }
+      setRevenueByPlan(revenueData);
 
-        // Get total subscribers count (including inactive)
-        const planIds = plansWithCounts.map(p => p.id);
-        let totalSubsCount = 0;
-        if (planIds.length > 0) {
-          const {
-            count
-          } = await supabase.from("subscribers").select("*", {
-            count: "exact",
-            head: true
-          }).in("plan_id", planIds);
-          totalSubsCount = count || 0;
+      // Set Payouts & Balance Info Locally
+      if (payoutData) {
+        const pending = payoutData.filter(p => p.status === "pending" || p.status === "approved").reduce((sum, p) => sum + p.amount, 0);
+        const paidOut = payoutData.filter(p => p.status === "completed").reduce((sum, p) => sum + p.amount, 0);
+        setPendingPayouts(pending);
+        setTotalPaidOut(paidOut);
+      }
+      setCurrentLicense(licenseData);
+
+      // Render local fast state first
+      setStats(prev => ({
+        ...prev,
+        totalRevenue: totalRevenueAmount,
+        activeSubscribers: totalActiveSubscribers,
+        totalSubscribers: totalSubsCount,
+      }));
+      setLoading(false); // Stop loading spinner immediately so UI is responsive!
+
+      // FIRE AND FORGET: Paystack Analytics (Slow API calls happening in the background)
+      fetchPaystackAnalyticsQuietly(orgData.id, totalRevenueAmount, totalActiveSubscribers, totalSubsCount);
+
+      // Fetch Recent Transactions quietly
+      fetchRecentTransactions(orgData.id);
+
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to load dashboard");
+      setLoading(false);
+    }
+  };
+
+  const fetchPaystackAnalyticsQuietly = async (orgId: string, baseRevenue: number, baseActiveSubs: number, baseTotalSubs: number) => {
+    try {
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke("fetch-paystack-analytics");
+
+      if (!analyticsError && analyticsData) {
+        console.log("Paystack analytics background load complete.");
+        const failedData = analyticsData.failedPaymentsData || [];
+        const abandonedCount = failedData.find((d: any) => d.name === 'Abandoned Checkout')?.value || 0;
+        const failedCount = failedData.find((d: any) => d.name === 'Failed Payments')?.value || 0;
+
+        setFailedPaymentsData(failedData);
+
+        const paystackChartData = analyticsData.chartData || [];
+        if (paystackChartData.length > 0) {
+          const revenueData: RevenueByPlan[] = paystackChartData.map((item: any, index: number) => ({
+            name: item.plan,
+            value: item.revenue,
+            color: CHART_COLORS[index % CHART_COLORS.length]
+          }));
+          setRevenueByPlan(revenueData);
         }
 
-        // Fetch live data from Paystack analytics
-        const {
-          data: analyticsData,
-          error: analyticsError
-        } = await supabase.functions.invoke("fetch-paystack-analytics");
-        let abandonedCount = 0;
-        let failedCount = 0;
-        let paystackTotalRevenue = totalRevenueAmount;
-        let paystackActiveSubscribers = totalActiveSubscribers;
-        if (!analyticsError && analyticsData) {
-          console.log("Paystack analytics data:", analyticsData);
-
-          // Use Paystack data for overview section
-          paystackTotalRevenue = analyticsData.totalRevenue || totalRevenueAmount;
-          paystackActiveSubscribers = analyticsData.activeSubscribers || totalActiveSubscribers;
-
-          // Failed payments breakdown
-          const failedData = analyticsData.failedPaymentsData || [];
-          abandonedCount = failedData.find((d: any) => d.name === 'Abandoned Checkout')?.value || 0;
-          failedCount = failedData.find((d: any) => d.name === 'Failed Payments')?.value || 0;
-          setFailedPaymentsData(failedData);
-
-          // Revenue by plan from Paystack
-          const paystackChartData = analyticsData.chartData || [];
-          if (paystackChartData.length > 0) {
-            const revenueData: RevenueByPlan[] = paystackChartData.map((item: any, index: number) => ({
-              name: item.plan,
-              value: item.revenue,
-              color: CHART_COLORS[index % CHART_COLORS.length]
-            }));
-            setRevenueByPlan(revenueData);
-          }
-
-          // Revenue trend for time series chart
-          const revenueTrend = analyticsData.revenueTrend || [];
-          if (revenueTrend.length > 0) {
-            setTimeSeriesData(revenueTrend.map((item: any) => ({
-              date: item.month,
-              value: item.revenue
-            })));
-          }
+        const revenueTrend = analyticsData.revenueTrend || [];
+        if (revenueTrend.length > 0) {
+          setTimeSeriesData(revenueTrend.map((item: any) => ({
+            date: item.month,
+            value: item.revenue
+          })));
         }
+
         setStats({
-          totalRevenue: paystackTotalRevenue,
-          recurringRevenue: analyticsData?.recurringRevenue || 0,
-          activeSubscribers: paystackActiveSubscribers,
-          totalSubscribers: totalSubsCount,
+          totalRevenue: analyticsData.totalRevenue || baseRevenue,
+          recurringRevenue: analyticsData.recurringRevenue || 0,
+          activeSubscribers: analyticsData.activeSubscribers || baseActiveSubs,
+          totalSubscribers: baseTotalSubs,
           totalFailedPayments: abandonedCount + failedCount,
           abandonedCheckouts: abandonedCount,
           failedPayments: failedCount
         });
-
-        // Fetch recent transactions
-        await fetchRecentTransactions(orgData.id);
       }
-
-      // Fetch balance and payouts
-      if (orgData) {
-        const {
-          data: payoutData
-        } = await supabase.from("payout_requests").select("amount, status").eq("org_id", orgData.id);
-        if (payoutData) {
-          const pending = payoutData.filter(p => p.status === "pending" || p.status === "approved").reduce((sum, p) => sum + p.amount, 0);
-          const paidOut = payoutData.filter(p => p.status === "completed").reduce((sum, p) => sum + p.amount, 0);
-          setPendingPayouts(pending);
-          setTotalPaidOut(paidOut);
-        }
-        const {
-          data: licenseData
-        } = await supabase.from("licenses").select("*").eq("org_id", orgData.id).eq("status", "active").order("expires_at", {
-          ascending: false
-        }).limit(1).maybeSingle();
-        setCurrentLicense(licenseData);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to load dashboard");
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.error("Paystack background sync failed:", e);
     }
   };
+
   const fetchRecentTransactions = async (orgId: string) => {
     try {
       // Calculate 48 hours ago
@@ -697,24 +677,23 @@ const Dashboard = () => {
       toast.success("Revenue report exported successfully");
     } catch (error) {
       console.error("Error exporting revenue:", error);
-      toast.error("Failed to export revenue report");
     } finally {
       setExportingRevenue(false);
     }
   };
-  const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   if (loading) {
     return <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
         <SidebarInset>
           <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
-          <DashboardSkeleton />
+          <DashboardSplash />
         </SidebarInset>
       </div>
     </SidebarProvider>;
   }
+  const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   return <SidebarProvider>
     <div className="flex min-h-screen w-full bg-background">
       <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
@@ -723,40 +702,44 @@ const Dashboard = () => {
         <main className="flex-1 overflow-auto">
           <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
 
-
             {/* Top Stats Row - 4 Cards */}
             <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
-              {/* Toggle for hiding values */}
-              <div className="col-span-full flex justify-start sm:justify-end mb-2 gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide w-full items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
-                  onClick={() => toast.info("Guided tour coming soon!")}
-                >
-                  <PlayCircle className="h-3 sm:h-4 w-3 sm:w-4" />
-                  Tour
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
-                  onClick={() => toast.info("No new updates")}
-                >
-                  <Sparkles className="h-3 sm:h-4 w-3 sm:w-4 text-indigo-500" />
-                  What's New
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                </Button>
-                <div className="h-3 sm:h-4 w-px bg-border/50 my-auto mx-0.5 sm:mx-1 shrink-0" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
-                  onClick={() => setHideValues(!hideValues)}
-                >
-                  {hideValues ? <EyeOff className="h-3 sm:h-4 w-3 sm:w-4" /> : <Eye className="h-3 sm:h-4 w-3 sm:w-4" />}
-                  {hideValues ? "Show" : "Hide"}
-                </Button>
+              {/* Toolbar row: Founder insight left, actions right */}
+              <div className="col-span-full flex items-center justify-between mb-2 gap-2 overflow-x-auto pb-1 scrollbar-hide w-full">
+                {/* Founder Insight - left side */}
+                <FounderInsight />
+                {/* Actions - right side */}
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
+                    onClick={() => toast.info("Guided tour coming soon!")}
+                  >
+                    <PlayCircle className="h-3 sm:h-4 w-3 sm:w-4" />
+                    Tour
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
+                    onClick={() => toast.info("No new updates")}
+                  >
+                    <Sparkles className="h-3 sm:h-4 w-3 sm:w-4 text-indigo-500" />
+                    What's New
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  </Button>
+                  <div className="h-3 sm:h-4 w-px bg-border/50 my-auto mx-0.5 sm:mx-1 shrink-0" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
+                    onClick={() => setHideValues(!hideValues)}
+                  >
+                    {hideValues ? <EyeOff className="h-3 sm:h-4 w-3 sm:w-4" /> : <Eye className="h-3 sm:h-4 w-3 sm:w-4" />}
+                    {hideValues ? "Show" : "Hide"}
+                  </Button>
+                </div>
               </div>
 
               {/* Total Revenue (MTD) */}
@@ -1143,6 +1126,7 @@ const Dashboard = () => {
               </div>
             </Card>
 
+            <FloatingSupport />
           </div>
         </main>
       </SidebarInset>
