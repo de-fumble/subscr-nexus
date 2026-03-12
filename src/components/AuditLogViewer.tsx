@@ -35,7 +35,7 @@ interface AuditLog {
 }
 
 interface AuditLogViewerProps {
-  orgId?: string; // If provided, filters to specific org. If not, shows all (superadmin)
+  orgId?: string;
   isSuperadmin?: boolean;
   isPremium?: boolean;
 }
@@ -124,169 +124,184 @@ export function AuditLogViewer({ orgId, isSuperadmin = false, isPremium = false 
         return false;
       }
     }
-    if (filters.module !== "all" && log.module !== filters.module) {
-      return false;
-    }
-    if (filters.action !== "all" && !log.action.toLowerCase().includes(filters.action)) {
-      return false;
-    }
-    if (filters.dateFrom && new Date(log.created_at) < new Date(filters.dateFrom)) {
-      return false;
-    }
-    if (filters.dateTo && new Date(log.created_at) > new Date(filters.dateTo + 'T23:59:59')) {
-      return false;
-    }
+    if (filters.module !== "all" && log.module !== filters.module) return false;
+    if (filters.action !== "all" && !log.action.toLowerCase().includes(filters.action)) return false;
+    if (filters.dateFrom && new Date(log.created_at) < new Date(filters.dateFrom)) return false;
+    if (filters.dateTo && new Date(log.created_at) > new Date(filters.dateTo + 'T23:59:59')) return false;
     return true;
   });
 
   return (
     <div className="space-y-4">
+      {/* Premium upgrade banner */}
       {!isSuperadmin && orgId && !isPremium && (
-        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 p-4 rounded-xl flex items-start gap-3">
-          <FileText className="h-5 w-5 mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <h4 className="font-semibold mb-1">72-Hour Log Retention</h4>
-            <p className="text-sm">
-              Your organization is currently on a free or standard plan. Audit logs older than 72 hours will be automatically deleted to conserve space. Please download your logs regularly or upgrade to Premium for infinite retention.
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 p-3 sm:p-4 rounded-xl flex items-start gap-3">
+          <FileText className="h-4 w-4 sm:h-5 sm:w-5 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold mb-1 text-sm sm:text-base">72-Hour Log Retention</h4>
+            <p className="text-xs sm:text-sm">
+              Your organization is on a free or standard plan. Logs older than 72 hours are automatically deleted. Upgrade to Premium for unlimited retention.
             </p>
           </div>
         </div>
       )}
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+        <CardHeader className="pb-3 px-4 sm:px-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                 Audit Logs
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm mt-0.5">
                 Immutable record of all actions {isSuperadmin ? "across the platform" : "in your organization"}
               </CardDescription>
             </div>
             <Button
               variant="outline"
               size="icon"
+              className="shrink-0 h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => fetchLogs(true)}
               disabled={refreshing}
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
+
+        <CardContent className="space-y-4 px-3 sm:px-6">
+          {/* Filters — responsive grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            <div className="relative sm:col-span-2 lg:col-span-2">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search logs..."
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className="pl-9"
+                className="pl-9 text-sm"
               />
             </div>
-            <Select
-              value={filters.module}
-              onValueChange={(value) => setFilters({ ...filters, module: value })}
-            >
-              <SelectTrigger className="w-40">
-                <Filter className="h-4 w-4 mr-2" />
+            <Select value={filters.module} onValueChange={(v) => setFilters({ ...filters, module: v })}>
+              <SelectTrigger className="text-sm">
+                <Filter className="h-3.5 w-3.5 mr-2 shrink-0" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {MODULE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
+                {MODULE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Input
-              type="date"
-              value={filters.dateFrom}
-              onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-              className="w-40"
-              placeholder="From date"
-            />
-            <Input
-              type="date"
-              value={filters.dateTo}
-              onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-              className="w-40"
-              placeholder="To date"
-            />
+            <div className="grid grid-cols-2 sm:col-span-2 lg:col-span-1 gap-2">
+              <Input type="date" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} className="text-xs" />
+              <Input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} className="text-xs" />
+            </div>
           </div>
 
-          {/* Logs Table */}
+          {/* Content */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground text-sm">
               {filters.search || filters.module !== "all" || filters.dateFrom || filters.dateTo
                 ? "No logs match your filters"
                 : "No audit logs found"}
             </div>
           ) : (
-            <div className="overflow-auto max-h-[500px]">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background">
-                  <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Actor Role</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Entity Type</TableHead>
-                    <TableHead>Module</TableHead>
-                    <TableHead>Details</TableHead>
-                    {isSuperadmin && <TableHead>Actor</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="text-xs whitespace-nowrap">
-                        {new Date(log.created_at).toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {(log.details as any)?.role || "User"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getActionBadgeClass(log.action)}>
-                          {log.action.replace(/_/g, ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="capitalize">
+            <>
+              {/* Mobile card list */}
+              <div className="sm:hidden space-y-2">
+                {filteredLogs.map((log) => (
+                  <div key={log.id} className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge className={`text-[10px] ${getActionBadgeClass(log.action)}`}>
+                        {log.action.replace(/_/g, ' ')}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] capitalize">
+                        {(log.details as any)?.role || "User"}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground capitalize">
                         {log.entity_type.replace(/_/g, ' ')}
-                      </TableCell>
-                      <TableCell>
-                        {log.module && (
-                          <Badge variant="outline" className="capitalize">
-                            {log.module}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
-                        {log.details ? JSON.stringify(log.details) : '-'}
-                      </TableCell>
-                      {isSuperadmin && (
-                        <TableCell className="font-mono text-xs">
-                          {log.actor_id.slice(0, 8)}...
-                        </TableCell>
+                      </span>
+                      {log.module && (
+                        <Badge variant="outline" className="text-[10px] capitalize">{log.module}</Badge>
                       )}
+                    </div>
+                    {log.details && (
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {JSON.stringify(log.details)}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-auto max-h-[520px] rounded-lg border border-border/50">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow>
+                      <TableHead className="text-xs">Timestamp</TableHead>
+                      <TableHead className="text-xs">Role</TableHead>
+                      <TableHead className="text-xs">Action</TableHead>
+                      <TableHead className="text-xs">Entity</TableHead>
+                      <TableHead className="text-xs">Module</TableHead>
+                      <TableHead className="text-xs">Details</TableHead>
+                      {isSuperadmin && <TableHead className="text-xs">Actor</TableHead>}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLogs.map((log) => (
+                      <TableRow key={log.id} className="hover:bg-muted/30">
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {new Date(log.created_at).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize text-[11px]">
+                            {(log.details as any)?.role || "User"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getActionBadgeClass(log.action)} text-[11px]`}>
+                            {log.action.replace(/_/g, ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="capitalize text-sm">
+                          {log.entity_type.replace(/_/g, ' ')}
+                        </TableCell>
+                        <TableCell>
+                          {log.module && (
+                            <Badge variant="outline" className="capitalize text-[11px]">
+                              {log.module}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
+                          {log.details ? JSON.stringify(log.details) : '-'}
+                        </TableCell>
+                        {isSuperadmin && (
+                          <TableCell className="font-mono text-xs">
+                            {log.actor_id.slice(0, 8)}...
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
 
-          <div className="text-xs text-muted-foreground text-center pt-2">
-            Showing {filteredLogs.length} of {logs.length} logs • Logs are immutable and cannot be modified
+          <div className="text-xs text-muted-foreground text-center pt-1">
+            Showing {filteredLogs.length} of {logs.length} logs • Immutable records
           </div>
         </CardContent>
       </Card>

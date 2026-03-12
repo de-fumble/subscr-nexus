@@ -704,12 +704,12 @@ const Dashboard = () => {
 
             {/* Top Stats Row - 4 Cards */}
             <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
-              {/* Toolbar row: Founder insight left, actions right */}
-              <div className="col-span-full flex items-center justify-between mb-2 gap-2 overflow-x-auto pb-1 scrollbar-hide w-full">
-                {/* Founder Insight - left side */}
+              {/* Toolbar row: stacks on mobile, side-by-side on desktop */}
+              <div className="col-span-full flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1.5 sm:gap-2 w-full">
+                {/* Founder Insight - top on mobile, left on desktop */}
                 <FounderInsight />
                 {/* Actions - right side */}
-                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
                   <Button
                     variant="ghost"
                     size="sm"

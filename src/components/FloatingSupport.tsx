@@ -9,7 +9,7 @@ export function FloatingSupport() {
     const [isLoading, setIsLoading] = useState(true);
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end">
 
             {/* Support Panel / IFrame Modal */}
             <div
@@ -69,8 +69,10 @@ export function FloatingSupport() {
             <Button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "rounded-full shadow-xl premium-shadow hover:scale-105 transition-all duration-300 gap-2.5 backdrop-blur-md",
-                    isOpen ? "h-12 w-12 p-0 bg-muted hover:bg-muted/80 text-foreground" : "h-14 pl-5 pr-6 bg-primary hover:bg-primary/90"
+                    "rounded-full shadow-xl premium-shadow hover:scale-105 transition-all duration-300 backdrop-blur-md",
+                    isOpen
+                        ? "h-10 w-10 sm:h-12 sm:w-12 p-0 bg-muted hover:bg-muted/80 text-foreground"
+                        : "h-12 w-12 sm:h-14 sm:w-auto sm:pl-5 sm:pr-6 sm:gap-2.5 bg-primary hover:bg-primary/90"
                 )}
             >
                 <div className="relative flex items-center justify-center">
@@ -83,7 +85,7 @@ export function FloatingSupport() {
                         </>
                     )}
                 </div>
-                {!isOpen && <span className="font-semibold tracking-wide text-primary-foreground">AI Support</span>}
+                {!isOpen && <span className="font-semibold tracking-wide text-primary-foreground hidden sm:inline">AI Support</span>}
             </Button>
         </div>
     );
