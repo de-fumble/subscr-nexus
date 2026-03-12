@@ -90,7 +90,7 @@ export function AuditLogViewer({ orgId, isSuperadmin = false, isPremium = false 
         .limit(200);
 
       if (orgId) {
-        query = query.eq('entity_id', orgId).eq('entity_type', 'organization');
+        query = query.eq('entity_id', orgId);
       }
 
       const { data, error } = await query;

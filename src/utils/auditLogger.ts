@@ -1,37 +1,32 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const logAuditEvent = async (
-    action: "login" | "logout" | "create_invoice" | "create_plan" | string,
-    entityType: "organization" | "user" | "invoice" | "plan" | string,
+    action: string,
+    entityType: string,
     entityId: string,
-    moduleName: "auth" | "invoices" | "plans" | "organization" | string,
+    moduleName: string,
     details: Record<string, any> = {},
-    roleContext: string = "User" // Expected to pass the user's role in the org
+    roleContext: string = "Owner"
 ) => {
     try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-        // Attach the actor's role to the details
-        const enhancedDetails = {
-            ...details,
-            role: roleContext
-        };
-
-        const { error } = await supabase.functions.invoke("log-audit-event", {
-            body: {
-                action,
-                entity_type: entityType,
-                entity_id: entityId,
-                details: enhancedDetails,
-                module_name: moduleName,
-            },
+        const { error } = await supabase.from("audit_logs").insert({
+            actor_id: user.id,
+            action,
+            entity_type: entityType,
+            entity_id: entityId,
+            details: { ...details, role: roleContext },
+            module: moduleName,
         });
 
         if (error) {
-            console.warn("Audit logging failed:", error);
+            console.error("🟢 Audit log insert failed:", error);
+        } else {
+            console.log("🟢 Audit log inserted successfully:", { action, entityType, entityId, moduleName });
         }
-    } catch (error) {
-        console.warn("Audit logging error:", error);
+    } catch (err) {
+        console.error("🟢 Audit logging exception:", err);
     }
 };

@@ -119,7 +119,7 @@ const Auth = () => {
           }).catch(() => { });
 
           if (org?.id) {
-            logAuditEvent("login", "organization", org.id, "auth", { email: authData.user.email }, "Owner");
+            await logAuditEvent("login", "organization", org.id, "auth", { email: authData.user.email }, "Owner");
           }
 
           toast.success("Welcome back!");

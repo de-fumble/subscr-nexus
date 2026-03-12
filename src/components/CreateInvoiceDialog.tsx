@@ -120,12 +120,13 @@ export function CreateInvoiceDialog({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      logAuditEvent("create_invoice", "invoice", invoiceNumber, "invoices", {
+      logAuditEvent("create_invoice", "organization", orgId, "invoices", {
+        invoice_number: invoiceNumber,
         customer: customerName,
         email: customerEmail,
         total,
         action: "downloaded"
-      }, role || "User");
+      }, role || "Owner");
 
       toast.success("Invoice downloaded successfully");
     } catch (error) {
@@ -172,12 +173,13 @@ export function CreateInvoiceDialog({
 
       if (error) throw error;
 
-      logAuditEvent("create_invoice", "invoice", invoiceNumber, "invoices", {
+      logAuditEvent("create_invoice", "organization", orgId, "invoices", {
+        invoice_number: invoiceNumber,
         customer: customerName,
         email: customerEmail,
         total,
         action: "emailed"
-      }, role || "User");
+      }, role || "Owner");
 
       toast.success(`Invoice sent to ${customerEmail}`);
       resetForm();

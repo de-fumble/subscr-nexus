@@ -171,11 +171,11 @@ const CreatePlan = () => {
       }
 
       if (organization) {
-        logAuditEvent("create_plan", "plan", data.plan.id || "new_plan", "plans", {
-          name: validated.name,
+        logAuditEvent("create_plan", "organization", organization.id || "", "plans", {
+          plan_name: validated.name,
           price: validated.price,
           interval: validated.interval
-        }, role || "User");
+        }, role || "Owner");
       }
 
       toast.success("Plan created successfully!");
