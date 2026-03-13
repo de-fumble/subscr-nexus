@@ -36,7 +36,11 @@ export function ThemeProvider({
 
         root.classList.remove("light", "dark")
 
-        const isForceLightPage = ['/', '/auth', '/reset-password', '/verify-email', '/verify-otp'].includes(pathname)
+        const exactLightPages = ['/', '/auth', '/reset-password', '/verify-email', '/verify-otp']
+        const prefixLightPages = ['/plans-hub/', '/subscribe/', '/pay/']
+        const isForceLightPage =
+            exactLightPages.includes(pathname) ||
+            prefixLightPages.some((prefix) => pathname.startsWith(prefix))
         if (isForceLightPage) {
             root.classList.add("light")
             return
