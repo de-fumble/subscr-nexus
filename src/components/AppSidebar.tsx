@@ -119,7 +119,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
                   <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
                 </div>
                 <div className="flex flex-col min-w-0 justify-center">
-                  <span className="font-mono font-bold text-lg tracking-wider text-teal-900">
+                  <span className="font-mono font-bold text-lg tracking-wider text-white">
                     RECURRA
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
 
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium px-2 mb-1">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-white/50 font-medium px-2 mb-1">
             {isExpanded ? "Navigation" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -154,12 +154,12 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
                     isActive={isActive(item.url)}
                     tooltip={item.title}
                     className={`rounded-md transition-all duration-150 ${isActive(item.url)
-                      ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                      ? 'bg-white/20 text-white border border-white/30'
+                      : 'hover:bg-white/10 text-white/70 hover:text-white'
                       }`}
                   >
-                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-primary' : ''}`} />
-                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
+                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-white' : 'text-white/70'}`} />
+                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium text-white' : 'text-white/80'}`}>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -171,7 +171,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
 
         {/* Account Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-medium px-2 mb-1">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-white/50 font-medium px-2 mb-1">
             {isExpanded ? "Account" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -183,12 +183,12 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
                     isActive={isActive(item.url)}
                     tooltip={item.title}
                     className={`rounded-md transition-all duration-150 ${isActive(item.url)
-                      ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                      ? 'bg-white/20 text-white border border-white/30'
+                      : 'hover:bg-white/10 text-white/70 hover:text-white'
                       }`}
                   >
-                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-primary' : ''}`} />
-                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium' : ''}`}>{item.title}</span>}
+                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-white' : 'text-white/70'}`} />
+                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium text-white' : 'text-white/80'}`}>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -198,20 +198,20 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
       </SidebarContent>
 
       <SidebarFooter className="p-2">
-        <div className={`rounded-lg bg-muted/30 border border-border/30 p-2.5 ${isExpanded ? '' : 'p-2'}`}>
+        <div className={`rounded-lg bg-white/10 border border-white/15 p-2.5 ${isExpanded ? '' : 'p-2'}`}>
           <SidebarMenu>
             <SidebarMenuItem>
               <div className={`flex items-center gap-2.5 mb-2 ${isExpanded ? '' : 'justify-center'}`}>
-                <Avatar className="h-8 w-8 ring-1 ring-border/40">
+                <Avatar className="h-8 w-8 ring-1 ring-white/30">
                   <AvatarImage src={organization?.logo_url || undefined} alt={displayName || ''} />
-                  <AvatarFallback className="bg-primary/90 text-primary-foreground text-xs font-medium">
+                  <AvatarFallback className="bg-white/20 text-white text-xs font-medium">
                     {displayName?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
                 {isExpanded && (
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[13px] font-medium truncate">{displayName}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{displayEmail}</p>
+                    <p className="text-[13px] font-medium truncate text-white">{displayName}</p>
+                    <p className="text-[11px] text-white/60 truncate">{displayEmail}</p>
                   </div>
                 )}
               </div>
@@ -220,7 +220,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
               <SidebarMenuButton
                 onClick={handleSignOut}
                 tooltip="Sign Out"
-                className="rounded-md hover:bg-destructive/8 hover:text-destructive text-muted-foreground transition-colors text-[13px]"
+                className="rounded-md hover:bg-red-500/20 hover:text-red-300 text-white/70 transition-colors text-[13px]"
               >
                 <LogOut className="h-4 w-4" />
                 {isExpanded && <span>Sign Out</span>}
