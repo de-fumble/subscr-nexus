@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, XCircle, ArrowLeft, Mail } from "lucide-react";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();

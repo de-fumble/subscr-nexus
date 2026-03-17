@@ -34,7 +34,9 @@ import DashboardInvoices from "./pages/DashboardInvoices";
 import DashboardBillingProfiles from "./pages/DashboardBillingProfiles";
 import BillingProfileDetail from "./pages/BillingProfileDetail";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminProfile from "./pages/SuperAdminProfile";
 import SuperAdminOrganization from "./pages/SuperAdminOrganization";
+import SuperAdminOrganizations from "./pages/SuperAdminOrganizations";
 import SuperAdminPayouts from "./pages/SuperAdminPayouts";
 import SuperAdminDeletions from "./pages/SuperAdminDeletions";
 import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
@@ -42,6 +44,7 @@ import SuperAdminLogs from "./pages/SuperAdminLogs";
 import SuperAdminNameChanges from "./pages/SuperAdminNameChanges";
 import SuperAdminLicenses from "./pages/SuperAdminLicenses";
 import SuperAdminKYC from "./pages/SuperAdminKYC";
+import { SuperAdminLayout } from "./components/SuperAdminLayout";
 // Footer Pages
 import About from "./pages/About";
 import Careers from "./pages/Careers";
@@ -63,7 +66,6 @@ import UserVerifyTransaction from "./pages/UserVerifyTransaction";
 import UserSettings from "./pages/UserSettings";
 
 import DashboardSetup from "./pages/DashboardSetup";
-import { ThemeProvider } from "./components/ThemeProvider";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 
 const queryClient = new QueryClient();
@@ -72,7 +74,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <BrowserRouter>
-        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
           <Toaster />
           <Sonner />
           <Analytics />
@@ -111,17 +112,20 @@ const App = () => (
             <Route path="/dashboard/invoices" element={<ProtectedRoute><DashboardInvoices /></ProtectedRoute>} />
             <Route path="/dashboard/billing-profiles" element={<ProtectedRoute><DashboardBillingProfiles /></ProtectedRoute>} />
             <Route path="/dashboard/billing-profiles/:profileId" element={<ProtectedRoute><BillingProfileDetail /></ProtectedRoute>} />
-            {/* Super Admin Routes */}
-            <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
-            <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
-            <Route path="/superadmin/payouts" element={<ProtectedRoute><SuperAdminPayouts /></ProtectedRoute>} />
-            <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminDeletions /></ProtectedRoute>} />
-            <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
-            <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminAppeals /></ProtectedRoute>} />
-            <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
-            <Route path="/superadmin/name-changes" element={<ProtectedRoute><SuperAdminNameChanges /></ProtectedRoute>} />
-            <Route path="/superadmin/licenses" element={<ProtectedRoute><SuperAdminLicenses /></ProtectedRoute>} />
-            <Route path="/superadmin/kyc" element={<ProtectedRoute><SuperAdminKYC /></ProtectedRoute>} />
+            <Route element={<SuperAdminLayout />}>
+              <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+              <Route path="/superadmin/profile" element={<ProtectedRoute><SuperAdminProfile /></ProtectedRoute>} />
+              <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
+              <Route path="/superadmin/organizations" element={<ProtectedRoute><SuperAdminOrganizations /></ProtectedRoute>} />
+              <Route path="/superadmin/payouts" element={<ProtectedRoute><SuperAdminPayouts /></ProtectedRoute>} />
+              <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminDeletions /></ProtectedRoute>} />
+              <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
+              <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminAppeals /></ProtectedRoute>} />
+              <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
+              <Route path="/superadmin/name-changes" element={<ProtectedRoute><SuperAdminNameChanges /></ProtectedRoute>} />
+              <Route path="/superadmin/licenses" element={<ProtectedRoute><SuperAdminLicenses /></ProtectedRoute>} />
+              <Route path="/superadmin/kyc" element={<ProtectedRoute><SuperAdminKYC /></ProtectedRoute>} />
+            </Route>
             {/* Footer Pages */}
             <Route path="/about" element={<About />} />
             <Route path="/careers" element={<Careers />} />
@@ -138,7 +142,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <MobileBottomNav />
-        </ThemeProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

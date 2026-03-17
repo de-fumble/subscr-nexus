@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Shield, Zap, BarChart3, Building2, User, Mail } from "lucide-react";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 import { logAuditEvent } from "@/utils/auditLogger";
 type AccountType = "institution" | "user";
 type AuthMode = "login" | "signup" | "forgot-password";

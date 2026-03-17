@@ -319,9 +319,23 @@ export default function DashboardStaff() {
 
   if (loading || roleLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
-      </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-background">
+          <AppSidebar organization={organization} role={role} userEmail={undefined} canAccessSettings={canManageStaff} />
+          <SidebarInset className="flex-1">
+            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+              <SidebarTrigger />
+              <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
+            </header>
+            <main className="flex-1 overflow-auto">
+              <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
+                <div className="h-48 bg-muted animate-pulse rounded-xl" />
+                <div className="h-32 bg-muted animate-pulse rounded-xl" />
+              </div>
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
     );
   }
 

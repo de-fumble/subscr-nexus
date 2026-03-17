@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
+import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -111,11 +112,7 @@ export default function SuperAdminPayouts() {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Authenticating..." />;
   }
 
   if (!isSuperadmin) {
@@ -123,19 +120,19 @@ export default function SuperAdminPayouts() {
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Payout Requests</h1>
-          <p className="text-muted-foreground">Manage organization payout requests</p>
+          <h1 className="text-3xl font-bold tracking-tight">Payout Requests</h1>
+          <p className="text-muted-foreground mt-1">Manage organization payout requests</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="bg-muted/50">
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
@@ -144,8 +141,8 @@ export default function SuperAdminPayouts() {
         </TabsList>
 
         <TabsContent value={activeTab}>
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle className="capitalize">{activeTab} Payouts</CardTitle>
               <CardDescription>
                 {activeTab === "pending" && "Review and process pending payout requests"}
@@ -155,72 +152,78 @@ export default function SuperAdminPayouts() {
                 {activeTab === "all" && "All payout requests"}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <PremiumLoader size="lg" message="Loading payouts..." fullScreen={false} />
               ) : (
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Organization</TableHead>
+                  <TableHeader className="bg-muted/10">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="pl-6">Organization</TableHead>
                       <TableHead>Bank Details</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Requested</TableHead>
                       <TableHead>Processed</TableHead>
                       <TableHead>Request Notes</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead className="pr-6"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {payouts.map((payout) => (
-                      <TableRow key={payout.id}>
-                        <TableCell>
+                      <TableRow key={payout.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="pl-6">
                           <div>
                             <p className="font-medium">{payout.organizations?.org_name}</p>
-                            <p className="text-xs text-muted-foreground">{payout.organizations?.email}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{payout.organizations?.email}</p>
                           </div>
                         </TableCell>
                         <TableCell>
                           {payout.organizations?.bank_name ? (
                             <div className="text-sm">
-                              <p className="font-medium">{payout.organizations?.bank_name}</p>
-                              <p className="text-muted-foreground">{payout.organizations?.account_number}</p>
-                              <p className="text-xs text-muted-foreground">{payout.organizations?.account_name}</p>
+                              <p className="font-medium text-foreground">{payout.organizations?.bank_name}</p>
+                              <p className="text-muted-foreground text-xs mt-0.5 font-mono">{payout.organizations?.account_number}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{payout.organizations?.account_name}</p>
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-sm">No bank details</span>
+                            <span className="text-muted-foreground text-sm italic">No bank details</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">₦{payout.amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-medium text-lg">₦{payout.amount.toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant={
                             payout.status === 'completed' ? 'default' :
                             payout.status === 'pending' ? 'secondary' :
                             payout.status === 'approved' ? 'outline' :
                             'destructive'
+                          } className={
+                            payout.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none' :
+                            payout.status === 'pending' ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none shadow-none' :
+                            payout.status === 'approved' ? 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none shadow-none' :
+                            'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 shadow-none'
                           }>
-                            {payout.status}
+                            <span className="capitalize">{payout.status}</span>
                           </Badge>
                         </TableCell>
-                        <TableCell>{new Date(payout.requested_at).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          {payout.processed_at ? new Date(payout.processed_at).toLocaleDateString() : '-'}
+                        <TableCell className="text-muted-foreground">
+                          {new Date(payout.requested_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate">{payout.notes || '-'}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
+                        <TableCell className="text-muted-foreground">
+                          {payout.processed_at ? new Date(payout.processed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground">{payout.notes || '-'}</TableCell>
+                        <TableCell className="pr-6">
+                          <div className="flex gap-2 justify-end">
                             {payout.status === 'pending' && (
                               <>
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
                                   onClick={() => handleApprove(payout.id)}
                                   disabled={actionLoading}
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  <CheckCircle className="h-4 w-4 mr-1.5" />
                                   Approve
                                 </Button>
                                 <Button
@@ -229,7 +232,7 @@ export default function SuperAdminPayouts() {
                                   onClick={() => openRejectDialog(payout)}
                                   disabled={actionLoading}
                                 >
-                                  <XCircle className="h-4 w-4 mr-1" />
+                                  <XCircle className="h-4 w-4 mr-1.5" />
                                   Reject
                                 </Button>
                               </>
@@ -240,8 +243,8 @@ export default function SuperAdminPayouts() {
                                 onClick={() => handleComplete(payout.id)}
                                 disabled={actionLoading}
                               >
-                                <Clock className="h-4 w-4 mr-1" />
-                                Mark Complete
+                                <Clock className="h-4 w-4 mr-1.5" />
+                                Complete
                               </Button>
                             )}
                           </div>
@@ -250,8 +253,8 @@ export default function SuperAdminPayouts() {
                     ))}
                     {payouts.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                          No {activeTab} payout requests
+                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                          No {activeTab} payout requests found
                         </TableCell>
                       </TableRow>
                     )}
@@ -282,7 +285,7 @@ export default function SuperAdminPayouts() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={actionLoading || !rejectReason}>
-              {actionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {actionLoading && <PremiumSpinner className="mr-2" />}
               Reject
             </Button>
           </DialogFooter>

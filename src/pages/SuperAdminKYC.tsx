@@ -12,6 +12,7 @@ import {
   Loader2, Search, FileCheck, CheckCircle2, XCircle, Clock,
   Building, Download, Eye, ArrowLeft, RefreshCw
 } from "lucide-react";
+import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -190,11 +191,7 @@ export default function SuperAdminKYC() {
   const pendingCount = submissions.filter(s => !s.kyc_verified).length;
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Loading KYC data..." />;
   }
 
   if (!isSuperadmin) {
@@ -202,105 +199,109 @@ export default function SuperAdminKYC() {
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/superadmin")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <FileCheck className="h-8 w-8" />
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <FileCheck className="h-8 w-8 text-primary" />
               KYC Submissions
             </h1>
-            <p className="text-muted-foreground">Review and approve organization KYC submissions</p>
+            <p className="text-muted-foreground mt-1">Review and approve organization KYC submissions</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            {pendingCount} Pending
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="text-sm font-medium px-3 py-1.5 bg-background shadow-sm">
+            <span className="text-primary font-bold mr-1">{pendingCount}</span> Pending
           </Badge>
-          <Button variant="outline" size="icon" onClick={() => fetchSubmissions(true)} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => fetchSubmissions(true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/50">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All KYC Submissions</CardTitle>
               <CardDescription>Organizations that have submitted KYC information</CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search submissions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
+                className="pl-9 bg-background"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
+            <TableHeader className="bg-muted/10">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Organization</TableHead>
                 <TableHead>Business Name</TableHead>
                 <TableHead>Business Type</TableHead>
                 <TableHead>Staff Count</TableHead>
                 <TableHead>Document</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Submitted</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="pr-6"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredSubmissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell>
+                <TableRow key={submission.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="pl-6">
                     <div>
-                      <p className="font-medium">{submission.org_name}</p>
-                      <p className="text-sm text-muted-foreground">{submission.email}</p>
+                      <p className="font-medium text-foreground">{submission.org_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{submission.email}</p>
                     </div>
                   </TableCell>
-                  <TableCell>{submission.business_name || "-"}</TableCell>
-                  <TableCell className="capitalize">{submission.business_type?.replace(/_/g, " ") || "-"}</TableCell>
-                  <TableCell>{submission.staff_count || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">{submission.business_name || "-"}</TableCell>
+                  <TableCell className="capitalize text-muted-foreground">{submission.business_type?.replace(/_/g, " ") || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">{submission.staff_count || "-"}</TableCell>
                   <TableCell>
                     {submission.registration_document_url ? (
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10"
                         onClick={() => window.open(submission.registration_document_url!, "_blank")}
                       >
-                        <Download className="h-4 w-4 mr-1" />
+                        <Download className="h-4 w-4 mr-1.5" />
                         Download
                       </Button>
                     ) : (
-                      <span className="text-muted-foreground">None</span>
+                      <span className="text-muted-foreground italic text-sm">None</span>
                     )}
                   </TableCell>
                   <TableCell>{getStatusBadge(submission)}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-muted-foreground">
                     {submission.kyc_submitted_at
-                      ? new Date(submission.kyc_submitted_at).toLocaleDateString()
+                      ? new Date(submission.kyc_submitted_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                       : "-"}
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => handleReview(submission)}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      Review
-                    </Button>
+                  <TableCell className="pr-6">
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => handleReview(submission)} className="border border-input hover:bg-accent hover:text-accent-foreground">
+                        <Eye className="h-4 w-4 mr-1.5" />
+                        Review
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
               {filteredSubmissions.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                     {searchQuery ? "No submissions match your search" : "No KYC submissions yet"}
                   </TableCell>
                 </TableRow>
@@ -391,7 +392,7 @@ export default function SuperAdminKYC() {
               onClick={handleDeny}
               disabled={processing}
             >
-              {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+              {processing ? <PremiumSpinner className="mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
               Deny
             </Button>
             <Button
@@ -399,7 +400,7 @@ export default function SuperAdminKYC() {
               disabled={processing}
               className="bg-green-600 hover:bg-green-700"
             >
-              {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              {processing ? <PremiumSpinner className="mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
               Approve
             </Button>
           </DialogFooter>

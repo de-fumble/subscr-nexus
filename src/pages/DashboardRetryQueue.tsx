@@ -307,7 +307,31 @@ const DashboardRetryQueue = () => {
   };
 
   if (loading) {
-    return <PremiumLoader message="Loading retry queue..." />;
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
+          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+          <SidebarInset className="flex-1 flex flex-col">
+            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+              <SidebarTrigger />
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-primary" />
+                Retry Queue
+              </h1>
+            </header>
+            <main className="flex-1 overflow-auto p-4 sm:p-6">
+              <div className="max-w-7xl mx-auto space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
+                </div>
+                <div className="h-10 w-64 bg-muted animate-pulse rounded-lg" />
+                <div className="h-64 bg-muted animate-pulse rounded-xl" />
+              </div>
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
   }
 
   return (

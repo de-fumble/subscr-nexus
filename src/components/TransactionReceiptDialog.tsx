@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Download, Printer, CheckCircle2, Loader2 } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PDFReceiptDocument } from "./PDFReceiptDocument";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 
 interface TransactionDetails {
   reference: string;

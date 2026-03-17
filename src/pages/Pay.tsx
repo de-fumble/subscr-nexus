@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Shield, Lock, CreditCard, CheckCircle2, Sparkles, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 
 interface Payment {
   id: string;

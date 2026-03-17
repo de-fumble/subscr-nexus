@@ -36,14 +36,12 @@ export function DashboardSplash() {
                     {/* System Logo */}
                     <div className="relative h-16 w-16">
                         <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping" />
-                        <div className="absolute inset-2 bg-primary/40 rounded-full animate-pulse" />
-                        <div className="relative h-full w-full rounded-2xl bg-gradient-to-br from-primary/10 to-blue-600/10 flex items-center justify-center transform transition-transform hover:scale-105 duration-300">
-                            <img
-                                src="/sidebar-logo.png"
-                                alt="Recurra"
-                                className="h-12 w-12 object-cover rounded-full ring-2 ring-background/50 shadow-sm"
-                            />
-                        </div>
+                        <div className="absolute inset-2 bg-primary/20 rounded-full animate-pulse" />
+                        <img
+                            src="/recurra-logo.svg"
+                            alt="Recurra"
+                            className="relative h-16 w-16 rounded-full shadow-lg ring-2 ring-background/50"
+                        />
                     </div>
 
                     <div className="space-y-2 w-full">

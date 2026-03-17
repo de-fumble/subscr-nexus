@@ -21,47 +21,56 @@ export function PremiumLoader({
 
   const s = sizes[size];
 
+  // Using a minimalist dark teal and white aesthetic
   const loader = (
     <div className={cn("flex flex-col items-center gap-4", className)}>
       <div className="relative">
-        {/* Outer glow */}
+        {/* Outer glow (subtle) */}
         <div className={cn(
-          "absolute inset-0 rounded-full bg-accent/10 blur-xl animate-pulse",
+          "absolute inset-0 rounded-full blur-xl animate-pulse opacity-20",
           size === "lg" ? "scale-150" : "scale-125"
-        )} />
+        )} style={{ backgroundColor: "hsl(var(--sidebar-background))" }} />
         
         {/* Main spinner container */}
         <div className={cn("relative", s.container)}>
           {/* Rotating ring */}
           <div className={cn(
-            "absolute inset-0 rounded-full border-2 border-accent/20",
+            "absolute inset-0 rounded-full border-2",
             s.ring
           )} 
-          style={{ margin: "auto", top: 0, bottom: 0, left: 0, right: 0 }}
+          style={{ 
+            margin: "auto", top: 0, bottom: 0, left: 0, right: 0,
+            borderColor: "rgba(10, 77, 77, 0.1)" // Light teal trail
+          }}
           />
           <div 
             className={cn(
-              "absolute rounded-full border-2 border-transparent border-t-accent",
+              "absolute rounded-full border-2 border-transparent",
               s.ring
             )}
             style={{ 
               margin: "auto", top: 0, bottom: 0, left: 0, right: 0,
-              animation: "spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite" 
+              borderTopColor: "hsl(var(--sidebar-background))", // Dark teal leading edge
+              animation: "spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite" 
             }}
           />
           
-          {/* Center dot */}
+          {/* Center dot container for white inner dot over dark teal inner background */}
           <div className={cn(
-            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent",
+            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
             s.dot
           )}
-          style={{ animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
-          />
+          style={{ 
+            backgroundColor: "hsl(var(--sidebar-background))",
+            animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" 
+          }}>
+            <div className="h-full w-full rounded-full bg-white scale-50" />
+          </div>
         </div>
       </div>
       
       {message && (
-        <p className="text-xs text-muted-foreground/70 tracking-wide font-medium animate-pulse">
+        <p className="text-xs tracking-wide font-medium animate-pulse" style={{ color: "hsl(var(--sidebar-background))" }}>
           {message}
         </p>
       )}
@@ -87,10 +96,16 @@ export function PremiumLoader({
 export function PremiumSpinner({ className }: { className?: string }) {
   return (
     <div className={cn(
-      "h-4 w-4 rounded-full border-2 border-transparent border-t-current",
+      "h-4 w-4 rounded-full border-2 border-transparent",
       className
     )}
-    style={{ animation: "spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite" }}
+    style={{ 
+      borderTopColor: "hsl(var(--sidebar-background))", 
+      borderRightColor: "rgba(10, 77, 77, 0.1)",
+      borderBottomColor: "rgba(10, 77, 77, 0.1)",
+      borderLeftColor: "rgba(10, 77, 77, 0.1)",
+      animation: "spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite" 
+    }}
     />
   );
 }

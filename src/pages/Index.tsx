@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, ArrowDown, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2, Dumbbell } from "lucide-react";
 import { Link } from "react-router-dom";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 import dashboardPreview from "@/assets/dashboard-preview.png";
 import usecaseSchool from "@/assets/usecase-school-v2.png";
 import usecaseCooperative from "@/assets/usecase-cooperative-v2.png";

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Key, Search, RefreshCw, Building2, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -154,11 +155,7 @@ export default function SuperAdminLicenses() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Loading licenses..." />;
   }
 
   if (!isSuperadmin) {
@@ -166,58 +163,71 @@ export default function SuperAdminLicenses() {
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">License Management</h1>
-          <p className="text-muted-foreground">View and manage organization licenses</p>
+          <h1 className="text-3xl font-bold tracking-tight">License Management</h1>
+          <p className="text-muted-foreground mt-1">View and manage organization licenses</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={() => fetchData(true)} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
           </Button>
-          <Button variant="outline" onClick={() => navigate("/superadmin")}>
-            Back to Dashboard
+          <Button variant="outline" size="sm" onClick={() => navigate("/superadmin")}>
+            Dashboard
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="border-black/5 dark:border-white/5 shadow-sm relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Organizations</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
+              <Building2 className="h-4 w-4 text-indigo-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-black/5 dark:border-white/5 shadow-sm relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Active Licenses</CardTitle>
-            <Key className="h-4 w-4 text-green-500" />
+            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <Key className="h-4 w-4 text-emerald-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.licensed}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{stats.licensed}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-black/5 dark:border-white/5 shadow-sm relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Expired</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <div className="h-8 w-8 rounded-full bg-rose-500/10 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.expired}</div>
+            <div className="text-2xl font-bold text-rose-600 dark:text-rose-500">{stats.expired}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-black/5 dark:border-white/5 shadow-sm relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Unlicensed</CardTitle>
-            <Key className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-slate-500/10 flex items-center justify-center">
+              <Key className="h-4 w-4 text-slate-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-muted-foreground">{stats.unlicensed}</div>
@@ -226,64 +236,64 @@ export default function SuperAdminLicenses() {
       </div>
 
       {/* Organizations Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/50">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>Organizations</CardTitle>
               <CardDescription>All organizations with license status</CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search organizations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
+                className="pl-9 bg-background"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
+            <TableHeader className="bg-muted/10">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Organization</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>License Status</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Expires</TableHead>
                 <TableHead>KYC</TableHead>
-                <TableHead className="text-right">Joined</TableHead>
+                <TableHead className="text-right pr-6">Joined</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredOrganizations.map((org) => (
-                <TableRow key={org.id}>
-                  <TableCell className="font-medium">{org.org_name}</TableCell>
-                  <TableCell>{org.email}</TableCell>
+                <TableRow key={org.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="font-medium pl-6">{org.org_name}</TableCell>
+                  <TableCell className="text-muted-foreground">{org.email}</TableCell>
                   <TableCell>{getLicenseStatus(org.license)}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-muted-foreground">
                     {org.license ? PLAN_LABELS[org.license.plan_type] || org.license.plan_type : "-"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-muted-foreground">
                     {org.license ? format(new Date(org.license.expires_at), "MMM d, yyyy") : "-"}
                   </TableCell>
                   <TableCell>
                     {org.kyc_verified ? (
-                      <Badge className="bg-green-500/10 text-green-600">Verified</Badge>
+                      <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none border-none">Verified</Badge>
                     ) : (
-                      <Badge variant="outline">Pending</Badge>
+                      <Badge variant="outline" className="shadow-none">Pending</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right text-muted-foreground pr-6">
                     {format(new Date(org.created_at), "MMM d, yyyy")}
                   </TableCell>
                 </TableRow>
               ))}
               {filteredOrganizations.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                     {searchQuery ? "No organizations match your search" : "No organizations found"}
                   </TableCell>
                 </TableRow>

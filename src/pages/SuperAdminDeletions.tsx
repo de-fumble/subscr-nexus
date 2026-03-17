@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -97,11 +98,7 @@ export default function SuperAdminDeletions() {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Authenticating..." />;
   }
 
   if (!isSuperadmin) {
@@ -109,19 +106,19 @@ export default function SuperAdminDeletions() {
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Deletion Requests</h1>
-          <p className="text-muted-foreground">Review and process account deletion requests</p>
+          <h1 className="text-3xl font-bold tracking-tight">Deletion Requests</h1>
+          <p className="text-muted-foreground mt-1">Review and process account deletion requests</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="bg-muted/50">
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
@@ -129,8 +126,8 @@ export default function SuperAdminDeletions() {
         </TabsList>
 
         <TabsContent value={activeTab}>
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle className="capitalize">{activeTab} Deletion Requests</CardTitle>
               <CardDescription>
                 {activeTab === "pending" && "Review pending deletion requests carefully"}
@@ -139,53 +136,55 @@ export default function SuperAdminDeletions() {
                 {activeTab === "all" && "All deletion requests"}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <PremiumLoader size="lg" message="Loading deletions..." fullScreen={false} />
               ) : (
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Organization</TableHead>
+                  <TableHeader className="bg-muted/10">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="pl-6">Organization</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Reason</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Requested</TableHead>
                       <TableHead>Processed</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead className="pr-6"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {deletions.map((deletion) => (
-                      <TableRow key={deletion.id}>
-                        <TableCell className="font-medium">{deletion.organizations?.org_name || 'Deleted'}</TableCell>
-                        <TableCell>{deletion.organizations?.email || '-'}</TableCell>
-                        <TableCell className="max-w-xs truncate">{deletion.reason || '-'}</TableCell>
+                      <TableRow key={deletion.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium pl-6">{deletion.organizations?.org_name || 'Deleted'}</TableCell>
+                        <TableCell className="text-muted-foreground">{deletion.organizations?.email || '-'}</TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground">{deletion.reason || '-'}</TableCell>
                         <TableCell>
                           <Badge variant={
                             deletion.status === 'approved' ? 'default' :
                             deletion.status === 'pending' ? 'secondary' :
                             'destructive'
+                          } className={
+                            deletion.status === 'approved' ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none' :
+                            deletion.status === 'pending' ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none shadow-none' :
+                            'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 shadow-none'
                           }>
-                            {deletion.status}
+                            <span className="capitalize">{deletion.status}</span>
                           </Badge>
                         </TableCell>
-                        <TableCell>{new Date(deletion.requested_at).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          {deletion.processed_at ? new Date(deletion.processed_at).toLocaleDateString() : '-'}
+                        <TableCell className="text-muted-foreground">{new Date(deletion.requested_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {deletion.processed_at ? new Date(deletion.processed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="pr-6">
                           {deletion.status === 'pending' && (
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 justify-end">
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => openConfirmDialog(deletion)}
                                 disabled={actionLoading}
                               >
-                                <CheckCircle className="h-4 w-4 mr-1" />
+                                <CheckCircle className="h-4 w-4 mr-1.5" />
                                 Approve
                               </Button>
                               <Button
@@ -194,7 +193,7 @@ export default function SuperAdminDeletions() {
                                 onClick={() => handleReject(deletion.id)}
                                 disabled={actionLoading}
                               >
-                                <XCircle className="h-4 w-4 mr-1" />
+                                <XCircle className="h-4 w-4 mr-1.5" />
                                 Reject
                               </Button>
                             </div>
@@ -204,7 +203,7 @@ export default function SuperAdminDeletions() {
                     ))}
                     {deletions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                           No {activeTab} deletion requests
                         </TableCell>
                       </TableRow>
@@ -238,7 +237,7 @@ export default function SuperAdminDeletions() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={actionLoading}
             >
-              {actionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {actionLoading && <PremiumSpinner className="mr-2" />}
               Delete Organization
             </AlertDialogAction>
           </AlertDialogFooter>

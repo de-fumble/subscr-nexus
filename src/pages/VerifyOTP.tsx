@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Loader2, ArrowLeft, Mail, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 
 const VerifyOTP = () => {
   const [searchParams] = useSearchParams();

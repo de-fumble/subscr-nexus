@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Search, CheckCircle, RefreshCw } from "lucide-react";
+import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -104,11 +105,7 @@ export default function SuperAdminDefaulters() {
   );
 
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Authenticating..." />;
   }
 
   if (!isSuperadmin) {
@@ -116,52 +113,51 @@ export default function SuperAdminDefaulters() {
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Defaulted Subscribers</h1>
-            <p className="text-muted-foreground">Track and manage subscribers with payment issues (live from Paystack)</p>
+            <h1 className="text-3xl font-bold tracking-tight">Defaulted Subscribers</h1>
+            <p className="text-muted-foreground mt-1">Track and manage subscribers with payment issues across organizations</p>
           </div>
         </div>
-        <Button variant="outline" size="icon" onClick={() => fetchDefaulters(true)} disabled={refreshing}>
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+        <Button variant="outline" size="sm" onClick={() => fetchDefaulters(true)} disabled={refreshing}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/50">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Defaulters ({defaulters.length})</CardTitle>
               <CardDescription>
-                Subscribers with payment failures, paused, or non-renewing status across all organizations
+                Subscribers with payment failures, paused, or non-renewing status
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search defaulters..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
+                className="pl-9 bg-background"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
+            <PremiumLoader size="lg" message="Loading defaulters..." fullScreen={false} />
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Organization</TableHead>
+              <TableHeader className="bg-muted/10">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Organization</TableHead>
                   <TableHead>Subscriber</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Plan</TableHead>
@@ -170,61 +166,64 @@ export default function SuperAdminDefaulters() {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Retries</TableHead>
                   <TableHead>Next Retry</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="pr-6"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDefaulters.map((defaulter, index) => (
-                  <TableRow key={defaulter.id || index}>
-                    <TableCell className="font-medium">
+                  <TableRow key={defaulter.id || index} className="hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-medium pl-6">
                       {defaulter.organization || '-'}
                     </TableCell>
                     <TableCell>{defaulter.customer_name || '-'}</TableCell>
-                    <TableCell>{defaulter.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{defaulter.email}</TableCell>
                     <TableCell>{defaulter.plan}</TableCell>
                     <TableCell>
                       {getStatusBadge(defaulter.status, defaulter.failure_reason)}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground truncate max-w-[150px]">
                       {defaulter.failure_reason || '-'}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-medium">
                       ₦{(defaulter.amount || 0).toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center text-muted-foreground">
                       {defaulter.retry_count !== undefined ? `${defaulter.retry_count} / 3` : '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-muted-foreground">
                       {defaulter.next_payment_date 
-                        ? new Date(defaulter.next_payment_date).toLocaleDateString() 
+                        ? new Date(defaulter.next_payment_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) 
                         : defaulter.last_retry_at
-                          ? new Date(defaulter.last_retry_at).toLocaleDateString()
+                          ? new Date(defaulter.last_retry_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                           : '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="pr-6">
                       {defaulter.id && !defaulter.id.startsWith('SUB_') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMarkResolved(defaulter.id)}
-                          disabled={actionLoading === defaulter.id}
-                        >
-                          {actionLoading === defaulter.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Resolve
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+                            onClick={() => handleMarkResolved(defaulter.id)}
+                            disabled={actionLoading === defaulter.id}
+                          >
+                            {actionLoading === defaulter.id ? (
+                              <PremiumSpinner />
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-1.5" />
+                                Resolve
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredDefaulters.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                       {searchQuery ? 'No matching defaulters found' : 'No defaulted subscribers'}
                     </TableCell>
                   </TableRow>

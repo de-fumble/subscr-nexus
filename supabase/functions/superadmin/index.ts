@@ -947,7 +947,8 @@ async function getPlatformStats(supabase: any) {
   }
 
   const platformEarnings = totalTransactions * PLATFORM_FEE_PER_TRANSACTION;
-  const totalARR = totalMRR * 12;
+  const roundedMRR = Math.round(totalMRR);
+  const totalARR = roundedMRR * 12;
 
   // Pending counts
   const { count: pendingPayouts } = await supabase

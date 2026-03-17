@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
+import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -117,11 +118,7 @@ export default function SuperAdminAppeals() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Loading appeals..." />;
   }
 
   if (!isSuperadmin) return null;
@@ -130,41 +127,41 @@ export default function SuperAdminAppeals() {
   const processedAppeals = appeals.filter(a => a.status !== "pending");
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/superadmin")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Suspension Appeals</h1>
-          <p className="text-muted-foreground">Review and manage organization suspension appeals</p>
+          <h1 className="text-3xl font-bold tracking-tight">Suspension Appeals</h1>
+          <p className="text-muted-foreground mt-1">Review and manage organization suspension appeals</p>
         </div>
       </div>
 
       {/* Pending Appeals */}
-      <Card>
-        <CardHeader>
+      <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/50">
           <CardTitle>Pending Appeals ({pendingAppeals.length})</CardTitle>
           <CardDescription>Appeals waiting for review</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
+            <TableHeader className="bg-muted/10">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Organization</TableHead>
                 <TableHead>Original Suspension Reason</TableHead>
                 <TableHead>Appeal Reason</TableHead>
                 <TableHead>Submitted</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="pr-6"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pendingAppeals.map((appeal) => (
-                <TableRow key={appeal.id}>
-                  <TableCell>
+                <TableRow key={appeal.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="pl-6">
                     <div>
                       <p className="font-medium">{appeal.organizations?.org_name}</p>
-                      <p className="text-xs text-muted-foreground">{appeal.organizations?.email}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{appeal.organizations?.email}</p>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
@@ -175,17 +172,19 @@ export default function SuperAdminAppeals() {
                   <TableCell className="max-w-sm">
                     <p className="text-sm line-clamp-2">{appeal.appeal_reason}</p>
                   </TableCell>
-                  <TableCell>{new Date(appeal.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
+                  <TableCell className="text-muted-foreground">{new Date(appeal.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</TableCell>
+                  <TableCell className="pr-6">
+                    <div className="flex gap-2 justify-end">
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
                         onClick={() => {
                           setSelectedAppeal(appeal);
                           setActionType("approve");
                         }}
                       >
-                        <CheckCircle className="h-3 w-3 mr-1" />
+                        <CheckCircle className="h-4 w-4 mr-1.5" />
                         Approve
                       </Button>
                       <Button
@@ -196,7 +195,7 @@ export default function SuperAdminAppeals() {
                           setActionType("reject");
                         }}
                       >
-                        <XCircle className="h-3 w-3 mr-1" />
+                        <XCircle className="h-4 w-4 mr-1.5" />
                         Reject
                       </Button>
                     </div>
@@ -205,7 +204,7 @@ export default function SuperAdminAppeals() {
               ))}
               {pendingAppeals.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                     No pending appeals
                   </TableCell>
                 </TableRow>
@@ -216,29 +215,29 @@ export default function SuperAdminAppeals() {
       </Card>
 
       {/* Processed Appeals */}
-      <Card>
-        <CardHeader>
+      <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/50">
           <CardTitle>Processed Appeals</CardTitle>
           <CardDescription>Previously reviewed appeals</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
+            <TableHeader className="bg-muted/10">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Organization</TableHead>
                 <TableHead>Appeal Reason</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Admin Notes</TableHead>
-                <TableHead>Processed</TableHead>
+                <TableHead className="pr-6">Processed</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {processedAppeals.map((appeal) => (
-                <TableRow key={appeal.id}>
-                  <TableCell>
+                <TableRow key={appeal.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="pl-6">
                     <div>
                       <p className="font-medium">{appeal.organizations?.org_name}</p>
-                      <p className="text-xs text-muted-foreground">{appeal.organizations?.email}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{appeal.organizations?.email}</p>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-sm">
@@ -250,12 +249,12 @@ export default function SuperAdminAppeals() {
                       {appeal.admin_notes || "-"}
                     </p>
                   </TableCell>
-                  <TableCell>{new Date(appeal.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-muted-foreground pr-6">{new Date(appeal.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</TableCell>
                 </TableRow>
               ))}
               {processedAppeals.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                     No processed appeals
                   </TableCell>
                 </TableRow>
@@ -308,7 +307,7 @@ export default function SuperAdminAppeals() {
               onClick={handleAction}
               disabled={processing || (actionType === "reject" && !adminNotes.trim())}
             >
-              {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {processing && <PremiumSpinner className="mr-2" />}
               {actionType === "approve" ? "Approve & Restore" : "Reject Appeal"}
             </Button>
           </DialogFooter>

@@ -21,7 +21,6 @@ import { DashboardSplash } from "@/components/DashboardSplash";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { SetupProgressCard } from "@/components/SetupProgressCard";
 import { NotificationIcon } from "@/components/NotificationIcon";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { FounderInsight } from "@/components/FounderInsight";
 interface Organization {
@@ -78,7 +77,6 @@ const DashboardHeader = ({
       </h1>
     </div>
     <div className="flex items-center gap-2 pr-1 sm:pr-0">
-      <ThemeToggle />
       {orgId && <div className="shrink-0 relative z-50 flex items-center"><NotificationIcon orgId={orgId} /></div>}
     </div>
   </header>;
@@ -816,11 +814,9 @@ const Dashboard = () => {
                   <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
                     <div className="flex items-center justify-between mb-2 sm:mb-3">
                       <span className="stat-label text-xs sm:text-sm font-medium">Failed</span>
-                      <FailedPaymentsDialog>
-                        <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-destructive hover:text-destructive/80 text-[10px] sm:text-xs">
+                      <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-destructive hover:text-destructive/80 text-[10px] sm:text-xs" onClick={() => navigate("/dashboard/failed-payments")}>
                           Manage
                         </Button>
-                      </FailedPaymentsDialog>
                     </div>
                     <div>
                       <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">

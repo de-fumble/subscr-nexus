@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle, RefreshCw, CreditCard } from "lucide-react";
+import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
   TableBody,
@@ -157,11 +158,7 @@ export default function SuperAdminOrganization() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Loading organization..." />;
   }
 
   if (!details) {
@@ -175,7 +172,7 @@ export default function SuperAdminOrganization() {
   const org = details.organization;
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin')}>
@@ -183,27 +180,28 @@ export default function SuperAdminOrganization() {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold">{org.org_name}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{org.org_name}</h1>
               {org.is_suspended ? (
-                <Badge variant="destructive">Suspended</Badge>
+                <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20">Suspended</Badge>
               ) : (
-                <Badge variant="default">Active</Badge>
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20">Active</Badge>
               )}
             </div>
-            <p className="text-muted-foreground">{org.email}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{org.email}</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={() => fetchData(true)} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
           {org.is_suspended ? (
-            <Button onClick={handleRestore} disabled={actionLoading}>
+            <Button size="sm" onClick={handleRestore} disabled={actionLoading}>
               <CheckCircle className="h-4 w-4 mr-2" />
               Restore Organization
             </Button>
           ) : (
-            <Button variant="destructive" onClick={() => setSuspendDialogOpen(true)} disabled={actionLoading}>
+            <Button size="sm" variant="destructive" onClick={() => setSuspendDialogOpen(true)} disabled={actionLoading}>
               <Ban className="h-4 w-4 mr-2" />
               Suspend Organization
             </Button>
@@ -213,53 +211,65 @@ export default function SuperAdminOrganization() {
 
       {/* Revenue Summary Cards - Row 1 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-emerald-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₦{(analytics?.total_revenue || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              From {analytics?.transaction_count || 0} transactions
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight">₦{(analytics?.total_revenue || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              From <span className="font-medium text-emerald-500">{analytics?.transaction_count || 0}</span> transactions
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Amount Owed</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent" />
+           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
+            <CardTitle className="text-sm font-medium">Platform Fee Owed</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₦{(analytics?.recurring_revenue || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              After ₦{(analytics?.platform_fee || 0).toLocaleString()} platform fee
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight">₦{(analytics?.recurring_revenue || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+               Based on ₦{(analytics?.platform_fee || 0).toLocaleString()} platform fee
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">MRR</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
+               <TrendingUp className="h-4 w-4 text-green-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">₦{(analytics?.mrr || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight text-green-600">₦{(analytics?.mrr || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Monthly Recurring Revenue
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-transparent" />
+           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">ARR</CardTitle>
-            <CreditCard className="h-4 w-4 text-blue-500" />
+            <div className="h-8 w-8 rounded-full bg-cyan-500/10 flex items-center justify-center">
+              <CreditCard className="h-4 w-4 text-cyan-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">₦{(analytics?.arr || 0).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight text-cyan-600">₦{(analytics?.arr || 0).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Annual Recurring Revenue
             </p>
           </CardContent>
@@ -268,53 +278,65 @@ export default function SuperAdminOrganization() {
 
       {/* Subscriber Stats - Row 2 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-violet-500/10 flex items-center justify-center">
+              <Users className="h-4 w-4 text-violet-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics?.total_subscribers || 0}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight">{analytics?.total_subscribers || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               All-time subscribers
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
-            <Users className="h-4 w-4 text-green-500" />
+            <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
+              <Users className="h-4 w-4 text-green-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{analytics?.active_subscribers || 0}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight text-green-600">{analytics?.active_subscribers || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Currently paying
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">Defaulted</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <div className="h-8 w-8 rounded-full bg-rose-500/10 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{analytics?.defaulted_subscribers || 0}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight text-rose-500">{analytics?.defaulted_subscribers || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Payment issues
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <div className="h-8 w-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+               <AlertTriangle className="h-4 w-4 text-orange-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{analytics?.churn_rate || 0}%</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold tracking-tight text-orange-600">{analytics?.churn_rate || 0}%</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {analytics?.churned_subscribers || 0} churned
             </p>
           </CardContent>
@@ -333,7 +355,7 @@ export default function SuperAdminOrganization() {
         <TabsContent value="analytics" className="space-y-4">
           {/* Charts */}
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card className="border-black/5 dark:border-white/5 shadow-sm">
               <CardHeader>
                 <CardTitle>Monthly Revenue Trend</CardTitle>
                 <CardDescription>Revenue over the last 12 months</CardDescription>
@@ -341,14 +363,21 @@ export default function SuperAdminOrganization() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={analytics?.monthly_revenue_trend || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                       }}
                       formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
                     />
@@ -356,8 +385,7 @@ export default function SuperAdminOrganization() {
                       type="monotone"
                       dataKey="revenue"
                       stroke="hsl(var(--primary))"
-                      fill="hsl(var(--primary))"
-                      fillOpacity={0.2}
+                      fill="url(#colorRevenue)"
                       strokeWidth={2}
                     />
                   </AreaChart>
@@ -365,7 +393,7 @@ export default function SuperAdminOrganization() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-black/5 dark:border-white/5 shadow-sm">
               <CardHeader>
                 <CardTitle>Subscriber Growth</CardTitle>
                 <CardDescription>New subscribers over time</CardDescription>
@@ -373,14 +401,15 @@ export default function SuperAdminOrganization() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={analytics?.subscriber_growth || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                       }}
                     />
                     <Line
@@ -388,6 +417,8 @@ export default function SuperAdminOrganization() {
                       dataKey="subscribers"
                       stroke="hsl(var(--chart-2))"
                       strokeWidth={2}
+                      dot={{ r: 4, strokeWidth: 2 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -396,33 +427,34 @@ export default function SuperAdminOrganization() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card className="border-black/5 dark:border-white/5 shadow-sm">
               <CardHeader>
                 <CardTitle>Subscribers by Plan</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={analytics?.subscribers_by_plan || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                       }}
                     />
-                    <Legend />
-                    <Bar dataKey="active" fill="hsl(var(--primary))" name="Active" />
-                    <Bar dataKey="defaulted" fill="hsl(var(--destructive))" name="Defaulted" />
-                    <Bar dataKey="churned" fill="hsl(var(--muted-foreground))" name="Churned" />
+                    <Legend iconType="circle" />
+                    <Bar dataKey="active" fill="hsl(var(--primary))" name="Active" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="defaulted" fill="hsl(var(--destructive))" name="Defaulted" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="churned" fill="hsl(var(--muted-foreground))" name="Churned" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-black/5 dark:border-white/5 shadow-sm">
               <CardHeader>
                 <CardTitle>Plan Distribution</CardTitle>
                 <CardDescription>Active subscribers by plan</CardDescription>
@@ -435,20 +467,29 @@ export default function SuperAdminOrganization() {
                         data={analytics?.plan_distribution || []}
                         cx="50%"
                         cy="50%"
-                        labelLine={true}
-                        label={({ name, count, percentage }) => `${name}: ${count} (${percentage}%)`}
+                        labelLine={false}
+                        label={({ name, percentage }) => `${name} (${percentage}%)`}
                         outerRadius={100}
+                        innerRadius={60}
                         dataKey="count"
+                        paddingAngle={2}
                       >
                         {(analytics?.plan_distribution || []).map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground border border-dashed rounded-lg">
                     No active subscribers to show distribution
                   </div>
                 )}
@@ -457,34 +498,34 @@ export default function SuperAdminOrganization() {
           </div>
 
           {/* Revenue by Plan Table */}
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle>Revenue by Plan</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Plan Name</TableHead>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Plan Name</TableHead>
                     <TableHead className="text-right">Active Subscribers</TableHead>
                     <TableHead className="text-right">Revenue</TableHead>
                     <TableHead className="text-right">Platform Fee</TableHead>
-                    <TableHead className="text-right">Net Revenue</TableHead>
+                    <TableHead className="text-right pr-6">Net Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(analytics?.revenue_by_plan || []).map((plan) => (
-                    <TableRow key={plan.name}>
-                      <TableCell className="font-medium">{plan.name}</TableCell>
+                    <TableRow key={plan.name} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium pl-6">{plan.name}</TableCell>
                       <TableCell className="text-right">{plan.active_subscribers}</TableCell>
                       <TableCell className="text-right">₦{plan.revenue.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-muted-foreground">₦{plan.platform_fee.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-medium">₦{plan.net_revenue.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-medium text-emerald-600 pr-6">₦{plan.net_revenue.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                   {(analytics?.revenue_by_plan || []).length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         No revenue data available
                       </TableCell>
                     </TableRow>
@@ -496,40 +537,40 @@ export default function SuperAdminOrganization() {
         </TabsContent>
 
         <TabsContent value="plans">
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle>Subscription Plans</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Name</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Interval</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Paystack Code</TableHead>
+                    <TableHead className="pr-6">Paystack Code</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {details.plans.map((plan) => (
-                    <TableRow key={plan.id}>
-                      <TableCell className="font-medium">{plan.name}</TableCell>
+                    <TableRow key={plan.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium pl-6">{plan.name}</TableCell>
                       <TableCell>₦{plan.price.toLocaleString()}</TableCell>
                       <TableCell className="capitalize">{plan.interval}</TableCell>
                       <TableCell>
                         {plan.is_active ? (
-                          <Badge>Active</Badge>
+                          <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none">Active</Badge>
                         ) : (
-                          <Badge variant="secondary">Inactive</Badge>
+                          <Badge variant="secondary" className="bg-muted/50 text-muted-foreground shadow-none">Inactive</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{plan.paystack_plan_code}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground pr-6">{plan.paystack_plan_code}</TableCell>
                     </TableRow>
                   ))}
                   {details.plans.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         No plans found
                       </TableCell>
                     </TableRow>
@@ -541,73 +582,81 @@ export default function SuperAdminOrganization() {
         </TabsContent>
 
         <TabsContent value="subscribers">
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle>Subscribers (Live from Paystack)</CardTitle>
               <CardDescription>All subscribers for this organization</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Next Payment</TableHead>
+                    <TableHead className="pr-6">Next Payment</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(details.live_subscribers || []).map((sub, index) => (
-                    <TableRow key={sub.subscription_code || index}>
-                      <TableCell className="font-medium">
+                    <TableRow key={sub.subscription_code || index} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium pl-6">
                         {`${sub.customer?.first_name || ''} ${sub.customer?.last_name || ''}`.trim() || '-'}
                       </TableCell>
-                      <TableCell>{sub.customer?.email || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{sub.customer?.email || '-'}</TableCell>
                       <TableCell>{sub.plan?.name || '-'}</TableCell>
                       <TableCell>
                         <Badge variant={
                           sub.status === 'active' ? 'default' :
                           sub.status === 'attention' ? 'destructive' :
                           'secondary'
+                        } className={
+                          sub.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none' :
+                          sub.status === 'attention' ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 shadow-none' :
+                          'bg-muted/50 text-muted-foreground shadow-none'
                         }>
                           {sub.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">₦{((sub.amount || 0) / 100).toLocaleString()}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-right font-medium">₦{((sub.amount || 0) / 100).toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground pr-6">
                         {sub.next_payment_date 
-                          ? new Date(sub.next_payment_date).toLocaleDateString()
+                          ? new Date(sub.next_payment_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                           : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
                   {(details.live_subscribers || []).length === 0 && details.subscribers.map((sub) => (
-                    <TableRow key={sub.id}>
-                      <TableCell className="font-medium">{sub.customer_name || '-'}</TableCell>
-                      <TableCell>{sub.email}</TableCell>
+                    <TableRow key={sub.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium pl-6">{sub.customer_name || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{sub.email}</TableCell>
                       <TableCell>{sub.subscription_plans?.name}</TableCell>
                       <TableCell>
                         <Badge variant={
                           sub.status === 'active' ? 'default' :
                           sub.status === 'attention' ? 'destructive' :
                           'secondary'
+                        } className={
+                          sub.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none' :
+                          sub.status === 'attention' ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 shadow-none' :
+                          'bg-muted/50 text-muted-foreground shadow-none'
                         }>
                           {sub.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">₦{sub.amount.toLocaleString()}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-right font-medium">₦{sub.amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground pr-6">
                         {sub.next_payment_date 
-                          ? new Date(sub.next_payment_date).toLocaleDateString()
+                          ? new Date(sub.next_payment_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                           : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
                   {(details.live_subscribers || []).length === 0 && details.subscribers.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         No subscribers found
                       </TableCell>
                     </TableRow>
@@ -619,42 +668,43 @@ export default function SuperAdminOrganization() {
         </TabsContent>
 
         <TabsContent value="defaulters">
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle>Defaulted Subscribers</CardTitle>
               <CardDescription>Subscribers with payment issues</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Reason</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead className="pr-6"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(analytics?.defaulted_list || []).map((defaulter, index) => (
-                    <TableRow key={defaulter.id || index}>
-                      <TableCell className="font-medium">{defaulter.customer_name || '-'}</TableCell>
-                      <TableCell>{defaulter.email}</TableCell>
+                    <TableRow key={defaulter.id || index} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium pl-6">{defaulter.customer_name || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{defaulter.email}</TableCell>
                       <TableCell>{defaulter.plan}</TableCell>
                       <TableCell>
-                        <Badge variant="destructive">{defaulter.reason}</Badge>
+                        <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 shadow-none px-2">{defaulter.reason}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">₦{(defaulter.amount || 0).toLocaleString()}</TableCell>
-                      <TableCell>
-                        {defaulter.date ? new Date(defaulter.date).toLocaleDateString() : '-'}
+                      <TableCell className="text-right font-medium">₦{(defaulter.amount || 0).toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {defaulter.date ? new Date(defaulter.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right pr-6">
                         {defaulter.id && !defaulter.id.startsWith('SUB_') && (
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
                             onClick={() => handleMarkResolved(defaulter.id)}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
@@ -666,7 +716,7 @@ export default function SuperAdminOrganization() {
                   ))}
                   {(analytics?.defaulted_list || []).length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No defaulted subscribers
                       </TableCell>
                     </TableRow>
@@ -678,45 +728,50 @@ export default function SuperAdminOrganization() {
         </TabsContent>
 
         <TabsContent value="payouts">
-          <Card>
-            <CardHeader>
+          <Card className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50">
               <CardTitle>Payout History</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Amount</TableHead>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Requested</TableHead>
                     <TableHead>Processed</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead className="pr-6">Notes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {details.payout_requests.map((payout) => (
-                    <TableRow key={payout.id}>
-                      <TableCell className="font-medium">₦{payout.amount.toLocaleString()}</TableCell>
+                    <TableRow key={payout.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium text-lg pl-6">₦{payout.amount.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant={
                           payout.status === 'completed' ? 'default' :
                           payout.status === 'pending' ? 'secondary' :
                           payout.status === 'approved' ? 'outline' :
                           'destructive'
+                        } className={
+                          payout.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none' :
+                          payout.status === 'pending' ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none shadow-none' :
+                          payout.status === 'approved' ? 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none shadow-none' :
+                          'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 shadow-none'
                         }>
-                          {payout.status}
+                          <span className="capitalize">{payout.status}</span>
                         </Badge>
                       </TableCell>
-                      <TableCell>{new Date(payout.requested_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        {payout.processed_at ? new Date(payout.processed_at).toLocaleDateString() : '-'}
+                      <TableCell className="text-muted-foreground">{new Date(payout.requested_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {payout.processed_at ? new Date(payout.processed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">{payout.notes || '-'}</TableCell>
+                      <TableCell className="max-w-xs truncate text-muted-foreground pr-6">{payout.notes || '-'}</TableCell>
                     </TableRow>
                   ))}
                   {details.payout_requests.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         No payout requests
                       </TableCell>
                     </TableRow>
@@ -747,7 +802,7 @@ export default function SuperAdminOrganization() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleSuspend} disabled={actionLoading || !suspendReason}>
-              {actionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {actionLoading && <PremiumSpinner className="mr-2" />}
               Suspend
             </Button>
           </DialogFooter>

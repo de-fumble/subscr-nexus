@@ -3,17 +3,14 @@ import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { AuditLogViewer } from "@/components/AuditLogViewer";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 
 export default function SuperAdminLogs() {
   const navigate = useNavigate();
   const { isSuperadmin, loading } = useSuperadmin();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PremiumLoader fullScreen message="Loading logs..." />;
   }
 
   if (!isSuperadmin) {
@@ -22,18 +19,20 @@ export default function SuperAdminLogs() {
   }
 
   return (
-    <div className="container py-8 space-y-6">
+    <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate('/superadmin')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Platform Audit Logs</h1>
-          <p className="text-muted-foreground">View all actions across the platform</p>
+          <h1 className="text-3xl font-bold tracking-tight">Platform Audit Logs</h1>
+          <p className="text-muted-foreground mt-1">View all actions across the platform</p>
         </div>
       </div>
 
-      <AuditLogViewer isSuperadmin={true} />
+      <div className="bg-card border-black/5 dark:border-white/5 shadow-sm rounded-xl overflow-hidden p-6">
+        <AuditLogViewer isSuperadmin={true} />
+      </div>
     </div>
   );
 }

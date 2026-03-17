@@ -126,17 +126,17 @@ export default function SuperAdminNameChanges() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-6">
+      <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" onClick={() => navigate("/superadmin")}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Name Change Requests</h1>
-            <p className="text-muted-foreground">Review and approve organization name changes</p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Name Change Requests</h1>
+            <p className="text-muted-foreground mt-1">Review and approve organization name changes</p>
           </div>
           <div className="ml-auto">
-            <Button variant="outline" onClick={fetchRequests} className="gap-2">
+            <Button variant="outline" size="sm" onClick={fetchRequests} className="gap-2">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </Button>
@@ -145,7 +145,7 @@ export default function SuperAdminNameChanges() {
 
         <div className="space-y-4">
           {requests.length === 0 ? (
-            <Card className="glass-card">
+            <Card className="border-black/5 dark:border-white/5 shadow-sm">
               <CardContent className="py-12 text-center">
                 <Edit3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-semibold mb-2">No Name Change Requests</h3>
@@ -154,8 +154,8 @@ export default function SuperAdminNameChanges() {
             </Card>
           ) : (
             requests.map((request) => (
-              <Card key={request.id} className="glass-card">
-                <CardHeader>
+              <Card key={request.id} className="border-black/5 dark:border-white/5 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                <CardHeader className="bg-muted/30 border-b border-border/50">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -169,63 +169,68 @@ export default function SuperAdminNameChanges() {
                     {getStatusBadge(request.status)}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4 p-4 rounded-xl bg-muted/30">
+                <CardContent className="space-y-4 pt-6">
+                  <div className="grid md:grid-cols-2 gap-4 p-4 rounded-xl border border-border/50 bg-muted/10 shadow-sm">
                     <div>
-                      <p className="text-sm text-muted-foreground">Current Name</p>
-                      <p className="font-medium">{request.current_name}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Current Name</p>
+                      <p className="font-medium text-foreground">{request.current_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Requested Name</p>
+                      <p className="text-sm text-muted-foreground mb-1">Requested Name</p>
                       <p className="font-medium text-accent">{request.requested_name}</p>
                     </div>
                   </div>
 
                   {request.reason && (
-                    <div className="p-4 rounded-xl bg-muted/30">
+                    <div className="p-4 rounded-xl border border-border/50 bg-muted/10 shadow-sm">
                       <p className="text-sm text-muted-foreground mb-1">Reason for Change</p>
-                      <p className="text-sm">{request.reason}</p>
+                      <p className="text-sm leading-relaxed">{request.reason}</p>
                     </div>
                   )}
 
-                  <p className="text-xs text-muted-foreground">
-                    Submitted: {new Date(request.created_at).toLocaleString()}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    Submitted: {new Date(request.created_at).toLocaleString(undefined, {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    })}
                   </p>
 
                   {request.status === "pending" && (
-                    <div className="space-y-3 pt-4 border-t border-border/50">
+                    <div className="space-y-3 pt-6 mt-6 border-t border-border/50">
                       <Textarea
                         placeholder="Admin notes (optional)"
                         value={adminNotes[request.id] || ""}
                         onChange={(e) => setAdminNotes({ ...adminNotes, [request.id]: e.target.value })}
-                        className="glass-card border-border/50"
+                        className="bg-background border-input shadow-sm"
+                        rows={3}
                       />
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleProcess(request, false)}
+                          disabled={processingId === request.id}
+                          className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/50"
+                        >
+                          <XCircle className="h-4 w-4 mr-1.5" />
+                          Reject
+                        </Button>
                         <Button
                           onClick={() => handleProcess(request, true)}
                           disabled={processingId === request.id}
-                          className="bg-green-600 hover:bg-green-700 gap-2"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                         >
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-4 w-4 mr-1.5" />
                           Approve
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleProcess(request, false)}
-                          disabled={processingId === request.id}
-                          className="gap-2"
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Reject
                         </Button>
                       </div>
                     </div>
                   )}
 
                   {request.admin_notes && request.status !== "pending" && (
-                    <div className="p-4 rounded-xl bg-muted/30">
-                      <p className="text-sm text-muted-foreground mb-1">Admin Notes</p>
-                      <p className="text-sm">{request.admin_notes}</p>
+                    <div className="p-4 rounded-xl border border-border/50 bg-muted/10 shadow-sm mt-4">
+                      <p className="text-sm font-medium text-muted-foreground mb-1.5">Admin Notes</p>
+                      <p className="text-sm leading-relaxed">{request.admin_notes}</p>
                     </div>
                   )}
                 </CardContent>

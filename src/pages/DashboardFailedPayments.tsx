@@ -275,7 +275,31 @@ const DashboardFailedPayments = () => {
   };
 
   if (loading) {
-    return <PremiumLoader message="Loading failed payments..." />;
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
+          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
+          <SidebarInset className="flex-1 flex flex-col">
+            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
+              <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+              <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                Failed Payments
+              </h1>
+            </header>
+            <main className="flex-1 overflow-auto p-4 sm:p-6">
+              <div className="max-w-6xl mx-auto space-y-4">
+                <div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
+                <div className="h-24 bg-muted animate-pulse rounded-xl" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  {[...Array(4)].map((_, i) => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
+                </div>
+              </div>
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
   }
 
   return (

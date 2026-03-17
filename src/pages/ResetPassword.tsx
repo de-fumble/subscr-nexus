@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Lock, CheckCircle } from "lucide-react";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");

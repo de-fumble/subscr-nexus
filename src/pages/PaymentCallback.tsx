@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, Home } from "lucide-react";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo.svg";
 
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
