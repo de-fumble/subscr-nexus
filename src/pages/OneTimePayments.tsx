@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import * as XLSX from "xlsx";
@@ -321,6 +322,7 @@ const OneTimePayments = () => {
             <PremiumLoader message="Loading payments..." />
           </SidebarInset>
         </div>
+        <FloatingSupport />
       </SidebarProvider>
     );
   }
@@ -542,6 +544,7 @@ const OneTimePayments = () => {
           </main>
         </SidebarInset>
       </div>
+      <FloatingSupport />
     </SidebarProvider>
   );
 };

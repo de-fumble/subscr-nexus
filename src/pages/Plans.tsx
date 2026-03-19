@@ -24,6 +24,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 
 import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 import { PlanManagementDialog } from "@/components/PlanManagementDialog";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 interface Plan {
   id: string;
@@ -274,6 +275,7 @@ const Plans = () => {
             <PremiumLoader message="Loading plans..." />
           </SidebarInset>
         </div>
+        <FloatingSupport />
       </SidebarProvider>
     );
   }
@@ -410,6 +412,7 @@ const Plans = () => {
           </main>
         </SidebarInset>
       </div>
+      <FloatingSupport />
 
       <AlertDialog open={!!planToDelete} onOpenChange={() => setPlanToDelete(null)}>
         <AlertDialogContent className="glass-card">

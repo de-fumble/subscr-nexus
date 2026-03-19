@@ -17,6 +17,7 @@ import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
 import { KYCSection } from "@/components/KYCSection";
 import { SettingsPageSkeleton } from "@/components/DashboardSkeleton";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 export default function DashboardSettings() {
   const navigate = useNavigate();
@@ -482,6 +483,7 @@ export default function DashboardSettings() {
                 </div>
               )}
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { PremiumLoader } from "@/components/PremiumLoader";
 import { ArrowRight, Rocket } from "lucide-react";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 interface Organization {
   id: string;
@@ -76,7 +77,17 @@ const DashboardSetup = () => {
     }
   };
 
-  if (loading) return <PremiumLoader message="Loading setup..." />;
+  if (loading) return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar organization={null} role={null} userEmail={undefined} canAccessSettings={false} />
+        <SidebarInset>
+          <PremiumLoader message="Loading setup..." />
+        </SidebarInset>
+      </div>
+      <FloatingSupport />
+    </SidebarProvider>
+  );
 
   const setupComplete = !!organization?.paystack_secret_key && hasPlans;
 
@@ -125,6 +136,7 @@ const DashboardSetup = () => {
                 </Button>
               </div>
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

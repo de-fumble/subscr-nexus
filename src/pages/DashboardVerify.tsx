@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 
 interface Organization {
@@ -112,6 +113,7 @@ export default function DashboardVerify() {
             <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
               <VerifyTransactionCard organization={organization} />
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

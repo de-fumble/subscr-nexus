@@ -26,6 +26,7 @@
  } from "@/components/ui/select";
  import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
  import { AppSidebar } from "@/components/AppSidebar";
+import { FloatingSupport } from "@/components/FloatingSupport";
  
  
 interface BillingProfile {
@@ -277,6 +278,7 @@ interface BillingProfile {
              <PremiumLoader message="Loading billing profiles..." />
            </SidebarInset>
          </div>
+         <FloatingSupport />
        </SidebarProvider>
      );
    }
@@ -457,6 +459,7 @@ interface BillingProfile {
                  </CardContent>
                </Card>
              </div>
+             <FloatingSupport />
            </main>
          </SidebarInset>
        </div>

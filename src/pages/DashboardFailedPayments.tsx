@@ -25,6 +25,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -296,6 +297,7 @@ const DashboardFailedPayments = () => {
                 </div>
               </div>
             </main>
+            <FloatingSupport />
           </SidebarInset>
         </div>
       </SidebarProvider>
@@ -546,6 +548,7 @@ const DashboardFailedPayments = () => {
                 </>
               )}
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

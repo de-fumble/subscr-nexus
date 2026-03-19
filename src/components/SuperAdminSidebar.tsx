@@ -10,6 +10,7 @@ import {
   FileCheck,
   LogOut,
   UserIcon,
+  LayoutGrid,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -126,6 +127,16 @@ export function SuperAdminSidebar() {
       <SidebarFooter className="p-2">
         <div className={`rounded-lg bg-white/10 border border-white/15 p-2.5 ${isExpanded ? '' : 'p-2'}`}>
           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => navigate("/dashboard")}
+                tooltip="User Dashboard"
+                className="rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors text-[13px] mb-1"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                {isExpanded && <span>User Dashboard</span>}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={handleSignOut}

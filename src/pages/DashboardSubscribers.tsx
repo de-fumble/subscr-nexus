@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 
 interface Subscriber {
@@ -229,6 +230,7 @@ export default function DashboardSubscribers() {
             <PremiumLoader message="Loading subscribers..." />
           </SidebarInset>
         </div>
+        <FloatingSupport />
       </SidebarProvider>
     );
   }
@@ -383,6 +385,7 @@ export default function DashboardSubscribers() {
                 </CardContent>
               </Card>
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

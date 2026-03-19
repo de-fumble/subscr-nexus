@@ -15,9 +15,11 @@ import {
   AlertTriangle,
   Receipt,
   UserSquare,
-  RotateCcw
+  RotateCcw,
+  ShieldCheck
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { logAuditEvent } from "@/utils/auditLogger";
 import {
   Sidebar,
@@ -55,6 +57,7 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   const navigate = useNavigate();
   const { open, isMobile, openMobile } = useSidebar();
   const isExpanded = isMobile ? openMobile : open;
+  const { isSuperadmin } = useSuperadmin();
 
   const menuItems = [
     { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
@@ -166,6 +169,37 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Core Panel - Superadmin Only */}
+        {isSuperadmin && (
+          <>
+            {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-white/50 font-medium px-2 mb-1">
+                {isExpanded ? "Administration" : ""}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-0.5">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => navigate("/superadmin")}
+                      isActive={location.pathname.startsWith("/superadmin")}
+                      tooltip="Core Panel"
+                      className={`rounded-md transition-all duration-150 ${
+                        location.pathname.startsWith("/superadmin")
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'hover:bg-white/10 text-white/70 hover:text-white'
+                      }`}
+                    >
+                      <ShieldCheck className={`h-4 w-4 ${location.pathname.startsWith("/superadmin") ? 'text-white' : 'text-white/70'}`} />
+                      {isExpanded && <span className={`text-[13px] ${location.pathname.startsWith("/superadmin") ? 'font-medium text-white' : 'text-white/80'}`}>Core Panel</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
 

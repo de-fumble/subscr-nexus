@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuditLogViewer } from "@/components/AuditLogViewer";
 import { Loader2 } from "lucide-react";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 import { useOrgRole } from "@/hooks/useOrgRole";
 
@@ -45,16 +46,18 @@ export default function DashboardLogs() {
         .eq("user_id", user.id)
         .single();
 
+      let membership: any = null;
       if (orgData) {
         setOrganization(orgData);
       } else {
         // Check if user is a member
-        const { data: membership } = await supabase
+        const { data: memberData } = await supabase
           .from('organization_members')
           .select('org_id, organizations(id, org_name, email, logo_url)')
           .eq('user_id', user.id)
           .single();
 
+        membership = memberData;
         if (membership?.organizations) {
           setOrganization(membership.organizations as unknown as Organization);
         }
@@ -95,6 +98,7 @@ export default function DashboardLogs() {
             </div>
           </SidebarInset>
         </div>
+        <FloatingSupport />
       </SidebarProvider>
     );
   }
@@ -119,6 +123,7 @@ export default function DashboardLogs() {
                 <AuditLogViewer orgId={organization.id} isPremium={isPremium} />
               )}
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

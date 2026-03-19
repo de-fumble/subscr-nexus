@@ -43,6 +43,7 @@ import {
   AlertTriangle,
   Zap,
 } from "lucide-react";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 interface RetrySubscriber {
   id: string;
@@ -330,6 +331,7 @@ const DashboardRetryQueue = () => {
             </main>
           </SidebarInset>
         </div>
+        <FloatingSupport />
       </SidebarProvider>
     );
   }
@@ -601,6 +603,7 @@ const DashboardRetryQueue = () => {
                 </CardContent>
               </Card>
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

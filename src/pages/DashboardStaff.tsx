@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { Loader2, Shield, User, UserPlus, Trash2, Users, ChevronDown, ChevronUp, Mail, Calendar, Hash } from "lucide-react";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 
 interface Organization {
@@ -535,6 +536,7 @@ export default function DashboardStaff() {
                 </CardContent>
               </Card>
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

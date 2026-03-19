@@ -28,6 +28,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { KYCSection } from "@/components/KYCSection";
 import { NameChangeRequestDialog } from "@/components/NameChangeRequestDialog";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 interface OrganizationData {
   id: string;
@@ -334,6 +335,7 @@ export default function DashboardProfile() {
                 </Card>
               </div>
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

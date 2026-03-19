@@ -15,6 +15,7 @@ import { EphemeralAIDialog } from "@/components/EphemeralAIDialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { AnalyticsPageSkeleton } from "@/components/DashboardSkeleton";
+import { FloatingSupport } from "@/components/FloatingSupport";
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 interface Organization {
   id: string;
@@ -187,6 +188,7 @@ export default function DashboardAnalytics() {
             <AnalyticsPageSkeleton />
           </SidebarInset>
         </div>
+        <FloatingSupport />
       </SidebarProvider>;
   }
   return <SidebarProvider>
@@ -375,6 +377,7 @@ export default function DashboardAnalytics() {
               planDistribution
             }} />
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>

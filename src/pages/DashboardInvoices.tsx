@@ -10,6 +10,7 @@ import { useOrgRole } from "@/hooks/useOrgRole";
 import { toast } from "sonner";
 import { Receipt, Plus, ArrowLeft, FileText } from "lucide-react";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
+import { FloatingSupport } from "@/components/FloatingSupport";
 
 interface Organization {
   id: string;
@@ -190,6 +191,7 @@ const DashboardInvoices = () => {
                 </Card>
               </div>
             </div>
+            <FloatingSupport />
           </main>
         </SidebarInset>
       </div>
