@@ -9,12 +9,12 @@ export function FloatingSupport() {
     const [isLoading, setIsLoading] = useState(true);
 
     return (
-        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end">
+        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end pointer-events-none">
 
             {/* Support Panel / IFrame Modal */}
             <div
                 className={cn(
-                    "mb-4 glass-card premium-shadow rounded-2xl flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right shadow-2xl",
+                    "mb-4 glass-card premium-shadow rounded-2xl flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right shadow-2xl pointer-events-auto",
                     isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 pointer-events-none",
                     isExpanded ? "w-[90vw] h-[80vh] sm:w-[80vw] sm:h-[80vh] max-w-5xl" : "w-[350px] h-[550px]"
                 )}
@@ -65,11 +65,10 @@ export function FloatingSupport() {
                 </div>
             </div>
 
-            {/* Floating Button */}
             <Button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "rounded-full shadow-xl premium-shadow hover:scale-105 transition-all duration-300 backdrop-blur-md",
+                    "rounded-full shadow-xl premium-shadow hover:scale-105 transition-all duration-300 backdrop-blur-md pointer-events-auto",
                     isOpen
                         ? "h-10 w-10 sm:h-12 sm:w-12 p-0 bg-muted hover:bg-muted/80 text-foreground"
                         : "h-12 w-12 sm:h-14 sm:w-auto sm:pl-5 sm:pr-6 sm:gap-2.5 bg-primary hover:bg-primary/90"
