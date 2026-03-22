@@ -4,17 +4,26 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, Clock, DollarSign, TrendingUp, FileText, Download } from "lucide-react";
+import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, TrendingUp, FileText, Download, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import * as XLSX from "xlsx";
+
+interface PaymentTransaction {
+  id: string;
+  payment_id: string;
+  amount: number;
+  paid_at: string;
+  payer_email: string;
+  payer_name: string;
+  paystack_reference: string;
+}
 
 interface Payment {
   id: string;
@@ -23,10 +32,8 @@ interface Payment {
   amount: number;
   currency: string;
   is_paid: boolean;
-  paid_at: string | null;
-  paid_by_email: string | null;
-  paid_by_name: string | null;
   created_at: string;
+  one_time_payment_transactions: PaymentTransaction[];
 }
 
 interface Organization {
@@ -105,7 +112,10 @@ const OneTimePayments = () => {
 
       const { data: paymentsData, error } = await supabase
         .from("one_time_payments")
-        .select("*")
+        .select(`
+          *,
+          one_time_payment_transactions(*)
+        `)
         .eq("org_id", orgId)
         .order("created_at", { ascending: false });
 
@@ -131,14 +141,13 @@ const OneTimePayments = () => {
     toast.success("Payment link copied to clipboard!");
   };
 
-  const pendingPayments = payments.filter(p => !p.is_paid);
-  const paidPayments = payments.filter(p => p.is_paid);
+  const allTransactions = payments.flatMap(p => p.one_time_payment_transactions || []);
 
   // Analytics calculations
-  const totalCollected = paidPayments.reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+  const totalCollected = allTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalTransactions = allTransactions.length;
   const totalPayments = payments.length;
-  const conversionRate = totalPayments > 0 ? ((paidPayments.length / totalPayments) * 100).toFixed(1) : "0";
+  const avgRevenuePerLink = totalPayments > 0 ? (totalCollected / totalPayments) : 0;
 
   // Monthly revenue data for chart
   const getMonthlyData = (): MonthlyData[] => {
@@ -152,15 +161,15 @@ const OneTimePayments = () => {
       monthlyMap.set(key, { revenue: 0, count: 0 });
     }
 
-    // Aggregate paid payments
-    paidPayments.forEach((payment) => {
-      if (payment.paid_at) {
-        const date = new Date(payment.paid_at);
+    // Aggregate paid transactions
+    allTransactions.forEach((txn) => {
+      if (txn.paid_at) {
+        const date = new Date(txn.paid_at);
         const key = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
         if (monthlyMap.has(key)) {
           const current = monthlyMap.get(key)!;
           monthlyMap.set(key, {
-            revenue: current.revenue + payment.amount,
+            revenue: current.revenue + txn.amount,
             count: current.count + 1,
           });
         }
@@ -183,11 +192,10 @@ const OneTimePayments = () => {
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-      // Filter payments from this year
-      const yearPayments = paidPayments.filter((p) => {
-        if (!p.paid_at) return false;
-        return new Date(p.paid_at) >= startOfYear;
-      });
+      // Filter transactions from this year
+      const yearTransactions = allTransactions
+        .filter((t) => t.paid_at && new Date(t.paid_at) >= startOfYear)
+        .sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime());
 
       // Monthly summary
       const monthlySummary: Record<string, { revenue: number; count: number }> = {};
@@ -196,12 +204,12 @@ const OneTimePayments = () => {
         monthlySummary[monthName] = { revenue: 0, count: 0 };
       }
 
-      yearPayments.forEach((payment) => {
-        if (payment.paid_at) {
-          const date = new Date(payment.paid_at);
+      yearTransactions.forEach((txn) => {
+        if (txn.paid_at) {
+          const date = new Date(txn.paid_at);
           const monthName = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
           if (monthlySummary[monthName]) {
-            monthlySummary[monthName].revenue += payment.amount;
+            monthlySummary[monthName].revenue += txn.amount;
             monthlySummary[monthName].count += 1;
           }
         }
@@ -210,17 +218,20 @@ const OneTimePayments = () => {
       const summaryData = Object.entries(monthlySummary).map(([month, data]) => ({
         Month: month,
         "Total Revenue (₦)": data.revenue,
-        "Payment Count": data.count,
+        "Transaction Count": data.count,
       }));
 
-      const transactionsData = yearPayments.map((p) => ({
-        "Payment Name": p.name,
-        "Amount (₦)": p.amount,
-        "Payer Name": p.paid_by_name || "N/A",
-        "Payer Email": p.paid_by_email || "N/A",
-        "Paid Date": p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "N/A",
-        "Created Date": new Date(p.created_at).toLocaleDateString(),
-      }));
+      const transactionsData = yearTransactions.map((t) => {
+        const parentLink = payments.find(p => p.id === t.payment_id);
+        return {
+          "Payment Link Name": parentLink?.name || "Unknown",
+          "Amount (₦)": t.amount,
+          "Payer Name": t.payer_name || "N/A",
+          "Payer Email": t.payer_email || "N/A",
+          "Paid Date": new Date(t.paid_at).toLocaleDateString(),
+          "Reference": t.paystack_reference,
+        };
+      });
 
       const wb = XLSX.utils.book_new();
       const summaryWs = XLSX.utils.json_to_sheet(summaryData);
@@ -229,7 +240,7 @@ const OneTimePayments = () => {
       XLSX.utils.book_append_sheet(wb, summaryWs, "Monthly Summary");
       XLSX.utils.book_append_sheet(wb, transactionsWs, "All Transactions");
 
-      const fileName = `one-time-payments-${now.getFullYear()}.xlsx`;
+      const fileName = `standard-payments-transactions-${now.getFullYear()}.xlsx`;
       XLSX.writeFile(wb, fileName);
       toast.success("Export downloaded successfully!");
     } catch (error) {
@@ -240,78 +251,72 @@ const OneTimePayments = () => {
     }
   };
 
-  const renderPaymentCard = (payment: Payment, index: number) => (
-    <Card
-      key={payment.id}
-      className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] transition-all duration-300 hover:shadow-[var(--shadow-strong)] animate-fade-in"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-foreground">
-            {payment.name}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            Created {new Date(payment.created_at).toLocaleDateString()}
-          </p>
+  const renderPaymentCard = (payment: Payment, index: number) => {
+    const txns = payment.one_time_payment_transactions || [];
+    const linkRevenue = txns.reduce((sum, t) => sum + t.amount, 0);
+
+    return (
+      <Card
+        key={payment.id}
+        className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] transition-all duration-300 hover:shadow-[var(--shadow-strong)] animate-fade-in flex flex-col h-full"
+        style={{ animationDelay: `${index * 100}ms` }}
+      >
+        <div className="mb-4 flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-foreground line-clamp-1">
+              {payment.name}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Created {new Date(payment.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          <Badge variant="default" className="gap-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 shrink-0 ml-2">
+            <CheckCircle2 className="h-3 w-3" />
+            Active
+          </Badge>
         </div>
-        <Badge variant={payment.is_paid ? "default" : "secondary"} className="gap-1">
-          {payment.is_paid ? (
-            <>
-              <CheckCircle2 className="h-3 w-3" />
-              Paid
-            </>
-          ) : (
-            <>
-              <Clock className="h-3 w-3" />
-              Pending
-            </>
-          )}
-        </Badge>
-      </div>
 
-      {payment.description && (
-        <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
-          {payment.description}
-        </p>
-      )}
-
-      <div className="mb-4">
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-foreground">
-            ₦{payment.amount.toLocaleString()}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            one-time
-          </span>
-        </div>
-      </div>
-
-      {payment.is_paid && payment.paid_by_email && (
-        <div className="mb-4 p-3 rounded-lg bg-muted/50 text-sm">
-          <p className="text-muted-foreground">
-            Paid by: <span className="text-foreground font-medium">{payment.paid_by_name || payment.paid_by_email}</span>
+        {payment.description && (
+          <p className="mb-4 text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
+            {payment.description}
           </p>
-          <p className="text-muted-foreground text-xs">
-            {payment.paid_at && new Date(payment.paid_at).toLocaleString()}
-          </p>
-        </div>
-      )}
+        )}
 
-      <div className="space-y-2">
-        <Button
-          onClick={() => copyPaymentLink(payment.id)}
-          variant="outline"
-          className="w-full gap-2"
-          disabled={payment.is_paid}
-          title={payment.is_paid ? "This payment has been completed" : "Copy payment link"}
-        >
-          <ExternalLink className="h-4 w-4" />
-          {payment.is_paid ? "Payment Completed" : "Copy Payment Link"}
-        </Button>
-      </div>
-    </Card>
-  );
+        <div className="mb-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-foreground">
+              ₦{payment.amount.toLocaleString()}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              per transaction
+            </span>
+          </div>
+        </div>
+
+        <div className="mb-6 flex-1 rounded-xl bg-muted/50 p-4 border border-border/50">
+          <div className="flex justify-between items-center mb-2 text-sm">
+            <span className="text-muted-foreground">Total Generated</span>
+            <span className="font-semibold text-foreground">₦{linkRevenue.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-muted-foreground">Successful Payments</span>
+            <span className="font-semibold text-foreground">{txns.length}</span>
+          </div>
+        </div>
+
+        <div className="space-y-2 mt-auto">
+          <Button
+            onClick={() => copyPaymentLink(payment.id)}
+            variant="outline"
+            className="w-full gap-2 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Copy Payment Link
+          </Button>
+        </div>
+      </Card>
+    );
+  };
 
   if (loading) {
     return (
@@ -369,7 +374,7 @@ const OneTimePayments = () => {
           <main className="flex-1 overflow-auto">
             <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
               <div className="mb-6">
-                <p className="text-sm sm:text-base text-muted-foreground">Manage standard payment links</p>
+                <p className="text-sm sm:text-base text-muted-foreground">Manage and track your reusable standard payment links</p>
               </div>
 
               {/* Analytics Section */}
@@ -383,7 +388,7 @@ const OneTimePayments = () => {
                         size="icon"
                         className="h-6 w-6"
                         onClick={handleExport}
-                        disabled={exporting || paidPayments.length === 0}
+                        disabled={exporting || allTransactions.length === 0}
                         title="Export to Excel"
                       >
                         {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
@@ -393,46 +398,46 @@ const OneTimePayments = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-lg sm:text-2xl font-bold">₦{totalCollected.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">{paidPayments.length} payments received</p>
+                    <p className="text-xs text-muted-foreground">Across all payment links</p>
                   </CardContent>
                 </Card>
 
                 <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold">₦{totalPending.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">{pendingPayments.length} awaiting payment</p>
+                    <div className="text-lg sm:text-2xl font-bold">{totalTransactions.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">Successful payments</p>
                   </CardContent>
                 </Card>
 
                 <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Payment Links</CardTitle>
+                    <CardTitle className="text-sm font-medium">Active Payment Links</CardTitle>
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-lg sm:text-2xl font-bold">{totalPayments}</div>
-                    <p className="text-xs text-muted-foreground">Links created</p>
+                    <p className="text-xs text-muted-foreground">Links ready for payments</p>
                   </CardContent>
                 </Card>
 
                 <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                    <CardTitle className="text-sm font-medium">Avg Revenue / Link</CardTitle>
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold">{conversionRate}%</div>
-                    <p className="text-xs text-muted-foreground">Paid vs created</p>
+                    <div className="text-lg sm:text-2xl font-bold">₦{Math.round(avgRevenuePerLink).toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">Per standard payment link</p>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Charts Section */}
-              {paidPayments.length > 0 && (
+              {allTransactions.length > 0 && (
                 <div className="mb-8 grid gap-6 lg:grid-cols-2">
                   <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                     <CardHeader>
@@ -456,7 +461,7 @@ const OneTimePayments = () => {
 
                   <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
                     <CardHeader>
-                      <CardTitle className="text-lg">Payments per Month</CardTitle>
+                      <CardTitle className="text-lg">Transaction Volume</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={200}>
@@ -465,7 +470,7 @@ const OneTimePayments = () => {
                           <XAxis dataKey="month" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                           <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                           <Tooltip
-                            formatter={(value: number) => [value, "Payments"]}
+                            formatter={(value: number) => [value, "Transactions"]}
                             contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                           />
                           <Bar dataKey="count" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
@@ -483,62 +488,25 @@ const OneTimePayments = () => {
                       <Plus className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h3 className="mb-2 text-xl font-semibold text-foreground">
-                      No payments yet
+                      No payment links yet
                     </h3>
                     <p className="mb-6 text-muted-foreground">
-                      Create your first one-time payment link
+                      Create your first reusable payment link to start collecting standard payments.
                     </p>
                     {canCreatePlans && (
                       <Button
                         onClick={() => navigate("/payments/create")}
                         className="bg-accent hover:bg-accent/90"
                       >
-                        Create Your First Payment
+                        Create Your First Payment Link
                       </Button>
                     )}
                   </div>
                 </Card>
               ) : (
-                <Tabs defaultValue="pending" className="space-y-6">
-                  <TabsList>
-                    <TabsTrigger value="pending" className="gap-2">
-                      Pending
-                      <Badge variant="secondary" className="ml-1">{pendingPayments.length}</Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="paid" className="gap-2">
-                      Paid
-                      <Badge variant="secondary" className="ml-1">{paidPayments.length}</Badge>
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="pending">
-                    {pendingPayments.length === 0 ? (
-                      <Card className="p-8 glass-card border-0">
-                        <div className="text-center text-muted-foreground">
-                          <p>No pending payments</p>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {pendingPayments.map((payment, index) => renderPaymentCard(payment, index))}
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="paid">
-                    {paidPayments.length === 0 ? (
-                      <Card className="p-8 glass-card border-0">
-                        <div className="text-center text-muted-foreground">
-                          <p>No paid payments yet</p>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {paidPayments.map((payment, index) => renderPaymentCard(payment, index))}
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {payments.map((payment, index) => renderPaymentCard(payment, index))}
+                </div>
               )}
             </div>
           </main>

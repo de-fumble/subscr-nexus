@@ -31,12 +31,11 @@ serve(async (req) => {
       .from("one_time_payments")
       .select("*, organizations(paystack_secret_key, org_name)")
       .eq("id", payment_id)
-      .eq("is_paid", false)
       .single();
 
     if (paymentError || !payment) {
       return new Response(
-        JSON.stringify({ error: "Payment not found or already paid" }),
+        JSON.stringify({ error: "Payment not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
