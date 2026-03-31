@@ -80,6 +80,7 @@ const PlansHub = () => {
         .from("one_time_payments")
         .select("id, name, description, amount, currency")
         .eq("org_id", orgId)
+        .eq("is_active", true)
         .order("amount", { ascending: true });
 
       setOneTimePayments(paymentsData || []);
