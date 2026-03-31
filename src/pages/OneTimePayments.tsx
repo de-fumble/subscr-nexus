@@ -281,7 +281,7 @@ const OneTimePayments = () => {
     return (
       <Card
         key={payment.id}
-        className="p-6 glass-card border-0 shadow-[var(--shadow-medium)] transition-all duration-300 hover:shadow-[var(--shadow-strong)] animate-fade-in flex flex-col h-full"
+        className={`p-6 glass-card border-0 shadow-[var(--shadow-medium)] transition-all duration-300 hover:shadow-[var(--shadow-strong)] animate-fade-in flex flex-col h-full ${payment.is_active === false ? 'opacity-75 grayscale-[0.3]' : ''}`}
         style={{ animationDelay: `${index * 100}ms` }}
       >
         <div className="mb-4 flex items-start justify-between">
@@ -293,10 +293,17 @@ const OneTimePayments = () => {
               Created {new Date(payment.created_at).toLocaleDateString()}
             </p>
           </div>
-          <Badge variant="default" className="gap-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 shrink-0 ml-2">
-            <CheckCircle2 className="h-3 w-3" />
-            Active
-          </Badge>
+          {payment.is_active !== false ? (
+            <Badge variant="default" className="gap-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 shrink-0 ml-2">
+              <CheckCircle2 className="h-3 w-3" />
+              Active
+            </Badge>
+          ) : (
+            <Badge variant="default" className="gap-1 bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/20 shrink-0 ml-2">
+              <Ban className="h-3 w-3" />
+              Deleted
+            </Badge>
+          )}
         </div>
 
         {payment.description && (
@@ -328,25 +335,36 @@ const OneTimePayments = () => {
         </div>
 
         <div className="space-y-2 mt-auto">
-          <div className="flex gap-2 w-full">
+          {payment.is_active !== false ? (
+            <div className="flex gap-2 w-full">
+              <Button
+                onClick={() => copyPaymentLink(payment.id)}
+                variant="outline"
+                className="flex-1 gap-2 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span className="hidden sm:inline">Copy Link</span>
+                <span className="sm:hidden">Copy</span>
+              </Button>
+              <Button
+                onClick={() => handleCancelLink(payment.id)}
+                variant="ghost"
+                className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                title="Cancel Payment Link"
+              >
+                <Ban className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
             <Button
-              onClick={() => copyPaymentLink(payment.id)}
               variant="outline"
-              className="flex-1 gap-2 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
-            >
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden sm:inline">Copy Link</span>
-              <span className="sm:hidden">Copy</span>
-            </Button>
-            <Button
-              onClick={() => handleCancelLink(payment.id)}
-              variant="ghost"
-              className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-              title="Cancel Payment Link"
+              disabled
+              className="w-full gap-2 opacity-50 cursor-not-allowed"
             >
               <Ban className="h-4 w-4" />
+              Link Disabled
             </Button>
-          </div>
+          )}
         </div>
       </Card>
     );
@@ -515,7 +533,7 @@ const OneTimePayments = () => {
                 </div>
               )}
 
-              {activePayments.length === 0 ? (
+              {payments.length === 0 ? (
                 <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
@@ -539,7 +557,7 @@ const OneTimePayments = () => {
                 </Card>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {activePayments.map((payment, index) => renderPaymentCard(payment, index))}
+                  {payments.map((payment, index) => renderPaymentCard(payment, index))}
                 </div>
               )}
             </div>
