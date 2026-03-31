@@ -25,6 +25,13 @@ export const TeamSection = () => {
             icon: Code,
             imagePosition: "object-center",
         },
+        {
+            name: "Chukwu Bright",
+            title: "Software Engineer/Marketing Lead",
+            image: "/team-marketing.jpg",
+            icon: User,
+            imagePosition: "object-top",
+        },
     ];
 
     return (
@@ -40,8 +47,8 @@ export const TeamSection = () => {
                     </p>
                 </div>
 
-                {/* Mobile: Round avatars in a row */}
-                <div className="flex md:hidden justify-center gap-6 max-w-sm mx-auto">
+                {/* Mobile: Round avatars in a 2x2 grid */}
+                <div className="grid grid-cols-2 md:hidden gap-x-4 gap-y-8 max-w-[320px] mx-auto">
                     {team.map((member, index) => (
                         <div key={index} className="flex flex-col items-center text-center group">
                             <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-accent/20 shadow-md mb-3 group-hover:border-accent/50 transition-all duration-300">
@@ -64,25 +71,25 @@ export const TeamSection = () => {
                 </div>
 
                 {/* Desktop: Card layout */}
-                <div className="hidden md:grid md:grid-cols-3 gap-5 max-w-3xl mx-auto">
+                <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
                     {team.map((member, index) => (
-                        <Card key={index} className="overflow-hidden border-border/50 hover:shadow-lg transition-all duration-300 group">
-                            <div className="aspect-[3/4] bg-muted/50 relative flex items-center justify-center overflow-hidden">
+                        <Card key={index} className="overflow-hidden border-border/50 hover:shadow-lg transition-all duration-300 group pt-8 pb-6 px-4">
+                            <div className="w-32 h-32 lg:w-40 lg:h-40 mx-auto rounded-full bg-muted/50 relative flex items-center justify-center overflow-hidden mb-5 border-4 border-accent/10 group-hover:border-accent/40 transition-all duration-500 shadow-md">
                                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-muted-foreground">
-                                    <member.icon className="w-14 h-14 opacity-20" />
+                                    <member.icon className="w-12 h-12 opacity-20" />
                                 </div>
                                 <img
                                     src={member.image !== "placeholder" ? member.image : "/placeholder.svg"}
                                     alt={member.name}
                                     loading="lazy"
                                     decoding="async"
-                                    className="w-full h-full object-cover object-top relative z-10 transition-transform duration-500 group-hover:scale-105"
+                                    className={`w-full h-full object-cover ${member.imagePosition} relative z-10 transition-transform duration-500 group-hover:scale-110`}
                                 />
                             </div>
-                            <div className="p-4 text-center">
-                                <h3 className="font-bold text-base text-foreground font-mono">{member.name}</h3>
-                                <p className="text-sm text-muted-foreground mt-0.5 font-mono">{member.title}</p>
-                                <div className="w-8 h-0.5 bg-accent/30 mx-auto mt-2 rounded-full" />
+                            <div className="text-center">
+                                <h3 className="font-bold text-lg text-foreground font-mono">{member.name}</h3>
+                                <p className="text-sm text-muted-foreground mt-1 font-mono">{member.title}</p>
+                                <div className="w-10 h-0.5 bg-accent/50 mx-auto mt-3 rounded-full transition-all duration-300 group-hover:w-16" />
                             </div>
                         </Card>
                     ))}
