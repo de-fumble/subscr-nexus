@@ -433,6 +433,7 @@ export type Database = {
           currency: string
           description: string | null
           id: string
+          is_active: boolean
           is_paid: boolean
           name: string
           org_id: string
@@ -448,6 +449,7 @@ export type Database = {
           currency?: string
           description?: string | null
           id?: string
+          is_active?: boolean
           is_paid?: boolean
           name: string
           org_id: string
@@ -463,6 +465,7 @@ export type Database = {
           currency?: string
           description?: string | null
           id?: string
+          is_active?: boolean
           is_paid?: boolean
           name?: string
           org_id?: string

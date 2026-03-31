@@ -15,6 +15,7 @@ interface Payment {
   amount: number;
   currency: string;
   is_paid: boolean;
+  is_active: boolean;
   org_id: string;
 }
 
@@ -47,8 +48,8 @@ const Pay = () => {
         .eq("id", paymentId)
         .single();
 
-      if (error || !data) {
-        toast.error("Payment not found");
+      if (error || !data || data.is_active === false) {
+        toast.error("Payment link is invalid or inactive");
         return;
       }
 

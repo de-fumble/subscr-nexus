@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, TrendingUp, FileText, Download, Users } from "lucide-react";
+import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, TrendingUp, FileText, Download, Users, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ interface Payment {
   amount: number;
   currency: string;
   is_paid: boolean;
+  is_active?: boolean;
   created_at: string;
   one_time_payment_transactions: PaymentTransaction[];
 }
@@ -142,11 +143,12 @@ const OneTimePayments = () => {
   };
 
   const allTransactions = payments.flatMap(p => p.one_time_payment_transactions || []);
+  const activePayments = payments.filter((p) => p.is_active !== false);
 
   // Analytics calculations
   const totalCollected = allTransactions.reduce((sum, t) => sum + t.amount, 0);
   const totalTransactions = allTransactions.length;
-  const totalPayments = payments.length;
+  const totalPayments = activePayments.length;
   const avgRevenuePerLink = totalPayments > 0 ? (totalCollected / totalPayments) : 0;
 
   // Monthly revenue data for chart
@@ -251,6 +253,27 @@ const OneTimePayments = () => {
     }
   };
 
+  const handleCancelLink = async (paymentId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this payment link? Users will no longer be able to make payments.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("one_time_payments")
+        .update({ is_active: false })
+        .eq("id", paymentId);
+
+      if (error) throw error;
+
+      toast.success("Payment link cancelled successfully");
+      fetchPayments(true);
+    } catch (error) {
+      console.error("Error cancelling link:", error);
+      toast.error("Failed to cancel payment link");
+    }
+  };
+
   const renderPaymentCard = (payment: Payment, index: number) => {
     const txns = payment.one_time_payment_transactions || [];
     const linkRevenue = txns.reduce((sum, t) => sum + t.amount, 0);
@@ -305,14 +328,25 @@ const OneTimePayments = () => {
         </div>
 
         <div className="space-y-2 mt-auto">
-          <Button
-            onClick={() => copyPaymentLink(payment.id)}
-            variant="outline"
-            className="w-full gap-2 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Copy Payment Link
-          </Button>
+          <div className="flex gap-2 w-full">
+            <Button
+              onClick={() => copyPaymentLink(payment.id)}
+              variant="outline"
+              className="flex-1 gap-2 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden sm:inline">Copy Link</span>
+              <span className="sm:hidden">Copy</span>
+            </Button>
+            <Button
+              onClick={() => handleCancelLink(payment.id)}
+              variant="ghost"
+              className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              title="Cancel Payment Link"
+            >
+              <Ban className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </Card>
     );
@@ -481,7 +515,7 @@ const OneTimePayments = () => {
                 </div>
               )}
 
-              {payments.length === 0 ? (
+              {activePayments.length === 0 ? (
                 <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
                   <div className="text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
@@ -505,7 +539,7 @@ const OneTimePayments = () => {
                 </Card>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {payments.map((payment, index) => renderPaymentCard(payment, index))}
+                  {activePayments.map((payment, index) => renderPaymentCard(payment, index))}
                 </div>
               )}
             </div>
