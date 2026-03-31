@@ -4,13 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, TrendingUp, FileText, Download, Users, Ban } from "lucide-react";
+import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, TrendingUp, FileText, Download, Users, Ban, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { QRCodeSVG } from "qrcode.react";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import * as XLSX from "xlsx";
@@ -346,6 +348,36 @@ const OneTimePayments = () => {
                 <span className="hidden sm:inline">Copy Link</span>
                 <span className="sm:hidden">Copy</span>
               </Button>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="shrink-0 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+                    title="Show QR Code"
+                  >
+                    <QrCode className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-center">{payment.name} QR Code</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl mt-4">
+                    <QRCodeSVG 
+                      value={`${window.location.origin}/pay/${payment.id}`}
+                      size={250}
+                      level={"M"}
+                      includeMargin={true}
+                      className="shadow-sm rounded-lg"
+                    />
+                    <p className="mt-6 text-sm text-zinc-500 font-medium text-center">
+                      Scan this code to go directly to the payment page.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Button
                 onClick={() => handleCancelLink(payment.id)}
                 variant="ghost"
