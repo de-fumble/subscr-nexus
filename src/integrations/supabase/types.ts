@@ -435,6 +435,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_paid: boolean
+          is_quick_payment: boolean | null
           name: string
           org_id: string
           paid_at: string | null
@@ -451,6 +452,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_paid?: boolean
+          is_quick_payment?: boolean | null
           name: string
           org_id: string
           paid_at?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_paid?: boolean
+          is_quick_payment?: boolean | null
           name?: string
           org_id?: string
           paid_at?: string | null

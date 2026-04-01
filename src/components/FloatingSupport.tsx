@@ -9,7 +9,7 @@ export function FloatingSupport() {
     const [isLoading, setIsLoading] = useState(true);
 
     return (
-        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end pointer-events-none">
+        <div className="fixed bottom-28 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end pointer-events-none">
 
             {/* Support Panel / IFrame Modal */}
             <div

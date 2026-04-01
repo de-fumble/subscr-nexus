@@ -31,13 +31,13 @@ export function MobileBottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md safe-area-bottom">
-        <div className="flex items-center justify-around h-14 px-2">
+      <nav className="fixed bottom-6 left-4 right-4 z-50 md:hidden border border-border/40 bg-background/60 backdrop-blur-xl rounded-full shadow-lg">
+        <div className="flex items-center justify-around h-16 px-2">
           {navItems.map((item) => (
             <button
               key={item.label}
               onClick={() => navigate(item.url)}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors rounded-full ${
                 isActive(item.url)
                   ? "text-primary"
                   : "text-muted-foreground"
@@ -50,7 +50,7 @@ export function MobileBottomNav() {
         </div>
       </nav>
       {/* Spacer to prevent content from being hidden behind the bottom nav */}
-      <div className="md:hidden h-14" />
+      <div className="md:hidden h-28" />
     </>
   );
 }

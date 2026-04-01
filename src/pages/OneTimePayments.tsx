@@ -12,6 +12,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -120,6 +121,7 @@ const OneTimePayments = () => {
           one_time_payment_transactions(*)
         `)
         .eq("org_id", orgId)
+        .neq("is_quick_payment", true)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -441,6 +443,9 @@ const OneTimePayments = () => {
                   <RefreshCw className="h-4 w-4" />
                 )}
               </Button>
+              {organization && (
+                <QuickCheckoutModal orgId={organization.id} />
+              )}
               {canCreatePlans && (
                 <Button
                   onClick={() => navigate("/payments/create")}
@@ -600,5 +605,163 @@ const OneTimePayments = () => {
     </SidebarProvider>
   );
 };
+
+function QuickCheckoutModal({ orgId }: { orgId: string }) {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "qr" | "success">("form");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("RECURRA CHECKOUT");
+  const [loading, setLoading] = useState(false);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (step === "qr" && paymentId) {
+      const channel = supabase
+        .channel(`transactions-${paymentId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "one_time_payment_transactions",
+            filter: `payment_id=eq.${paymentId}`,
+          },
+          (payload) => {
+            setStep("success");
+            setTimeout(() => {
+              setOpen(false);
+            }, 3000); // Close after 3 seconds
+          }
+        )
+        .subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [step, paymentId]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setTimeout(() => {
+        setStep("form");
+        setAmount("");
+        setDescription("RECURRA CHECKOUT");
+        setPaymentId(null);
+      }, 300);
+    }
+    setOpen(newOpen);
+  };
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || isNaN(Number(amount))) return;
+    setLoading(true);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error("No user");
+      
+      const { data, error } = await supabase
+        .from("one_time_payments")
+        .insert({
+          org_id: orgId,
+          name: "Quick Checkout",
+          description: description,
+          amount: Number(amount),
+          currency: "NGN",
+          is_quick_payment: true,
+          created_by: user.user.id
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      setPaymentId(data.id);
+      setStep("qr");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to generate checkout");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          variant="default"
+          className="bg-primary hover:bg-primary/90 gap-2 text-sm h-8 sm:h-9"
+          size="sm"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Quick Checkout</span>
+          <span className="sm:hidden">Quick</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md bg-background/95 backdrop-blur-xl border-border/50">
+        <DialogHeader>
+          <DialogTitle className="text-center text-xl font-bold">
+            {step === "form" ? "Quick Checkout" : step === "qr" ? "Scan to Pay" : "Payment Successful"}
+          </DialogTitle>
+        </DialogHeader>
+        
+        {step === "form" && (
+          <form onSubmit={handleGenerate} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Amount (₦)</label>
+              <Input 
+                type="number"
+                min="100"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="h-12 bg-background/50 border-border/50 rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Description (Optional)</label>
+              <Input 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="RECURRA CHECKOUT"
+                className="h-12 bg-background/50 border-border/50 rounded-xl"
+              />
+            </div>
+            <Button type="submit" className="w-full mt-4 h-12 rounded-xl text-base font-bold shadow-xl shadow-primary/20" disabled={loading}>
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Generate Link & QR"}
+            </Button>
+          </form>
+        )}
+        
+        {step === "qr" && paymentId && (
+          <div className="flex flex-col items-center justify-center p-8 bg-card/50 rounded-2xl mt-4 border border-border/50 shadow-inner">
+            <QRCodeSVG 
+              value={`${window.location.origin}/pay/${paymentId}`}
+              size={220}
+              level={"M"}
+              includeMargin={true}
+              className="shadow-md rounded-xl"
+            />
+            <p className="mt-6 text-sm text-primary font-bold text-center animate-pulse flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Waiting for payment...
+            </p>
+          </div>
+        )}
+        
+        {step === "success" && (
+          <div className="flex flex-col items-center justify-center p-8 bg-emerald-500/10 rounded-2xl mt-4 border border-emerald-500/20">
+            <div className="h-20 w-20 bg-emerald-500/20 rounded-full flex items-center justify-center animate-bounce mb-4">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-emerald-600 mb-2">Payment Received!</h3>
+            <p className="text-sm text-emerald-600/70 font-medium">Closing automatically in a moment...</p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default OneTimePayments;
