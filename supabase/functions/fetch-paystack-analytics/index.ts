@@ -316,11 +316,13 @@ serve(async (req) => {
           txn.metadata?.payment_id ||
           (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
         
+        // Hoist txnPlanCode above if/else so it is always in scope
+        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+
         if (isStandardPayment) {
           planName = "Standard Payment";
         } else {
           // 2. Match plan_code from transaction to LOCAL org plans (most accurate)
-          const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
           if (txnPlanCode && planCodeToName[txnPlanCode]) {
             planName = planCodeToName[txnPlanCode];
           }
@@ -362,9 +364,6 @@ serve(async (req) => {
             planName = customerCodeToPlanName[txn.customer.customer_code];
           }
         }
-        
-        // Log for debugging
-        console.log(`Failed txn ${txn.reference}: resolved planName=${planName}, plan_code=${txnPlanCode}, sub_code=${txn.subscription_code}, customer_code=${txn.customer?.customer_code}`);
         
         return {
           ...txn,
