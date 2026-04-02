@@ -615,7 +615,10 @@ function QuickCheckoutModal({ orgId }: { orgId: string }) {
   const [paymentId, setPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
     if (step === "qr" && paymentId) {
+      // Setup Realtime listener as primary
       const channel = supabase
         .channel(`transactions-${paymentId}`)
         .on(
@@ -626,16 +629,41 @@ function QuickCheckoutModal({ orgId }: { orgId: string }) {
             table: "one_time_payment_transactions",
             filter: `payment_id=eq.${paymentId}`,
           },
-          (payload) => {
-            setStep("success");
-            setTimeout(() => {
-              setOpen(false);
-            }, 3000); // Close after 3 seconds
+          () => {
+            handleSuccess();
           }
         )
         .subscribe();
       
+      // Setup Polling as fallback
+      const checkPayment = async () => {
+        const { data } = await supabase
+          .from("one_time_payment_transactions")
+          .select("id")
+          .eq("payment_id", paymentId)
+          .maybeSingle();
+          
+        if (data) {
+          handleSuccess();
+        }
+      };
+
+      const handleSuccess = () => {
+        if (step !== "success") {
+          setStep("success");
+          clearInterval(intervalId);
+          supabase.removeChannel(channel);
+          setTimeout(() => {
+            setOpen(false);
+          }, 3000); // Close after 3 seconds
+        }
+      };
+
+      intervalId = setInterval(checkPayment, 3000);
+      checkPayment(); // Initial check
+      
       return () => {
+        clearInterval(intervalId);
         supabase.removeChannel(channel);
       };
     }

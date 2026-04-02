@@ -171,46 +171,115 @@ interface BillingProfile {
  
        if (linksError) throw linksError;
  
-       // Get active plans count and latest payment for each profile
+       // Pre-fetch all required data to prevent N+1 queries
+       const emails = profileLinks?.map(link => (link.billing_profiles as any).email) || [];
+
+       // 1. All subscribers for this org
+       const { data: allSubscribers } = await supabase
+         .from("subscribers")
+         .select("id, status, email, amount, created_at, paystack_subscription_code, subscription_plans!inner(org_id)")
+         .eq("subscription_plans.org_id", orgId);
+
+       const subscriberIds = allSubscribers?.map(s => s.id) || [];
+
+       // 2. All transactions for these subscribers
+       const { data: allSubTxns } = subscriberIds.length > 0 
+         ? await supabase.from("transactions").select("*").in("subscriber_id", subscriberIds)
+         : { data: [] };
+
+       // 3. All one_time_payment_transactions for these emails
+       const { data: allOtpTxns } = emails.length > 0 
+         ? await supabase.from("one_time_payment_transactions").select("*").in("payer_email", emails)
+         : { data: [] };
+
+       // 4. All direct one_time_payments for these emails
+       const { data: allDirectOtp } = emails.length > 0
+         ? await supabase.from("one_time_payments").select("*").eq("org_id", orgId).eq("is_paid", true).in("paid_by_email", emails)
+         : { data: [] };
+
        const enrichedProfiles: BillingProfile[] = [];
- 
+
        for (const link of profileLinks || []) {
          const profile = link.billing_profiles as any;
- 
-         // Get subscribers for this email in this org's plans
-         const { data: subscribers } = await supabase
-           .from("subscribers")
-           .select(`
-             id,
-             status,
-             plan_id,
-             subscription_plans!inner (org_id)
-           `)
-           .eq("email", profile.email)
-           .eq("subscription_plans.org_id", orgId);
- 
-         const activePlans = subscribers?.filter((s) => s.status === "active").length || 0;
- 
-         // Get latest transaction
-         const { data: transactions } = await supabase
-           .from("transactions")
-           .select(`
-             status,
-             paid_at,
-             created_at,
-             subscribers!inner (
-               email,
-               plan_id,
-               subscription_plans!inner (org_id)
-             )
-           `)
-           .eq("subscribers.email", profile.email)
-           .eq("subscribers.subscription_plans.org_id", orgId)
-           .order("created_at", { ascending: false })
-           .limit(1);
- 
-         const latestTx = transactions?.[0];
- 
+         let totalSpend = 0;
+         let latestTx: any = null;
+         const profileTxns: any[] = [];
+
+         // Find matching subscribers
+         const profileSubscribers = allSubscribers?.filter(s => s.email === profile.email) || [];
+         const activePlans = profileSubscribers.filter(s => s.status === "active").length;
+
+         // Map subscription transactions
+         profileSubscribers.forEach(sub => {
+           // Find standard webhook transactions
+           const txns = allSubTxns?.filter(tx => tx.subscriber_id === sub.id) || [];
+           
+           txns.forEach(tx => {
+             const amount = Number(tx.amount) / 100;
+             profileTxns.push({
+               ...tx,
+               amount,
+               normalized_date: new Date(tx.paid_at || tx.created_at).getTime()
+             });
+             if (tx.status === "success" || tx.status === "Successful") {
+               totalSpend += amount;
+             }
+           });
+
+           // Fix webhook race condition: inject initial subscription payment if skipped
+           const planCreatedAt = new Date(sub.created_at).getTime();
+           const hasInitialTx = txns.some(t => Math.abs(new Date(t.created_at).getTime() - planCreatedAt) < 86400000);
+
+           if (!hasInitialTx && (sub.status === "active" || sub.status === "cancelled")) {
+             const initAmount = Number(sub.amount) / 100; // Sub amount in Kobo too
+             profileTxns.push({
+               id: `init-${sub.id}`,
+               status: "success",
+               amount: initAmount,
+               paid_at: sub.created_at,
+               created_at: sub.created_at,
+               normalized_date: planCreatedAt
+             });
+             totalSpend += initAmount;
+           }
+         });
+
+         // Map one time payment transactions
+         const otpTxns = allOtpTxns?.filter(tx => tx.payer_email === profile.email) || [];
+         otpTxns.forEach(tx => {
+           const amount = Number(tx.amount);
+           profileTxns.push({
+             ...tx,
+             amount,
+             status: "success",
+             normalized_date: new Date(tx.paid_at || tx.created_at).getTime()
+           });
+           totalSpend += amount;
+         });
+
+         // Map direct one time payments
+         const directOtp = allDirectOtp?.filter(tx => tx.paid_by_email === profile.email) || [];
+         directOtp.forEach(tx => {
+           // Avoid duplicates by reference
+           if (!profileTxns.some(t => t.paystack_reference === tx.paystack_reference)) {
+             const amount = Number(tx.amount);
+             profileTxns.push({
+               ...tx,
+               amount,
+               status: "success",
+               normalized_date: new Date(tx.paid_at || tx.created_at).getTime()
+             });
+             totalSpend += amount;
+           }
+         });
+
+         // Sort to find the latest payment
+         profileTxns.sort((a, b) => b.normalized_date - a.normalized_date);
+         
+         if (profileTxns.length > 0) {
+           latestTx = profileTxns[0];
+         }
+
           enrichedProfiles.push({
             id: profile.id,
             profile_number: profile.profile_number,
@@ -218,10 +287,10 @@ interface BillingProfile {
             full_name: profile.full_name,
             phone_number: profile.phone_number,
             created_at: profile.created_at,
-            total_paid: link.total_paid || 0,
+            total_paid: totalSpend,
             active_plans_count: activePlans,
-            latest_payment_status: latestTx?.status || null,
-            latest_payment_date: latestTx?.paid_at || latestTx?.created_at || null,
+            latest_payment_status: latestTx ? latestTx.status : null,
+            latest_payment_date: latestTx ? (latestTx.paid_at || latestTx.created_at) : null,
           });
        }
  

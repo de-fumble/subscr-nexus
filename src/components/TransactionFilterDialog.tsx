@@ -83,8 +83,9 @@ export function TransactionFilterDialog({
             
             // Filter and transform Paystack transactions
             paystackTxns.forEach((txn: any) => {
-              // Only include subscription transactions
-              if (txn.type !== "subscription") return;
+              // Only include subscription transactions from this payload
+              const typeStr = String(txn.type || "").toLowerCase();
+              if (typeStr !== "subscription") return;
               
               const txnDate = new Date(txn.date || txn.paid_at || txn.created_at);
               
@@ -107,7 +108,7 @@ export function TransactionFilterDialog({
                 reference: txn.reference || txn.paystack_reference || "N/A",
                 payer_name: txn.customer_name || txn.payer_name || "Unknown",
                 plan_name: txn.plan_name || txn.plan || "Subscription",
-                amount: Number(txn.amount) / 100, // Paystack amounts are in kobo
+                amount: Number(txn.amount), // Backend already converts to Naira
                 status: txn.status === "success" ? "success" : txn.status,
                 paid_at: txn.date || txn.paid_at || txn.created_at,
                 type: "subscription",

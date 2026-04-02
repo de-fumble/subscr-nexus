@@ -311,56 +311,56 @@ serve(async (req) => {
       const enrichedFailedTransactions = failedTransactions.map((txn: any) => {
         let planName = null;
         
-        // 1. Match plan_code from transaction to LOCAL org plans (most accurate)
-        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
-        if (txnPlanCode && planCodeToName[txnPlanCode]) {
-          planName = planCodeToName[txnPlanCode];
-        }
-        
-        // 2. Match subscription_code to local plan name via subscription lookup
-        if (!planName && txn.subscription_code && subCodeToPlanName[txn.subscription_code]) {
-          planName = subCodeToPlanName[txn.subscription_code];
-        }
-        
-        // 3. Match metadata plan_id to local org plan
-        if (!planName && txn.metadata?.plan_id) {
-          const plan = orgPlans?.find(p => p.id === txn.metadata.plan_id);
-          if (plan) planName = plan.name;
-        }
-        
-        // 4. Match metadata plan_name ONLY if it matches a known local plan name
-        if (!planName && txn.metadata?.plan_name) {
-          const matchingPlan = orgPlans?.find(
-            p => p.name.toLowerCase() === txn.metadata.plan_name.toLowerCase()
-          );
-          if (matchingPlan) {
-            planName = matchingPlan.name;
-          }
-        }
-        
-        // 5. Try custom_fields for plan_id and match to org plans
-        if (!planName && txn.metadata?.custom_fields) {
-          const planField = txn.metadata.custom_fields.find(
-            (f: any) => f.variable_name === "plan_id"
-          );
-          if (planField) {
-            const plan = orgPlans?.find(p => p.id === planField.value);
-            if (plan) planName = plan.name;
-          }
-        }
-        
-        // 6. Match customer_code to local plan name via subscription lookup
-        if (!planName && txn.customer?.customer_code && customerCodeToPlanName[txn.customer.customer_code]) {
-          planName = customerCodeToPlanName[txn.customer.customer_code];
-        }
-        
-        // 7. Check if it's a standard payment
+        // 1. Check if it's a standard payment first
         const isStandardPayment = txn.metadata?.payment_type === "one_time" || 
           txn.metadata?.payment_id ||
           (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
         
-        if (!planName && isStandardPayment) {
+        if (isStandardPayment) {
           planName = "Standard Payment";
+        } else {
+          // 2. Match plan_code from transaction to LOCAL org plans (most accurate)
+          const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+          if (txnPlanCode && planCodeToName[txnPlanCode]) {
+            planName = planCodeToName[txnPlanCode];
+          }
+          
+          // 3. Match subscription_code to local plan name via subscription lookup
+          if (!planName && txn.subscription_code && subCodeToPlanName[txn.subscription_code]) {
+            planName = subCodeToPlanName[txn.subscription_code];
+          }
+          
+          // 4. Match metadata plan_id to local org plan
+          if (!planName && txn.metadata?.plan_id) {
+            const plan = orgPlans?.find(p => p.id === txn.metadata.plan_id);
+            if (plan) planName = plan.name;
+          }
+          
+          // 5. Match metadata plan_name ONLY if it matches a known local plan name
+          if (!planName && txn.metadata?.plan_name) {
+            const matchingPlan = orgPlans?.find(
+              p => p.name.toLowerCase() === txn.metadata.plan_name.toLowerCase()
+            );
+            if (matchingPlan) {
+              planName = matchingPlan.name;
+            }
+          }
+          
+          // 6. Try custom_fields for plan_id and match to org plans
+          if (!planName && txn.metadata?.custom_fields) {
+            const planField = txn.metadata.custom_fields.find(
+              (f: any) => f.variable_name === "plan_id"
+            );
+            if (planField) {
+              const plan = orgPlans?.find(p => p.id === planField.value);
+              if (plan) planName = plan.name;
+            }
+          }
+          
+          // 7. Match customer_code to local plan name via subscription lookup
+          if (!planName && txn.customer?.customer_code && customerCodeToPlanName[txn.customer.customer_code]) {
+            planName = customerCodeToPlanName[txn.customer.customer_code];
+          }
         }
         
         // Log for debugging
@@ -475,35 +475,44 @@ serve(async (req) => {
           : null;
         let email = txn.customer?.email || null;
         
-        // Try to match plan_code from transaction
-        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
-        if (txnPlanCode && planCodeToName[txnPlanCode]) {
-          planName = planCodeToName[txnPlanCode];
-        }
-        
-        // Try to find plan from subscription
-        if (!planName && txn.customer) {
-          const customerSub = orgSubscriptions.find(
-            (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
-          );
-          if (customerSub?.plan) {
-            planName = customerSub.plan.name;
+        // Determine transaction type early
+        const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
+          txn.metadata?.payment_id ||
+          (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
+          
+        if (isOneTimePayment) {
+          planName = "One-Time Payment";
+        } else {
+          // Try to match plan_code from transaction
+          const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+          if (txnPlanCode && planCodeToName[txnPlanCode]) {
+            planName = planCodeToName[txnPlanCode];
           }
-        }
-        
-        // Try metadata for plan name
-        if (!planName && txn.metadata?.plan_name) {
-          planName = txn.metadata.plan_name;
-        }
-        
-        // Try custom_fields for plan
-        if (!planName && txn.metadata?.custom_fields) {
-          const planField = txn.metadata.custom_fields.find(
-            (f: any) => f.variable_name === "plan_id"
-          );
-          if (planField) {
-            const plan = orgPlans?.find(p => p.id === planField.value);
-            if (plan) planName = plan.name;
+          
+          // Try to find plan from subscription
+          if (!planName && txn.customer) {
+            const customerSub = orgSubscriptions.find(
+              (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
+            );
+            if (customerSub?.plan) {
+              planName = customerSub.plan.name;
+            }
+          }
+          
+          // Try metadata for plan name
+          if (!planName && txn.metadata?.plan_name) {
+            planName = txn.metadata.plan_name;
+          }
+          
+          // Try custom_fields for plan
+          if (!planName && txn.metadata?.custom_fields) {
+            const planField = txn.metadata.custom_fields.find(
+              (f: any) => f.variable_name === "plan_id"
+            );
+            if (planField) {
+              const plan = orgPlans?.find(p => p.id === planField.value);
+              if (plan) planName = plan.name;
+            }
           }
         }
         
@@ -511,11 +520,6 @@ serve(async (req) => {
         if (!customerName && txn.metadata?.customer_name) {
           customerName = txn.metadata.customer_name;
         }
-        
-        // Determine transaction type
-        const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
-          txn.metadata?.payment_id ||
-          (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
         
         return {
           paid_at: txn.paid_at || txn.created_at,
@@ -650,58 +654,58 @@ serve(async (req) => {
     successfulTransactions.forEach((txn: any) => {
       let planName = "Other";
       
-      // 1. FIRST: Match plan_code from transaction directly (most accurate)
-      const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
-      if (txnPlanCode && planCodeToName[txnPlanCode]) {
-        planName = planCodeToName[txnPlanCode];
-      }
-      
-      // 2. Try subscription_code to find the subscription and its plan
-      if (planName === "Other" && txn.subscription_code) {
-        const matchingSub = orgSubscriptions.find(
-          (sub: any) => sub.subscription_code === txn.subscription_code
-        );
-        if (matchingSub?.plan?.plan_code && planCodeToName[matchingSub.plan.plan_code]) {
-          planName = planCodeToName[matchingSub.plan.plan_code];
-        } else if (matchingSub?.plan?.name) {
-          planName = matchingSub.plan.name;
-        }
-      }
-      
-      // 3. Try metadata custom_fields for plan_id
-      if (planName === "Other" && txn.metadata?.custom_fields) {
-        const planField = txn.metadata.custom_fields.find(
-          (f: any) => f.variable_name === "plan_id"
-        );
-        if (planField) {
-          const plan = orgPlans?.find(p => p.id === planField.value);
-          if (plan) planName = plan.name;
-        }
-      }
-      
-      // 4. Try metadata plan_name
-      if (planName === "Other" && txn.metadata?.plan_name) {
-        planName = txn.metadata.plan_name;
-      }
-      
-      // 5. Check if it's a one-time/standard payment
+      // Check if it's a one-time/standard payment first
       const isOneTimePayment = txn.metadata?.payment_type === "one_time" || 
         txn.metadata?.payment_id ||
         (orgOtpReferences.has(txn.reference) || orgOtpTxnReferences.has(txn.reference));
-      
-      if (planName === "Other" && isOneTimePayment) {
+        
+      if (isOneTimePayment) {
         planName = "Standard Payments";
-      }
-      
-      // 6. Last resort: match by customer_code to subscription
-      if (planName === "Other" && txn.customer?.customer_code) {
-        const customerSub = orgSubscriptions.find(
-          (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
-        );
-        if (customerSub?.plan?.plan_code && planCodeToName[customerSub.plan.plan_code]) {
-          planName = planCodeToName[customerSub.plan.plan_code];
-        } else if (customerSub?.plan?.name) {
-          planName = customerSub.plan.name;
+      } else {
+        // 1. FIRST: Match plan_code from transaction directly (most accurate)
+        const txnPlanCode = txn.plan?.plan_code || txn.plan_object?.plan_code;
+        if (txnPlanCode && planCodeToName[txnPlanCode]) {
+          planName = planCodeToName[txnPlanCode];
+        }
+        
+        // 2. Try subscription_code to find the subscription and its plan
+        if (planName === "Other" && txn.subscription_code) {
+          const matchingSub = orgSubscriptions.find(
+            (sub: any) => sub.subscription_code === txn.subscription_code
+          );
+          if (matchingSub?.plan?.plan_code && planCodeToName[matchingSub.plan.plan_code]) {
+            planName = planCodeToName[matchingSub.plan.plan_code];
+          } else if (matchingSub?.plan?.name) {
+            planName = matchingSub.plan.name;
+          }
+        }
+        
+        // 3. Try metadata custom_fields for plan_id
+        if (planName === "Other" && txn.metadata?.custom_fields) {
+          const planField = txn.metadata.custom_fields.find(
+            (f: any) => f.variable_name === "plan_id"
+          );
+          if (planField) {
+            const plan = orgPlans?.find(p => p.id === planField.value);
+            if (plan) planName = plan.name;
+          }
+        }
+        
+        // 4. Try metadata plan_name
+        if (planName === "Other" && txn.metadata?.plan_name) {
+          planName = txn.metadata.plan_name;
+        }
+        
+        // 5. Last resort: match by customer_code to subscription
+        if (planName === "Other" && txn.customer?.customer_code) {
+          const customerSub = orgSubscriptions.find(
+            (sub: any) => sub.customer?.customer_code === txn.customer.customer_code
+          );
+          if (customerSub?.plan?.plan_code && planCodeToName[customerSub.plan.plan_code]) {
+            planName = planCodeToName[customerSub.plan.plan_code];
+          } else if (customerSub?.plan?.name) {
+            planName = customerSub.plan.name;
+          }
         }
       }
 

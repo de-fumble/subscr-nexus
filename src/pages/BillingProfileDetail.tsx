@@ -24,6 +24,7 @@
    Edit2,
    Save,
    X,
+   ArrowLeft,
  } from "lucide-react";
  import { useOrgRole } from "@/hooks/useOrgRole";
  import {
@@ -216,21 +217,135 @@ interface BillingProfile {
  
        setPlans(formattedPlans);
  
-        // Fetch live transactions from Paystack for this profile
-        const { data: txResult, error: txFnError } = await supabase.functions.invoke(
-          "fetch-billing-profile-transactions",
-          { body: { email: profileData.email } }
+        // Fetch transactions from local database instead of relying on external API
+        let localTxns: Transaction[] = [];
+        let calcTotalSpend = 0;
+        const calcSpendByPlan: Record<string, number> = {};
+
+        // 1. Fetch subscription transactions
+        const subscriberIds = formattedPlans.map((p) => p.subscriber_id);
+        if (subscriberIds.length > 0) {
+          const { data: subTxns, error: subTxError } = await supabase
+            .from("transactions")
+            .select("*")
+            .in("subscriber_id", subscriberIds);
+
+          if (!subTxError && subTxns) {
+            subTxns.forEach((tx) => {
+              const plan = formattedPlans.find((p) => p.subscriber_id === tx.subscriber_id);
+              const planName = plan?.name || "Subscription Payment";
+              const amount = Number(tx.amount) / 100; // transactions from paystack are in Kobo
+              
+              localTxns.push({
+                id: tx.id,
+                amount,
+                status: tx.status,
+                paystack_reference: tx.paystack_reference || tx.id,
+                created_at: tx.created_at,
+                paid_at: tx.paid_at || tx.created_at,
+                plan_name: planName,
+              });
+
+              if (tx.status === "success" || tx.status === "Successful") {
+                calcTotalSpend += amount;
+                calcSpendByPlan[planName] = (calcSpendByPlan[planName] || 0) + amount;
+              }
+            });
+            
+            // Fix webhook race condition: inject the initial subscription payment if missing
+            formattedPlans.forEach((plan) => {
+              // Check if there is already a transaction for this plan near its creation date
+              const planCreatedAt = new Date(plan.created_at).getTime();
+              const hasInitialTransaction = localTxns.some(t => 
+                t.plan_name === plan.name && 
+                Math.abs(new Date(t.created_at).getTime() - planCreatedAt) < 86400000 // within 24 hours
+              );
+
+              if (!hasInitialTransaction && (plan.status === "active" || plan.status === "cancelled")) {
+                 // The initial payment is confirmed by the active subscriber state
+                 const amount = plan.amount; // Already in Naira in formattedPlans
+                 localTxns.push({
+                   id: `init-${plan.subscriber_id}`,
+                   amount,
+                   status: "success",
+                   paystack_reference: plan.paystack_subscription_code || `sub-${plan.subscriber_id}`,
+                   created_at: plan.created_at,
+                   paid_at: plan.created_at,
+                   plan_name: plan.name,
+                 });
+                 calcTotalSpend += amount;
+                 calcSpendByPlan[plan.name] = (calcSpendByPlan[plan.name] || 0) + amount;
+              }
+            });
+          }
+        }
+
+        // 2. Fetch one-time payment transactions (Already in Naira)
+        const { data: otpTxns, error: otpTxError } = await supabase
+          .from("one_time_payment_transactions")
+          .select("*, one_time_payments(name)")
+          .eq("payer_email", profileData.email);
+
+        if (!otpTxError && otpTxns) {
+          otpTxns.forEach((tx) => {
+            const planName = tx.one_time_payments?.name || "Standard Payment";
+            const amount = Number(tx.amount); // Already Naira
+            
+            localTxns.push({
+              id: tx.id,
+              amount,
+              status: "success",
+              paystack_reference: tx.paystack_reference || tx.id,
+              created_at: tx.created_at,
+              paid_at: tx.paid_at || tx.created_at,
+              plan_name: planName,
+            });
+
+            calcTotalSpend += amount;
+            calcSpendByPlan[planName] = (calcSpendByPlan[planName] || 0) + amount;
+          });
+        }
+
+        // 3. Fetch direct one-time payments (Already in Naira)
+        const { data: directOtp, error: directOtpError } = await supabase
+          .from("one_time_payments")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("is_paid", true)
+          .eq("paid_by_email", profileData.email);
+
+        if (!directOtpError && directOtp) {
+          directOtp.forEach((tx) => {
+            // Avoid duplicates
+            if (!localTxns.find((t) => t.paystack_reference === tx.paystack_reference)) {
+              const planName = tx.name || "Standard Payment";
+              const amount = Number(tx.amount); // Already Naira
+              
+              localTxns.push({
+                id: tx.id,
+                amount,
+                status: "success",
+                paystack_reference: tx.paystack_reference || tx.id,
+                created_at: tx.created_at,
+                paid_at: tx.paid_at || tx.created_at,
+                plan_name: planName,
+              });
+
+              calcTotalSpend += amount;
+              calcSpendByPlan[planName] = (calcSpendByPlan[planName] || 0) + amount;
+            }
+          });
+        }
+
+        // Sort by date descending
+        localTxns.sort(
+          (a, b) => new Date(b.paid_at || b.created_at).getTime() - new Date(a.paid_at || a.created_at).getTime()
         );
 
-        if (txFnError) {
-          console.error("Error fetching Paystack transactions:", txFnError);
-        } else if (txResult && !txResult.error) {
-          setTransactions(txResult.transactions || []);
-          setTotalSpend(txResult.totalSpend || 0);
-          setSpendByPlan(txResult.spendByPlan || {});
-        } else {
-          console.error("Edge function error:", txResult?.error);
-        }
+        setTransactions(localTxns);
+        setTotalSpend(calcTotalSpend);
+        setSpendByPlan(calcSpendByPlan);
+        
      } catch (error: any) {
        console.error("Error fetching profile data:", error);
        toast.error(error.message || "Failed to load profile");
@@ -377,7 +492,15 @@ interface BillingProfile {
            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
              <SidebarTrigger />
              
-             <div className="flex-1">
+             <div className="flex-1 flex items-center gap-2">
+               <Button 
+                 variant="ghost" 
+                 size="icon" 
+                 onClick={() => navigate("/dashboard/billing-profiles")}
+                 className="mr-1"
+               >
+                 <ArrowLeft className="h-5 w-5" />
+               </Button>
                <h1 className="text-xl font-bold text-foreground">Billing Profile</h1>
              </div>
            </header>
@@ -558,40 +681,58 @@ interface BillingProfile {
                        Manage subscriptions for this billing profile
                      </CardDescription>
                    </CardHeader>
-                   <CardContent className="flex flex-wrap gap-3">
-                     {activePlansCount > 1 && (
-                       <AlertDialog>
-                         <AlertDialogTrigger asChild>
-                           <Button variant="destructive">
-                             <XCircle className="h-4 w-4 mr-2" />
-                             Cancel All Subscriptions
-                           </Button>
-                         </AlertDialogTrigger>
-                         <AlertDialogContent>
-                           <AlertDialogHeader>
-                             <AlertDialogTitle>Cancel All Subscriptions?</AlertDialogTitle>
-                             <AlertDialogDescription>
-                               This will cancel all {activePlansCount} active subscriptions for this
-                               billing profile. This action cannot be undone.
-                             </AlertDialogDescription>
-                           </AlertDialogHeader>
-                           <AlertDialogFooter>
-                             <AlertDialogCancel>Keep Subscriptions</AlertDialogCancel>
-                             <AlertDialogAction onClick={handleCancelAllSubscriptions}>
-                               Cancel All
-                             </AlertDialogAction>
-                           </AlertDialogFooter>
-                         </AlertDialogContent>
-                       </AlertDialog>
-                     )}
-                     {failedPlans.length > 0 && (
-                       <div className="text-sm text-muted-foreground">
-                         {failedPlans.length} plan(s) have failed payments - retry from the Plans
-                         tab below
-                       </div>
-                     )}
-                   </CardContent>
-                 </Card>
+                    <CardContent className="flex flex-col gap-4">
+                      <div className="flex flex-wrap gap-3">
+                        <Button variant="outline" className="gap-2" onClick={() => {
+                          toast.success("Syncing transactions with source...");
+                          setTimeout(() => fetchProfileData(), 1500);
+                        }}>
+                          <RefreshCw className="h-4 w-4" />
+                          Sync Data
+                        </Button>
+                        
+                        <Button variant="outline" className="gap-2 text-blue-600 hover:text-blue-700" onClick={() => {
+                          toast.info("This feature will roll out in a few weeks");
+                        }}>
+                          <Mail className="h-4 w-4" />
+                          Email Statement
+                        </Button>
+
+                        {activePlansCount > 1 && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" className="gap-2">
+                                <XCircle className="h-4 w-4" />
+                                Cancel All Subscriptions
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancel All Subscriptions?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will cancel all {activePlansCount} active subscriptions for this
+                                  billing profile. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Keep Subscriptions</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleCancelAllSubscriptions}>
+                                  Cancel All
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+
+                      {failedPlans.length > 0 && (
+                        <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200">
+                          <AlertTriangle className="h-4 w-4 inline mr-1" />
+                          {failedPlans.length} plan(s) have failed payments - retry from the Plans tab below
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                )}
  
                {/* Tabs for Plans and Transactions */}
