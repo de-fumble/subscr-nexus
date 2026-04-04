@@ -33,6 +33,7 @@ import DashboardRetryQueue from "./pages/DashboardRetryQueue";
 import DashboardInvoices from "./pages/DashboardInvoices";
 import DashboardBillingProfiles from "./pages/DashboardBillingProfiles";
 import BillingProfileDetail from "./pages/BillingProfileDetail";
+import DashboardAllTransactions from "./pages/DashboardAllTransactions";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import SuperAdminOrganization from "./pages/SuperAdminOrganization";
@@ -45,6 +46,7 @@ import SuperAdminNameChanges from "./pages/SuperAdminNameChanges";
 import SuperAdminLicenses from "./pages/SuperAdminLicenses";
 import SuperAdminKYC from "./pages/SuperAdminKYC";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
+import { DashboardLayout } from "./components/DashboardLayout";
 // Footer Pages
 import About from "./pages/About";
 import Careers from "./pages/Careers";
@@ -90,28 +92,31 @@ const App = () => (
             <Route path="/suspended" element={<SuspendedAccount />} />
             <Route path="/subscribe/:planId" element={<Subscribe />} />
             <Route path="/subscription-callback" element={<SubscriptionCallback />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/setup" element={<ProtectedRoute><DashboardSetup /></ProtectedRoute>} />
-            <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
-            <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
-            <Route path="/payments" element={<ProtectedRoute><OneTimePayments /></ProtectedRoute>} />
-            <Route path="/payments/create" element={<ProtectedRoute><CreateOneTimePayment /></ProtectedRoute>} />
             <Route path="/pay/:paymentId" element={<Pay />} />
             <Route path="/payment/callback" element={<PaymentCallback />} />
             <Route path="/plans-hub/:orgId" element={<PlansHub />} />
-            <Route path="/plans/create" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
-            <Route path="/dashboard/profile" element={<ProtectedRoute><DashboardProfile /></ProtectedRoute>} />
-            <Route path="/dashboard/settings" element={<ProtectedRoute><DashboardSettings /></ProtectedRoute>} />
-            <Route path="/dashboard/analytics" element={<ProtectedRoute><DashboardAnalytics /></ProtectedRoute>} />
-            <Route path="/dashboard/subscribers" element={<ProtectedRoute><DashboardSubscribers /></ProtectedRoute>} />
-            <Route path="/dashboard/logs" element={<ProtectedRoute><DashboardLogs /></ProtectedRoute>} />
-            <Route path="/dashboard/staff" element={<ProtectedRoute><DashboardStaff /></ProtectedRoute>} />
-            <Route path="/dashboard/verify" element={<ProtectedRoute><DashboardVerify /></ProtectedRoute>} />
-            <Route path="/dashboard/failed-payments" element={<ProtectedRoute><DashboardFailedPayments /></ProtectedRoute>} />
-            <Route path="/dashboard/retry-queue" element={<ProtectedRoute><DashboardRetryQueue /></ProtectedRoute>} />
-            <Route path="/dashboard/invoices" element={<ProtectedRoute><DashboardInvoices /></ProtectedRoute>} />
-            <Route path="/dashboard/billing-profiles" element={<ProtectedRoute><DashboardBillingProfiles /></ProtectedRoute>} />
-            <Route path="/dashboard/billing-profiles/:profileId" element={<ProtectedRoute><BillingProfileDetail /></ProtectedRoute>} />
+            {/* Dashboard routes — shared persistent sidebar */}
+            <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/setup" element={<DashboardSetup />} />
+              <Route path="/plans" element={<Plans />} />
+              <Route path="/plans/create" element={<CreatePlan />} />
+              <Route path="/payments" element={<OneTimePayments />} />
+              <Route path="/payments/create" element={<CreateOneTimePayment />} />
+              <Route path="/dashboard/profile" element={<DashboardProfile />} />
+              <Route path="/dashboard/settings" element={<DashboardSettings />} />
+              <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
+              <Route path="/dashboard/subscribers" element={<DashboardSubscribers />} />
+              <Route path="/dashboard/logs" element={<DashboardLogs />} />
+              <Route path="/dashboard/staff" element={<DashboardStaff />} />
+              <Route path="/dashboard/verify" element={<DashboardVerify />} />
+              <Route path="/dashboard/failed-payments" element={<DashboardFailedPayments />} />
+              <Route path="/dashboard/retry-queue" element={<DashboardRetryQueue />} />
+              <Route path="/dashboard/invoices" element={<DashboardInvoices />} />
+              <Route path="/dashboard/billing-profiles" element={<DashboardBillingProfiles />} />
+              <Route path="/dashboard/billing-profiles/:profileId" element={<BillingProfileDetail />} />
+              <Route path="/dashboard/transactions" element={<DashboardAllTransactions />} />
+            </Route>
             <Route element={<SuperAdminLayout />}>
               <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
               <Route path="/superadmin/profile" element={<ProtectedRoute><SuperAdminProfile /></ProtectedRoute>} />

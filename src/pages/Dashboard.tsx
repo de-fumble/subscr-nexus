@@ -8,8 +8,7 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import * as XLSX from "xlsx";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
-import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { TransactionFilterDialog } from "@/components/TransactionFilterDialog";
@@ -680,22 +679,17 @@ const Dashboard = () => {
     }
   };
   if (loading) {
-    return <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset>
-          <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
-          <DashboardSplash />
-        </SidebarInset>
-      </div>
-    </SidebarProvider>;
+    return (
+      <SidebarInset>
+        <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
+        <DashboardSplash />
+      </SidebarInset>
+    );
   }
   const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
-  return <SidebarProvider>
-    <div className="flex min-h-screen w-full bg-background">
-      <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-      <SidebarInset className="flex-1">
+  return (
+    <SidebarInset className="flex-1">
         <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
         <main className="flex-1 overflow-auto">
           <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
@@ -1125,14 +1119,13 @@ const Dashboard = () => {
             <FloatingSupport />
           </div>
         </main>
-      </SidebarInset>
-    </div>
 
     <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
 
     <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
 
     <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
-  </SidebarProvider>;
+  </SidebarInset>
+  );
 };
 export default Dashboard;

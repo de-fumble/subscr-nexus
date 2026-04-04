@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AuditLogViewer } from "@/components/AuditLogViewer";
 import { Loader2 } from "lucide-react";
 import { FloatingSupport } from "@/components/FloatingSupport";
-
 import { useOrgRole } from "@/hooks/useOrgRole";
 
 interface Organization {
@@ -86,47 +84,31 @@ export default function DashboardLogs() {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading logs...</p>
-              </div>
-            </div>
-          </SidebarInset>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading logs...</p>
         </div>
-        <FloatingSupport />
-      </SidebarProvider>
+      </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">
-                Activity Logs
-              </h1>
-            </div>
-          </header>
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-              {organization && (
-                <AuditLogViewer orgId={organization.id} isPremium={isPremium} />
-              )}
-            </div>
-            <FloatingSupport />
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        <div className="flex-1">
+          <h1 className="text-xl font-bold text-foreground">Activity Logs</h1>
+        </div>
+      </header>
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          {organization && (
+            <AuditLogViewer orgId={organization.id} isPremium={isPremium} />
+          )}
+        </div>
+        <FloatingSupport />
+      </main>
+    </SidebarInset>
   );
 }

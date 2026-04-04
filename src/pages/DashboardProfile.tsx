@@ -24,8 +24,7 @@ import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
 
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { KYCSection } from "@/components/KYCSection";
 import { NameChangeRequestDialog } from "@/components/NameChangeRequestDialog";
 import { FloatingSupport } from "@/components/FloatingSupport";
@@ -163,16 +162,7 @@ export default function DashboardProfile() {
   };
 
   if (loading || roleLoading) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <PremiumLoader message="Loading profile..." />
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    );
+    return <PremiumLoader message="Loading profile..." />;
   }
 
   // Show restricted page for non-owners
@@ -181,164 +171,158 @@ export default function DashboardProfile() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            
-            <div className="flex-1 flex items-center gap-3">
-              <h1 className="text-xl font-bold text-foreground">Profile Settings</h1>
-            </div>
-          </header>
-          
-          <main className="flex-1 overflow-auto">
-            <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
-              <div className="space-y-6">
-                {/* Profile Card */}
-                <Card className="glass-card border-0 shadow-[var(--shadow-medium)] overflow-hidden">
-                  <div className="h-16 sm:h-24 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent" />
-                  <CardHeader className="-mt-8 sm:-mt-12 pb-4">
-                    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6">
-                      <ProfilePictureUpload
-                        currentLogoUrl={organization?.logo_url}
-                        orgName={organization?.org_name || ""}
-                        onUploadComplete={handleLogoUpload}
-                      />
-                      <div className="flex-1 pb-2 text-center sm:text-left">
-                        <div className="flex items-center justify-center sm:justify-start gap-2">
-                          <CardTitle className="text-xl sm:text-2xl">{organization?.org_name}</CardTitle>
-                          <Sparkles className="h-5 w-5 text-accent" />
-                        </div>
-                        <CardDescription className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                          <Building2 className="h-4 w-4" />
-                          Organization Profile
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="org_name" className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          Organization Name
-                        </Label>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Input
-                            id="org_name"
-                            value={organization?.org_name || ""}
-                            disabled
-                            className="bg-muted/50 flex-1"
-                          />
-                          {pendingNameRequest ? (
-                            <Badge variant="secondary" className="h-10 px-3 flex items-center gap-1 shrink-0">
-                              <Clock className="h-3 w-3" />
-                              <span className="truncate max-w-[120px]">Pending: {pendingNameRequest.requested_name}</span>
-                            </Badge>
-                          ) : (
-                            <NameChangeRequestDialog
-                              orgId={organization?.id || ""}
-                              currentName={organization?.org_name || ""}
-                            >
-                              <Button variant="outline" className="gap-2 shrink-0">
-                                <Edit3 className="h-4 w-4" />
-                                Request Change
-                              </Button>
-                            </NameChangeRequestDialog>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Name changes require admin approval
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          Email Address
-                        </Label>
-                        <Input
-                          id="email"
-                          value={organization?.email || ""}
-                          disabled
-                          className="bg-muted/50"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Email cannot be changed
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        <div className="flex-1 flex items-center gap-3">
+          <h1 className="text-xl font-bold text-foreground">Profile Settings</h1>
+        </div>
+      </header>
 
-                {/* KYC Section */}
-                {organization && (
-                  <KYCSection
-                    orgId={organization.id}
-                    kycData={{
-                      business_nature: organization.business_nature,
-                      business_name: organization.business_name,
-                      staff_count: organization.staff_count,
-                      business_type: organization.business_type,
-                      is_registered: organization.is_registered,
-                      registration_document_url: organization.registration_document_url,
-                      monthly_revenue: organization.monthly_revenue,
-                      kyc_verified: organization.kyc_verified,
-                      kyc_submitted_at: organization.kyc_submitted_at,
-                    }}
-                    onUpdate={fetchProfile}
-                    disabled={!canSubmitKYC}
+      <main className="flex-1 overflow-auto">
+        <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
+          <div className="space-y-6">
+            {/* Profile Card */}
+            <Card className="glass-card border-0 shadow-[var(--shadow-medium)] overflow-hidden">
+              <div className="h-16 sm:h-24 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent" />
+              <CardHeader className="-mt-8 sm:-mt-12 pb-4">
+                <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6">
+                  <ProfilePictureUpload
+                    currentLogoUrl={organization?.logo_url}
+                    orgName={organization?.org_name || ""}
+                    onUploadComplete={handleLogoUpload}
                   />
-                )}
-
-                {/* Danger Zone */}
-                <Card className="border-destructive/50 glass-card shadow-[var(--shadow-medium)]">
-                  <CardHeader>
-                    <CardTitle className="text-destructive flex items-center gap-2">
-                      <Trash2 className="h-5 w-5" />
-                      Danger Zone
-                    </CardTitle>
-                    <CardDescription>
-                      Permanently delete your account and all associated data
+                  <div className="flex-1 pb-2 text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <CardTitle className="text-xl sm:text-2xl">{organization?.org_name}</CardTitle>
+                      <Sparkles className="h-5 w-5 text-accent" />
+                    </div>
+                    <CardDescription className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                      <Building2 className="h-4 w-4" />
+                      Organization Profile
                     </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={deleting} className="gap-2">
-                          <Trash2 className="h-4 w-4" />
-                          Delete Account
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="glass-card">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your
-                            account and remove all your data including subscription plans,
-                            subscribers, and transaction history from our servers.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDeleteAccount}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete Account
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-            <FloatingSupport />
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="org_name" className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      Organization Name
+                    </Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        id="org_name"
+                        value={organization?.org_name || ""}
+                        disabled
+                        className="bg-muted/50 flex-1"
+                      />
+                      {pendingNameRequest ? (
+                        <Badge variant="secondary" className="h-10 px-3 flex items-center gap-1 shrink-0">
+                          <Clock className="h-3 w-3" />
+                          <span className="truncate max-w-[120px]">Pending: {pendingNameRequest.requested_name}</span>
+                        </Badge>
+                      ) : (
+                        <NameChangeRequestDialog
+                          orgId={organization?.id || ""}
+                          currentName={organization?.org_name || ""}
+                        >
+                          <Button variant="outline" className="gap-2 shrink-0">
+                            <Edit3 className="h-4 w-4" />
+                            Request Change
+                          </Button>
+                        </NameChangeRequestDialog>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Name changes require admin approval
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      value={organization?.email || ""}
+                      disabled
+                      className="bg-muted/50"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email cannot be changed
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* KYC Section */}
+            {organization && (
+              <KYCSection
+                orgId={organization.id}
+                kycData={{
+                  business_nature: organization.business_nature,
+                  business_name: organization.business_name,
+                  staff_count: organization.staff_count,
+                  business_type: organization.business_type,
+                  is_registered: organization.is_registered,
+                  registration_document_url: organization.registration_document_url,
+                  monthly_revenue: organization.monthly_revenue,
+                  kyc_verified: organization.kyc_verified,
+                  kyc_submitted_at: organization.kyc_submitted_at,
+                }}
+                onUpdate={fetchProfile}
+                disabled={!canSubmitKYC}
+              />
+            )}
+
+            {/* Danger Zone */}
+            <Card className="border-destructive/50 glass-card shadow-[var(--shadow-medium)]">
+              <CardHeader>
+                <CardTitle className="text-destructive flex items-center gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Permanently delete your account and all associated data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={deleting} className="gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="glass-card">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your
+                        account and remove all your data including subscription plans,
+                        subscribers, and transaction history from our servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete Account
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <FloatingSupport />
+      </main>
+    </SidebarInset>
   );
 }

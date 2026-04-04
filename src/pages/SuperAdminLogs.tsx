@@ -31,7 +31,7 @@ export default function SuperAdminLogs() {
       </div>
 
       <div className="bg-card border-black/5 dark:border-white/5 shadow-sm rounded-xl overflow-hidden p-6">
-        <AuditLogViewer isSuperadmin={true} />
+        <AuditLogViewer isSuperadmin={true} showRetentionControls={true} />
       </div>
     </div>
   );

@@ -48,8 +48,7 @@
    AlertDialogTitle,
    AlertDialogTrigger,
  } from "@/components/ui/alert-dialog";
- import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
- import { AppSidebar } from "@/components/AppSidebar";
+ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
  
  
 interface BillingProfile {
@@ -464,18 +463,13 @@ interface BillingProfile {
      }
    };
  
-   if (loading) {
-     return (
-        <SidebarProvider>
-         <div className="flex min-h-screen w-full">
-           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-           <SidebarInset>
-             <PremiumLoader message="Loading billing profile..." />
-           </SidebarInset>
-         </div>
-       </SidebarProvider>
-     );
-   }
+    if (loading) {
+      return (
+        <SidebarInset>
+          <PremiumLoader message="Loading billing profile..." />
+        </SidebarInset>
+      );
+    }
  
    if (!profile) {
      return null;
@@ -484,11 +478,8 @@ interface BillingProfile {
    const activePlansCount = plans.filter((p) => p.status === "active").length;
    const failedPlans = plans.filter((p) => p.status === "payment_failed");
  
-   return (
-     <SidebarProvider>
-       <div className="flex min-h-screen w-full bg-background">
-         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-         <SidebarInset className="flex-1">
+    return (
+      <SidebarInset className="flex-1">
            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
              <SidebarTrigger />
              
@@ -931,8 +922,6 @@ interface BillingProfile {
                </Tabs>
              </div>
            </main>
-         </SidebarInset>
-       </div>
-     </SidebarProvider>
-   );
+      </SidebarInset>
+    );
  }

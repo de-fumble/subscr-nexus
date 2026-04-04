@@ -9,8 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { useOrgRole } from "@/hooks/useOrgRole";
 
@@ -139,128 +138,123 @@ const CreateOneTimePayment = () => {
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">Create Standard Payment</h1>
-            </div>
-          </header>
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        
+        <div className="flex-1">
+          <h1 className="text-xl font-bold text-foreground">Create Standard Payment</h1>
+        </div>
+      </header>
 
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-6 py-8">
-              <div className="mb-6">
-                <p className="text-muted-foreground">Create a standard payment link that can only be used once</p>
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-6 py-8">
+          <div className="mb-6">
+            <p className="text-muted-foreground">Create a standard payment link that can only be used once</p>
+          </div>
+
+          <Card className="mx-auto max-w-2xl p-8 glass-card border-0 shadow-[var(--shadow-medium)]">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Payment Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Invoice #1234"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  required
+                  disabled={loading}
+                  maxLength={100}
+                  className="glass-card border-border/50"
+                />
               </div>
 
-              <Card className="mx-auto max-w-2xl p-8 glass-card border-0 shadow-[var(--shadow-medium)]">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Payment Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Invoice #1234"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                      disabled={loading}
-                      maxLength={100}
-                      className="glass-card border-border/50"
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount (₦) *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="5000"
+                  value={formData.amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: e.target.value })
+                  }
+                  required
+                  disabled={loading}
+                  min="1"
+                  step="1"
+                  className="glass-card border-border/50"
+                />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount (₦) *</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="5000"
-                      value={formData.amount}
-                      onChange={(e) =>
-                        setFormData({ ...formData, amount: e.target.value })
-                      }
-                      required
-                      disabled={loading}
-                      min="1"
-                      step="1"
-                      className="glass-card border-border/50"
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe what this payment is for..."
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  disabled={loading}
+                  maxLength={500}
+                  rows={4}
+                  className="glass-card border-border/50"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formData.description.length}/500 characters
+                </p>
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description (Optional)</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Describe what this payment is for..."
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                      disabled={loading}
-                      maxLength={500}
-                      rows={4}
-                      className="glass-card border-border/50"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {formData.description.length}/500 characters
-                    </p>
-                  </div>
+              <div className="rounded-lg glass-card p-4 border border-accent/20">
+                <h3 className="mb-2 font-semibold text-foreground">
+                  Payment Preview
+                </h3>
+                <div className="space-y-1 text-sm">
+                  <p className="text-muted-foreground">
+                    Amount:{" "}
+                    <span className="font-semibold text-foreground">
+                      ₦{formData.amount || "0"}
+                    </span>
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    This link can only be used for a single payment and cannot be edited after creation.
+                  </p>
+                </div>
+              </div>
 
-                  <div className="rounded-lg glass-card p-4 border border-accent/20">
-                    <h3 className="mb-2 font-semibold text-foreground">
-                      Payment Preview
-                    </h3>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-muted-foreground">
-                        Amount:{" "}
-                        <span className="font-semibold text-foreground">
-                          ₦{formData.amount || "0"}
-                        </span>
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        This link can only be used for a single payment and cannot be edited after creation.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => navigate("/payments")}
-                      disabled={loading}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1 bg-accent hover:bg-accent/90"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        "Create Payment Link"
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Card>
-            </div>
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/payments")}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-accent hover:bg-accent/90"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Payment Link"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      </main>
+    </SidebarInset>
   );
 };
 

@@ -24,8 +24,7 @@
    SelectTrigger,
    SelectValue,
  } from "@/components/ui/select";
- import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
- import { AppSidebar } from "@/components/AppSidebar";
+ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
  
  
@@ -339,24 +338,16 @@ interface BillingProfile {
     };
  
    if (loading) {
-     return (
-        <SidebarProvider>
-         <div className="flex min-h-screen w-full">
-           <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-           <SidebarInset>
-             <PremiumLoader message="Loading billing profiles..." />
-           </SidebarInset>
-         </div>
-         <FloatingSupport />
-       </SidebarProvider>
-     );
-   }
+    return (
+      <SidebarInset>
+        <PremiumLoader message="Loading billing profiles..." />
+        <FloatingSupport />
+      </SidebarInset>
+    );
+  }
  
    return (
-     <SidebarProvider>
-       <div className="flex min-h-screen w-full bg-background">
-         <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-         <SidebarInset className="flex-1">
+    <SidebarInset className="flex-1">
            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
              <SidebarTrigger />
              
@@ -531,7 +522,5 @@ interface BillingProfile {
              <FloatingSupport />
            </main>
          </SidebarInset>
-       </div>
-     </SidebarProvider>
    );
  }

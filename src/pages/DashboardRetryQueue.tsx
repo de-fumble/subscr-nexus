@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { PremiumLoader } from "@/components/PremiumLoader";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -309,43 +308,30 @@ const DashboardRetryQueue = () => {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset className="flex-1 flex flex-col">
-            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-              <SidebarTrigger />
-              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <RotateCcw className="h-5 w-5 text-primary" />
-                Retry Queue
-              </h1>
-            </header>
-            <main className="flex-1 overflow-auto p-4 sm:p-6">
-              <div className="max-w-7xl mx-auto space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
-                </div>
-                <div className="h-10 w-64 bg-muted animate-pulse rounded-lg" />
-                <div className="h-64 bg-muted animate-pulse rounded-xl" />
-              </div>
-            </main>
-          </SidebarInset>
-        </div>
+      <SidebarInset className="flex-1 flex flex-col">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+          <SidebarTrigger />
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <RotateCcw className="h-5 w-5 text-primary" />
+            Retry Queue
+          </h1>
+        </header>
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="max-w-7xl mx-auto space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
+            </div>
+            <div className="h-10 w-64 bg-muted animate-pulse rounded-lg" />
+            <div className="h-64 bg-muted animate-pulse rounded-xl" />
+          </div>
+        </main>
         <FloatingSupport />
-      </SidebarProvider>
+      </SidebarInset>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
-        <AppSidebar
-          organization={organization}
-          role={role}
-          userEmail={userEmail}
-          canAccessSettings={canAccessSettings}
-        />
-        <SidebarInset className="flex-1 flex flex-col">
+    <SidebarInset className="flex-1 flex flex-col">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
             <div className="flex-1 flex items-center gap-3">
@@ -605,29 +591,7 @@ const DashboardRetryQueue = () => {
             </div>
             <FloatingSupport />
           </main>
-        </SidebarInset>
-      </div>
-
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Automatic Retries?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will stop all future automatic retry attempts for{" "}
-              <strong>{selectedSubscriber?.email}</strong>. The subscriber will be marked as
-              "payment failed" and no more charges will be attempted automatically.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Retrying</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancelRetry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Cancel Retries
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </SidebarProvider>
+      </SidebarInset>
   );
 };
 

@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/hooks/useOrgRole";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -320,80 +319,66 @@ export default function DashboardStaff() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar organization={organization} role={role} userEmail={undefined} canAccessSettings={canManageStaff} />
-          <SidebarInset className="flex-1">
-            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-              <SidebarTrigger />
-              <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
-            </header>
-            <main className="flex-1 overflow-auto">
-              <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
-                <div className="h-48 bg-muted animate-pulse rounded-xl" />
-                <div className="h-32 bg-muted animate-pulse rounded-xl" />
-              </div>
-            </main>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+      <SidebarInset className="flex-1">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+          <SidebarTrigger />
+          <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
+            <div className="h-48 bg-muted animate-pulse rounded-xl" />
+            <div className="h-32 bg-muted animate-pulse rounded-xl" />
+          </div>
+        </main>
+      </SidebarInset>
     );
   }
 
   if (!canManageStaff) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar organization={organization} />
-          <SidebarInset className="flex-1">
-            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-              <SidebarTrigger />
-              <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
-            </header>
-            <main className="flex-1 overflow-auto">
-              <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
-                    <p className="text-muted-foreground text-center">
-                      Only organization owners can manage staff members.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </main>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+      <SidebarInset className="flex-1">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+          <SidebarTrigger />
+          <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Shield className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground text-center">
+                  Only organization owners can manage staff members.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </SidebarInset>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={undefined} canAccessSettings={canManageStaff} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            
-            <div className="flex-1">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground">Staff Management</h1>
-            </div>
-          </header>
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Staff Members
-                  </CardTitle>
-                  <CardDescription>
-                    Add and manage staff members for your organization
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        <div className="flex-1">
+          <h1 className="text-lg sm:text-xl font-bold text-foreground">Staff Management</h1>
+        </div>
+      </header>
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Staff Members
+              </CardTitle>
+              <CardDescription>
+                Add and manage staff members for your organization
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
                   {/* Add Staff Button/Form */}
                   {!showAddForm ? (
                     <Button onClick={() => setShowAddForm(true)} className="gap-2">
@@ -488,58 +473,56 @@ export default function DashboardStaff() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+            </CardContent>
+          </Card>
 
-              {/* Role Permissions Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Role Permissions</CardTitle>
-                  <CardDescription>
-                    Understanding what each role can do
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant="secondary">Staff</Badge>
-                        <span className="text-sm text-muted-foreground">(Read-only)</span>
-                      </div>
-                      <ul className="text-sm space-y-2 text-muted-foreground">
-                        <li className="flex items-center gap-2">✓ View analytics</li>
-                        <li className="flex items-center gap-2">✓ View subscribers</li>
-                        <li className="flex items-center gap-2">✓ View plans</li>
-                        <li className="flex items-center gap-2">✓ View activity logs</li>
-                        <li className="flex items-center gap-2">✓ View defaulted subscribers</li>
-                        <li className="flex items-center gap-2 text-destructive">✗ Cannot modify data</li>
-                        <li className="flex items-center gap-2 text-destructive">✗ Cannot access settings</li>
-                        <li className="flex items-center gap-2 text-destructive">✗ Cannot request payouts</li>
-                      </ul>
-                    </div>
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant="default">Admin</Badge>
-                        <span className="text-sm text-muted-foreground">(Full access)</span>
-                      </div>
-                      <ul className="text-sm space-y-2 text-muted-foreground">
-                        <li className="flex items-center gap-2">✓ All staff permissions</li>
-                        <li className="flex items-center gap-2">✓ Create/edit/delete subscribers</li>
-                        <li className="flex items-center gap-2">✓ Create/edit/delete plans</li>
-                        <li className="flex items-center gap-2">✓ Request payouts</li>
-                        <li className="flex items-center gap-2">✓ View billing history</li>
-                        <li className="flex items-center gap-2">✓ Modify organization details</li>
-                        <li className="flex items-center gap-2 text-destructive">✗ Cannot manage staff</li>
-                      </ul>
-                    </div>
+          {/* Role Permissions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Role Permissions</CardTitle>
+              <CardDescription>
+                Understanding what each role can do
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary">Staff</Badge>
+                    <span className="text-sm text-muted-foreground">(Read-only)</span>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-            <FloatingSupport />
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+                  <ul className="text-sm space-y-2 text-muted-foreground">
+                    <li className="flex items-center gap-2">✓ View analytics</li>
+                    <li className="flex items-center gap-2">✓ View subscribers</li>
+                    <li className="flex items-center gap-2">✓ View plans</li>
+                    <li className="flex items-center gap-2">✓ View activity logs</li>
+                    <li className="flex items-center gap-2">✓ View defaulted subscribers</li>
+                    <li className="flex items-center gap-2 text-destructive">✗ Cannot modify data</li>
+                    <li className="flex items-center gap-2 text-destructive">✗ Cannot access settings</li>
+                    <li className="flex items-center gap-2 text-destructive">✗ Cannot request payouts</li>
+                  </ul>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="default">Admin</Badge>
+                    <span className="text-sm text-muted-foreground">(Full access)</span>
+                  </div>
+                  <ul className="text-sm space-y-2 text-muted-foreground">
+                    <li className="flex items-center gap-2">✓ All staff permissions</li>
+                    <li className="flex items-center gap-2">✓ Create/edit/delete subscribers</li>
+                    <li className="flex items-center gap-2">✓ Create/edit/delete plans</li>
+                    <li className="flex items-center gap-2">✓ Request payouts</li>
+                    <li className="flex items-center gap-2">✓ View billing history</li>
+                    <li className="flex items-center gap-2">✓ Modify organization details</li>
+                    <li className="flex items-center gap-2 text-destructive">✗ Cannot manage staff</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <FloatingSupport />
+      </main>
+    </SidebarInset>
   );
 }

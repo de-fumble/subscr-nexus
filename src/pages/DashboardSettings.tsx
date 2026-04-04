@@ -10,8 +10,7 @@ import { Key, Save, Shield, Lock, FileCheck, Building2, Link2, Link2Off, Webhook
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { RestrictedPage } from "@/components/RestrictedPage";
 
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { PasswordVerificationDialog } from "@/components/PasswordVerificationDialog";
 import { CompanyAccountSection } from "@/components/CompanyAccountSection";
 import { LicenseRequestDialog } from "@/components/LicenseRequestDialog";
@@ -185,20 +184,15 @@ export default function DashboardSettings() {
 
   if (loading || roleLoading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-              <SidebarTrigger />
-              <div className="flex-1 flex items-center gap-3">
-                <h1 className="text-xl font-bold text-foreground">Settings</h1>
-              </div>
-            </header>
-            <SettingsPageSkeleton />
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+      <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+          <SidebarTrigger />
+          <div className="flex-1 flex items-center gap-3">
+            <h1 className="text-xl font-bold text-foreground">Settings</h1>
+          </div>
+        </header>
+        <SettingsPageSkeleton />
+      </SidebarInset>
     );
   }
 
@@ -208,20 +202,16 @@ export default function DashboardSettings() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        <div className="flex-1 flex items-center gap-3">
+          <h1 className="text-xl font-bold text-foreground">Settings</h1>
+        </div>
+      </header>
 
-            <div className="flex-1 flex items-center gap-3">
-              <h1 className="text-xl font-bold text-foreground">Settings</h1>
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-auto">
-            <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
+      <main className="flex-1 overflow-auto">
+        <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
               {/* Paystack Connection Status Card */}
               <Card className={`mb-6 glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 ${hasExistingKeys ? 'border-l-green-500' : 'border-l-amber-500'}`}>
                 <CardHeader>
@@ -482,11 +472,9 @@ export default function DashboardSettings() {
                   />
                 </div>
               )}
-            </div>
-            <FloatingSupport />
-          </main>
-        </SidebarInset>
-      </div>
+        </div>
+        <FloatingSupport />
+      </main>
 
       <PasswordVerificationDialog
         open={showVerificationDialog}
@@ -495,6 +483,6 @@ export default function DashboardSettings() {
         title="Access API Keys"
         description="Verify your password to access sensitive settings"
       />
-    </SidebarProvider>
+    </SidebarInset>
   );
 }

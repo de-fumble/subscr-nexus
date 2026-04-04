@@ -3,8 +3,7 @@ import { PremiumLoader } from "@/components/PremiumLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
 import { FloatingSupport } from "@/components/FloatingSupport";
@@ -84,39 +83,24 @@ export default function DashboardVerify() {
   };
 
   if (loading || roleLoading) {
-    return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <PremiumLoader message="Loading..." />
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    );
+    return <PremiumLoader message="Loading..." />;
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            
-            <div className="flex-1 flex items-center gap-3">
-              <h1 className="text-xl font-bold text-foreground">Verify Transaction</h1>
-            </div>
-          </header>
-          
-          <main className="flex-1 overflow-auto">
-            <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
-              <VerifyTransactionCard organization={organization} />
-            </div>
-            <FloatingSupport />
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        <div className="flex-1 flex items-center gap-3">
+          <h1 className="text-xl font-bold text-foreground">Verify Transaction</h1>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-auto">
+        <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
+          <VerifyTransactionCard organization={organization} />
+        </div>
+        <FloatingSupport />
+      </main>
+    </SidebarInset>
   );
 }

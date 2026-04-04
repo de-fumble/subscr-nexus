@@ -19,8 +19,7 @@ import {
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 import { PlanManagementDialog } from "@/components/PlanManagementDialog";
@@ -268,150 +267,139 @@ const Plans = () => {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <PremiumLoader message="Loading plans..." />
-          </SidebarInset>
-        </div>
+      <SidebarInset>
+        <PremiumLoader message="Loading plans..." />
         <FloatingSupport />
-      </SidebarProvider>
+      </SidebarInset>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Subscription Plans</h1>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => fetchPlans(true)}
-                disabled={refreshing}
-                className="h-8 w-8 sm:h-9 sm:w-9"
-              >
-                {refreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-              </Button>
-              {canCreatePlans && (
-                <Button
-                  onClick={() => navigate("/plans/create")}
-                  className="bg-accent hover:bg-accent/90 gap-2 text-sm"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Create Plan</span>
-                  <span className="sm:hidden">New</span>
-                </Button>
-              )}
-            </div>
-          </header>
+    <SidebarInset className="flex-1">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+        <SidebarTrigger />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Subscription Plans</h1>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => fetchPlans(true)}
+            disabled={refreshing}
+            className="h-8 w-8 sm:h-9 sm:w-9"
+          >
+            {refreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
+          {canCreatePlans && (
+            <Button
+              onClick={() => navigate("/plans/create")}
+              className="bg-accent hover:bg-accent/90 gap-2 text-sm"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Create Plan</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+          )}
+        </div>
+      </header>
 
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-              <div className="mb-6">
-                <p className="text-muted-foreground">Manage your recurring payment plans</p>
-              </div>
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="mb-6">
+            <p className="text-muted-foreground">Manage your recurring payment plans</p>
+          </div>
 
-              {/* Plans Hub Link Card */}
-              {organization && (
-                <div className="mb-6">
-                  <PlansHubLinkCard 
-                    orgId={organization.id} 
-                    orgName={organization.org_name}
-                  />
+          {/* Plans Hub Link Card */}
+          {organization && (
+            <div className="mb-6">
+              <PlansHubLinkCard
+                orgId={organization.id}
+                orgName={organization.org_name}
+              />
+            </div>
+          )}
+
+          {plans.length === 0 ? (
+            <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <Plus className="h-8 w-8 text-muted-foreground" />
                 </div>
-              )}
+                <h3 className="mb-2 text-xl font-semibold text-foreground">
+                  No plans yet
+                </h3>
+                <p className="mb-6 text-muted-foreground">
+                  Create your first subscription plan to start accepting payments
+                </p>
+                {canCreatePlans && (
+                  <Button
+                    onClick={() => navigate("/plans/create")}
+                    className="bg-accent hover:bg-accent/90"
+                  >
+                    Create Your First Plan
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ) : (
+            <Tabs defaultValue="active" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="active" className="gap-2">
+                  Active Plans
+                  <Badge variant="secondary" className="ml-1">{activePlans.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="deleted" className="gap-2">
+                  Deleted Plans
+                  <Badge variant="secondary" className="ml-1">{deletedPlans.length}</Badge>
+                </TabsTrigger>
+              </TabsList>
 
-              {plans.length === 0 ? (
-                <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <Plus className="h-8 w-8 text-muted-foreground" />
+              <TabsContent value="active">
+                {activePlans.length === 0 ? (
+                  <Card className="p-8 glass-card border-0">
+                    <div className="text-center text-muted-foreground">
+                      <p>No active plans</p>
+                      {canCreatePlans && (
+                        <Button
+                          onClick={() => navigate("/plans/create")}
+                          className="mt-4"
+                          variant="outline"
+                        >
+                          Create a Plan
+                        </Button>
+                      )}
                     </div>
-                    <h3 className="mb-2 text-xl font-semibold text-foreground">
-                      No plans yet
-                    </h3>
-                    <p className="mb-6 text-muted-foreground">
-                      Create your first subscription plan to start accepting payments
-                    </p>
-                    {canCreatePlans && (
-                      <Button
-                        onClick={() => navigate("/plans/create")}
-                        className="bg-accent hover:bg-accent/90"
-                      >
-                        Create Your First Plan
-                      </Button>
-                    )}
+                  </Card>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {activePlans.map((plan, index) => renderPlanCard(plan, index))}
                   </div>
-                </Card>
-              ) : (
-                <Tabs defaultValue="active" className="space-y-6">
-                  <TabsList>
-                    <TabsTrigger value="active" className="gap-2">
-                      Active Plans
-                      <Badge variant="secondary" className="ml-1">{activePlans.length}</Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="deleted" className="gap-2">
-                      Deleted Plans
-                      <Badge variant="secondary" className="ml-1">{deletedPlans.length}</Badge>
-                    </TabsTrigger>
-                  </TabsList>
+                )}
+              </TabsContent>
 
-                  <TabsContent value="active">
-                    {activePlans.length === 0 ? (
-                      <Card className="p-8 glass-card border-0">
-                        <div className="text-center text-muted-foreground">
-                          <p>No active plans</p>
-                          {canCreatePlans && (
-                            <Button
-                              onClick={() => navigate("/plans/create")}
-                              className="mt-4"
-                              variant="outline"
-                            >
-                              Create a Plan
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {activePlans.map((plan, index) => renderPlanCard(plan, index))}
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="deleted">
-                    {deletedPlans.length === 0 ? (
-                      <Card className="p-8 glass-card border-0">
-                        <div className="text-center text-muted-foreground">
-                          <p>No deleted plans</p>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {deletedPlans.map((plan, index) => renderPlanCard(plan, index))}
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              )}
-            </div>
-          </main>
-        </SidebarInset>
-      </div>
+              <TabsContent value="deleted">
+                {deletedPlans.length === 0 ? (
+                  <Card className="p-8 glass-card border-0">
+                    <div className="text-center text-muted-foreground">
+                      <p>No deleted plans</p>
+                    </div>
+                  </Card>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {deletedPlans.map((plan, index) => renderPlanCard(plan, index))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
+      </main>
       <FloatingSupport />
 
       <AlertDialog open={!!planToDelete} onOpenChange={() => setPlanToDelete(null)}>
@@ -448,7 +436,7 @@ const Plans = () => {
           onSubscriberRemoved={() => fetchPlans(true)}
         />
       )}
-    </SidebarProvider>
+    </SidebarInset>
   );
 };
 

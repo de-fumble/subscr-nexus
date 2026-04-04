@@ -6,7 +6,6 @@ import {
   Settings,
   User,
   LogOut,
-  Building2,
   FileText,
   Shield,
   Lock,
@@ -16,6 +15,7 @@ import {
   Receipt,
   UserSquare,
   RotateCcw,
+  ArrowLeftRight,
   ShieldCheck
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -36,45 +36,106 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RoleBadge } from "@/components/RoleBadge";
-import { OrgRoleType } from "@/hooks/useOrgRole";
 import { Separator } from "@/components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { useOrgRole } from "@/hooks/useOrgRole";
 
-interface AppSidebarProps {
-  organization: {
-    id?: string;
-    org_name: string;
-    email: string;
-    logo_url?: string | null;
-  } | null;
-  role?: OrgRoleType;
-  userEmail?: string;
-  canAccessSettings?: boolean;
-}
-
-export function AppSidebar({ organization, role, userEmail, canAccessSettings = true }: AppSidebarProps) {
+export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { open, isMobile, openMobile } = useSidebar();
   const isExpanded = isMobile ? openMobile : open;
   const { isSuperadmin } = useSuperadmin();
+  const { role, canAccessSettings } = useOrgRole();
 
-  const menuItems = [
-    { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
-    { title: "Plans", icon: CreditCard, url: "/plans" },
-    { title: "Failed Payments", icon: AlertTriangle, url: "/dashboard/failed-payments" },
-    { title: "Retry Queue", icon: RotateCcw, url: "/dashboard/retry-queue" },
-    { title: "Standard Payments", icon: Banknote, url: "/payments" },
-    { title: "Subscribers", icon: Users, url: "/dashboard/subscribers" },
-    { title: "Billing Profiles", icon: UserSquare, url: "/dashboard/billing-profiles" },
-    { title: "Analytics", icon: TrendingUp, url: "/dashboard/analytics" },
-    { title: "Activity Logs", icon: FileText, url: "/dashboard/logs" },
-    { title: "Staff", icon: Shield, url: "/dashboard/staff" },
-    { title: "Create Invoice", icon: Receipt, url: "/dashboard/invoices" },
-    { title: "Verify Transaction", icon: CheckCircle, url: "/dashboard/verify" },
+  const { data: session } = useQuery({
+    queryKey: ["sidebar-session"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
+
+  const userId = session?.user?.id;
+  const userEmail = session?.user?.email;
+
+  const { data: organization } = useQuery({
+    queryKey: ["sidebar-organization", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      // Check if owner
+      const { data: ownedOrg } = await supabase
+        .from("organizations")
+        .select("id, org_name, email, logo_url")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (ownedOrg) return ownedOrg;
+      // Check if staff
+      const { data: membership } = await supabase
+        .from("organization_members")
+        .select("org_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (membership) {
+        const { data: memberOrg } = await supabase
+          .from("organizations")
+          .select("id, org_name, email, logo_url")
+          .eq("id", membership.org_id)
+          .maybeSingle();
+        return memberOrg;
+      }
+      return null;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // cache for 5 minutes
+  });
+
+  const navGroups = [
+    {
+      label: "Dashboard",
+      items: [
+        { title: "Overview", icon: LayoutDashboard, url: "/dashboard" },
+      ]
+    },
+    {
+      label: "Billing",
+      items: [
+        { title: "Plans", icon: CreditCard, url: "/plans" },
+        { title: "Standard Payments", icon: Banknote, url: "/payments" },
+        { title: "All Transactions", icon: ArrowLeftRight, url: "/dashboard/transactions" },
+        { title: "Failed Payments", icon: AlertTriangle, url: "/dashboard/failed-payments" },
+        { title: "Retry Queue", icon: RotateCcw, url: "/dashboard/retry-queue" },
+        { title: "Create Invoice", icon: Receipt, url: "/dashboard/invoices" },
+        { title: "Verify Transaction", icon: CheckCircle, url: "/dashboard/verify" },
+      ]
+    },
+    {
+      label: "Customers",
+      items: [
+        { title: "Subscribers", icon: Users, url: "/dashboard/subscribers" },
+        { title: "Billing Profiles", icon: UserSquare, url: "/dashboard/billing-profiles" },
+      ]
+    },
+    {
+      label: "Analytics",
+      items: [
+        { title: "Analytics", icon: TrendingUp, url: "/dashboard/analytics" },
+      ]
+    },
+    {
+      label: "Operations",
+      items: [
+        { title: "Activity Logs", icon: FileText, url: "/dashboard/logs" },
+      ]
+    },
+    {
+      label: "Team",
+      items: [
+        { title: "Staff", icon: Shield, url: "/dashboard/staff" },
+      ]
+    }
   ];
 
-  // Only show profile/settings to owners
   const settingsItems = canAccessSettings
     ? [
       { title: "Profile", icon: User, url: "/dashboard/profile" },
@@ -85,12 +146,10 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
       { title: "Settings", icon: Lock, url: "/dashboard/settings", restricted: true },
     ];
 
-  // Display name and email based on role
   const displayName = role === 'staff' ? userEmail?.split('@')[0] || 'Staff' : organization?.org_name;
   const displayEmail = role === 'staff' ? userEmail : organization?.email;
 
   const handleSignOut = async () => {
-    // Reset theme to light mode on sign-out so the next login starts fresh
     localStorage.removeItem("vite-ui-theme");
 
     if (organization) {
@@ -107,7 +166,6 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/20 bg-background/80 backdrop-blur-md">
       <SidebarContent className="px-2">
-        {/* Premium Header */}
         <SidebarGroup className="pt-4">
           <div className={`flex items-center gap-3 px-2 py-2 mb-2 transition-all duration-300 ${isExpanded ? 'justify-start' : 'justify-center'}`}>
             {isExpanded ? (
@@ -143,34 +201,34 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
 
         {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
 
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-white/50 font-medium px-2 mb-1">
-            {isExpanded ? "Navigation" : ""}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    onClick={() => navigate(item.url)}
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                    className={`rounded-md transition-all duration-150 ${isActive(item.url)
-                      ? 'bg-white/20 text-white border border-white/30'
-                      : 'hover:bg-white/10 text-white/70 hover:text-white'
-                      }`}
-                  >
-                    <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-white' : 'text-white/70'}`} />
-                    {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium text-white' : 'text-white/80'}`}>{item.title}</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label} className="py-1">
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-white/50 font-medium px-2 mb-1">
+              {isExpanded ? group.label : ""}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      onClick={() => navigate(item.url)}
+                      isActive={isActive(item.url)}
+                      tooltip={item.title}
+                      className={`rounded-md transition-all duration-150 ${isActive(item.url)
+                        ? 'bg-white/20 text-white border border-white/30'
+                        : 'hover:bg-white/10 text-white/70 hover:text-white'
+                        }`}
+                    >
+                      <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-white' : 'text-white/70'}`} />
+                      {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium text-white' : 'text-white/80'}`}>{item.title}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
-        {/* Core Panel - Superadmin Only */}
         {isSuperadmin && (
           <>
             {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
@@ -203,7 +261,6 @@ export function AppSidebar({ organization, role, userEmail, canAccessSettings = 
 
         {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
 
-        {/* Account Section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-white/50 font-medium px-2 mb-1">
             {isExpanded ? "Account" : ""}

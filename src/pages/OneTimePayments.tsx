@@ -8,8 +8,7 @@ import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, Trend
 import { toast } from "sonner";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -406,23 +405,15 @@ const OneTimePayments = () => {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-          <SidebarInset>
-            <PremiumLoader message="Loading payments..." />
-          </SidebarInset>
-        </div>
+      <SidebarInset>
+        <PremiumLoader message="Loading payments..." />
         <FloatingSupport />
-      </SidebarProvider>
+      </SidebarInset>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar organization={organization} role={role} userEmail={userEmail} canAccessSettings={canAccessSettings} />
-        <SidebarInset className="flex-1">
+    <SidebarInset className="flex-1">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
             <SidebarTrigger />
             
@@ -599,10 +590,7 @@ const OneTimePayments = () => {
               )}
             </div>
           </main>
-        </SidebarInset>
-      </div>
-      <FloatingSupport />
-    </SidebarProvider>
+    </SidebarInset>
   );
 };
 
