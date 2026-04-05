@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -32,7 +33,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Loader2, Shield, User, UserPlus, Trash2, Users, ChevronDown, ChevronUp, Mail, Calendar, Hash } from "lucide-react";
+import { Loader2, Shield, User, UserPlus, Trash2, Users, ChevronDown, ChevronUp, Mail, Calendar, Hash, Clock, UserX, UserCheck } from "lucide-react";
 import { FloatingSupport } from "@/components/FloatingSupport";
 
 
@@ -41,6 +42,7 @@ interface Organization {
   org_name: string;
   email: string;
   logo_url?: string | null;
+  is_clocked_out?: boolean;
 }
 
 interface StaffMember {
@@ -49,31 +51,38 @@ interface StaffMember {
   role: 'admin' | 'staff';
   created_at: string;
   email?: string;
+  is_suspended?: boolean;
 }
 
 interface StaffMemberCardProps {
   member: StaffMember;
   onUpdateRole: (memberId: string, newRole: 'admin' | 'staff') => void;
   onRemove: (memberId: string) => void;
+  onToggleSuspend: (memberId: string, currentStatus: boolean) => void;
 }
 
-function StaffMemberCard({ member, onUpdateRole, onRemove }: StaffMemberCardProps) {
+function StaffMemberCard({ member, onUpdateRole, onRemove, onToggleSuspend }: StaffMemberCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="border rounded-lg bg-card overflow-hidden">
+      <div className={`border rounded-lg bg-card overflow-hidden transition-opacity ${member.is_suspended ? 'opacity-80' : ''}`}>
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
-              {member.role === 'admin' ? (
+            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${member.is_suspended ? 'bg-amber-500/10' : 'bg-accent/10'}`}>
+              {member.is_suspended ? (
+                <UserX className="h-5 w-5 text-amber-500" />
+              ) : member.role === 'admin' ? (
                 <Shield className="h-5 w-5 text-accent" />
               ) : (
                 <User className="h-5 w-5 text-muted-foreground" />
               )}
             </div>
             <div>
-              <p className="font-medium text-sm">{member.email || `User ${member.user_id.slice(0, 8)}...`}</p>
+              <p className="font-medium text-sm flex items-center gap-2">
+                {member.email || `User ${member.user_id.slice(0, 8)}...`}
+                {member.is_suspended && <Badge variant="outline" className="text-amber-500 border-amber-500/30">Suspended</Badge>}
+              </p>
               <Badge variant={member.role === 'admin' ? 'default' : 'secondary'} className="mt-1">
                 {member.role === 'admin' ? 'Admin' : 'Staff'}
               </Badge>
@@ -181,6 +190,33 @@ function StaffMemberCard({ member, onUpdateRole, onRemove }: StaffMemberCardProp
                 </Select>
               </div>
             </div>
+
+            <div className="pt-3 mt-3 border-t flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium text-amber-600 dark:text-amber-500">Suspend Account</Label>
+                <p className="text-xs text-muted-foreground">
+                  Temporarily revoke this member's access to the workspace.
+                </p>
+              </div>
+              <Button 
+                variant={member.is_suspended ? "outline" : "destructive"} 
+                size="sm"
+                onClick={() => onToggleSuspend(member.id, !!member.is_suspended)}
+                className="gap-2"
+              >
+                {member.is_suspended ? (
+                  <>
+                    <UserCheck className="h-4 w-4" />
+                    Restore Access
+                  </>
+                ) : (
+                  <>
+                    <UserX className="h-4 w-4" />
+                    Suspend Access
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CollapsibleContent>
       </div>
@@ -196,6 +232,9 @@ export default function DashboardStaff() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isClockedOut, setIsClockedOut] = useState(false);
+  const [clockOutLoading, setClockOutLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -218,12 +257,13 @@ export default function DashboardStaff() {
       // Get organization
       const { data: orgData } = await supabase
         .from("organizations")
-        .select("id, org_name, email")
+        .select("id, org_name, email, is_clocked_out")
         .eq("user_id", user.id)
         .single();
 
       if (orgData) {
         setOrganization(orgData);
+        setIsClockedOut(orgData.is_clocked_out || false);
         
         // Fetch staff members using edge function to get emails
         const { data, error } = await supabase.functions.invoke('manage-staff', {
@@ -301,6 +341,42 @@ export default function DashboardStaff() {
     }
   };
 
+  const handleToggleSuspend = async (memberId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('organization_members')
+        .update({ is_suspended: !currentStatus })
+        .eq('id', memberId);
+
+      if (error) throw error;
+      toast.success(currentStatus ? 'Staff access restored' : 'Staff access suspended');
+      fetchData();
+    } catch (error: any) {
+      console.error('Error suspending member:', error);
+      toast.error('Failed to update member status');
+    }
+  };
+
+  const handleToggleClockOut = async (checked: boolean) => {
+    if (!organization) return;
+    setClockOutLoading(true);
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ is_clocked_out: checked })
+        .eq('id', organization.id);
+
+      if (error) throw error;
+      setIsClockedOut(checked);
+      toast.success(checked ? 'Workspace clocked out. Staff can no longer login.' : 'Workspace accessible. Staff can now login.');
+    } catch (error: any) {
+      console.error('Error toggling clock out:', error);
+      toast.error('Failed to update workspace status');
+    } finally {
+      setClockOutLoading(false);
+    }
+  };
+
   const handleRemoveStaff = async (memberId: string) => {
     try {
       const { error } = await supabase
@@ -368,6 +444,28 @@ export default function DashboardStaff() {
       </header>
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+          <div className="bg-card border border-border/80 shadow-sm rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Clock Out Workspace
+              </Label>
+              <p className="text-sm text-muted-foreground max-w-xl">
+                Lock the workspace. When clocked out, no staff members or admins aside from yourself will be able to login or access the system.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              {clockOutLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              <Switch 
+                checked={isClockedOut}
+                onCheckedChange={handleToggleClockOut}
+                disabled={clockOutLoading}
+                className="data-[state=checked]:bg-destructive"
+              />
+            </div>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -381,7 +479,7 @@ export default function DashboardStaff() {
             <CardContent className="space-y-6">
                   {/* Add Staff Button/Form */}
                   {!showAddForm ? (
-                    <Button onClick={() => setShowAddForm(true)} className="gap-2">
+                    <Button onClick={() => setShowAddForm(true)} className="gap-2 w-full sm:w-auto">
                       <UserPlus className="h-4 w-4" />
                       Add Staff Member
                     </Button>
@@ -469,6 +567,7 @@ export default function DashboardStaff() {
                           member={member}
                           onUpdateRole={handleUpdateRole}
                           onRemove={handleRemoveStaff}
+                          onToggleSuspend={handleToggleSuspend}
                         />
                       ))}
                     </div>

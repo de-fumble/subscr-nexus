@@ -492,6 +492,7 @@ export type Database = {
           created_at: string
           id: string
           invited_by: string | null
+          is_suspended: boolean | null
           org_id: string
           role: Database["public"]["Enums"]["org_role"]
           updated_at: string
@@ -501,6 +502,7 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          is_suspended?: boolean | null
           org_id: string
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
@@ -510,6 +512,7 @@ export type Database = {
           created_at?: string
           id?: string
           invited_by?: string | null
+          is_suspended?: boolean | null
           org_id?: string
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
@@ -538,6 +541,7 @@ export type Database = {
           email_verified: boolean | null
           email_verified_at: string | null
           id: string
+          is_clocked_out: boolean | null
           is_registered: boolean | null
           is_suspended: boolean | null
           kyc_submitted_at: string | null
@@ -567,6 +571,7 @@ export type Database = {
           email_verified?: boolean | null
           email_verified_at?: string | null
           id?: string
+          is_clocked_out?: boolean | null
           is_registered?: boolean | null
           is_suspended?: boolean | null
           kyc_submitted_at?: string | null
@@ -596,6 +601,7 @@ export type Database = {
           email_verified?: boolean | null
           email_verified_at?: string | null
           id?: string
+          is_clocked_out?: boolean | null
           is_registered?: boolean | null
           is_suspended?: boolean | null
           kyc_submitted_at?: string | null

@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       // First check if user is an org owner
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("is_suspended")
+        .select("is_suspended, is_clocked_out")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -61,19 +61,28 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       // Check if user is a staff member
       const { data: membership } = await supabase
         .from("organization_members")
-        .select("org_id")
+        .select("org_id, is_suspended")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (membership) {
-        // Fetch org suspension status
+        // Fetch org suspension/clock_out status
         const { data: org } = await supabase
           .from("organizations")
-          .select("is_suspended")
+          .select("is_suspended, is_clocked_out")
           .eq("id", membership.org_id)
           .maybeSingle();
 
-        setIsSuspended(org?.is_suspended || false);
+        // A staff member is blocked if: 
+        // 1. The platform suspended the org `org?.is_suspended`
+        // 2. The owner suspended this specific member `membership.is_suspended`
+        // 3. The owner clocked out the org `org?.is_clocked_out`
+
+        if (org?.is_suspended || membership.is_suspended || org?.is_clocked_out) {
+             setIsSuspended(true);
+        } else {
+             setIsSuspended(false);
+        }
       }
     } catch (error) {
       console.error("Error checking suspension:", error);

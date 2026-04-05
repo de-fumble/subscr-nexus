@@ -10,15 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { toast } from "sonner";
-import { 
-  AlertTriangle, 
-  RefreshCw, 
-  User, 
-  CreditCard, 
-  Calendar, 
-  AlertCircle, 
-  Search, 
-  X, 
+import {
+  AlertTriangle,
+  RefreshCw,
+  User,
+  CreditCard,
+  Calendar,
+  AlertCircle,
+  Search,
+  X,
   Download,
   ChevronLeft,
   ChevronRight
@@ -126,9 +126,9 @@ const DashboardFailedPayments = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
-        body: { 
-          orgId: org.id, 
-          action: "failed_transactions" 
+        body: {
+          orgId: org.id,
+          action: "failed_transactions"
         },
       });
 
@@ -137,7 +137,7 @@ const DashboardFailedPayments = () => {
       const payments: FailedPayment[] = (data?.failedTransactions || []).map((txn: any) => ({
         id: txn.id?.toString() || txn.reference,
         email: txn.customer?.email || "Unknown",
-        customer_name: txn.customer?.first_name 
+        customer_name: txn.customer?.first_name
           ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim()
           : txn.metadata?.customer_name || null,
         amount: txn.amount / 100,
@@ -276,267 +276,267 @@ const DashboardFailedPayments = () => {
 
   if (loading) {
     return (
-                <SidebarInset className="flex-1 flex flex-col">
-            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
-              <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
-              <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                Failed Payments
-              </h1>
-            </header>
-            <main className="flex-1 overflow-auto p-4 sm:p-6">
-              <div className="max-w-6xl mx-auto space-y-4">
-                <div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
-                <div className="h-24 bg-muted animate-pulse rounded-xl" />
-                <div className="grid gap-4 md:grid-cols-2">
-                  {[...Array(4)].map((_, i) => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
-                </div>
-              </div>
-            </main>
-            <FloatingSupport />
-          </SidebarInset>
+      <SidebarInset className="flex-1 flex flex-col">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
+          <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+          <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            Failed Payments
+          </h1>
+        </header>
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="max-w-6xl mx-auto space-y-4">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
+            <div className="h-24 bg-muted animate-pulse rounded-xl" />
+            <div className="grid gap-4 md:grid-cols-2">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
+            </div>
+          </div>
+        </main>
+        <FloatingSupport />
+      </SidebarInset>
     );
   }
 
   return (
-            <SidebarInset className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
-            <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
-            <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              Failed Payments
-            </h1>
-          </header>
+    <SidebarInset className="flex-1 flex flex-col">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
+        <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+        <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          Failed Payments
+        </h1>
+      </header>
 
-          <main className="flex-1 overflow-auto p-4 sm:p-6">
-            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-              {/* Quick Status Filters */}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("all")}
-                >
-                  All ({failedPayments.length})
-                </Button>
-                <Button
-                  variant={statusFilter === "failed" ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("failed")}
-                  className="gap-1"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Failed ({failedCount})
-                </Button>
-                <Button
-                  variant={statusFilter === "abandoned" ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("abandoned")}
-                  className="gap-1"
-                >
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Abandoned ({abandonedCount})
-                </Button>
-              </div>
+      <main className="flex-1 overflow-auto p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          {/* Quick Status Filters */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+            >
+              All ({failedPayments.length})
+            </Button>
+            <Button
+              variant={statusFilter === "failed" ? "destructive" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("failed")}
+              className="gap-1"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Failed ({failedCount})
+            </Button>
+            <Button
+              variant={statusFilter === "abandoned" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("abandoned")}
+              className="gap-1"
+            >
+              <AlertCircle className="h-3.5 w-3.5" />
+              Abandoned ({abandonedCount})
+            </Button>
+          </div>
 
-              {/* Filters Card */}
-              <Card className="p-4 glass-card">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Name / Email</Label>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search..."
-                        value={searchName}
-                        onChange={(e) => setSearchName(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Reference</Label>
-                    <Input
-                      placeholder="Search by reference..."
-                      value={searchReference}
-                      onChange={(e) => setSearchReference(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">From Date</Label>
-                    <Input
-                      type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">To Date</Label>
-                    <Input
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                    />
-                  </div>
+          {/* Filters Card */}
+          <Card className="p-4 glass-card">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Name / Email</Label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search..."
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="pl-9"
+                  />
                 </div>
-                {hasActiveFilters && (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Showing {filteredPayments.length} of {failedPayments.length} payments
-                    </p>
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-                      <X className="h-3 w-3" />
-                      Clear filters
-                    </Button>
-                  </div>
-                )}
-              </Card>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportToExcel}
-                  disabled={exporting || filteredPayments.length === 0}
-                  className="gap-2"
-                >
-                  <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
-                  Export to Excel
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => organization && fetchFailedPayments(organization)}
-                  disabled={loading}
-                  className="gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                  Refresh
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Reference</Label>
+                <Input
+                  placeholder="Search by reference..."
+                  value={searchReference}
+                  onChange={(e) => setSearchReference(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">From Date</Label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">To Date</Label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
+            </div>
+            {hasActiveFilters && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredPayments.length} of {failedPayments.length} payments
+                </p>
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                  <X className="h-3 w-3" />
+                  Clear filters
                 </Button>
               </div>
+            )}
+          </Card>
 
-              {/* Payments List */}
-              {filteredPayments.length === 0 ? (
-                <Card className="p-12 glass-card text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                    {hasActiveFilters ? (
-                      <Search className="h-8 w-8 text-muted-foreground" />
-                    ) : (
-                      <CreditCard className="h-8 w-8 text-muted-foreground" />
-                    )}
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2">
-                    {hasActiveFilters ? "No Matching Payments" : "No Failed Payments"}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {hasActiveFilters 
-                      ? "No failed payments match your filters" 
-                      : "All your subscribers' payments are up to date"}
-                  </p>
-                  {hasActiveFilters && (
-                    <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
-                      Clear filters
-                    </Button>
-                  )}
-                </Card>
-              ) : (
-                <>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {paginatedPayments.map((payment) => (
-                      <Card
-                        key={payment.id}
-                        className="p-4 glass-card border border-destructive/20 space-y-3"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                              <User className="h-5 w-5 text-destructive" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{payment.customer_name || "Unknown"}</p>
-                              <p className="text-sm text-muted-foreground">{payment.email}</p>
-                            </div>
-                          </div>
-                          {getStatusBadge(payment.status)}
+          {/* Actions */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportToExcel}
+              disabled={exporting || filteredPayments.length === 0}
+              className="gap-2"
+            >
+              <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
+              Export to Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => organization && fetchFailedPayments(organization)}
+              disabled={loading}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+
+          {/* Payments List */}
+          {filteredPayments.length === 0 ? (
+            <Card className="p-12 glass-card text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                {hasActiveFilters ? (
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                ) : (
+                  <CreditCard className="h-8 w-8 text-muted-foreground" />
+                )}
+              </div>
+              <h4 className="text-lg font-semibold mb-2">
+                {hasActiveFilters ? "No Matching Payments" : "No Failed Payments"}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {hasActiveFilters
+                  ? "No failed payments match your filters"
+                  : "All your subscribers' payments are up to date"}
+              </p>
+              {hasActiveFilters && (
+                <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
+                  Clear filters
+                </Button>
+              )}
+            </Card>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                {paginatedPayments.map((payment) => (
+                  <Card
+                    key={payment.id}
+                    className="p-4 glass-card border border-destructive/20 space-y-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-destructive" />
                         </div>
-
-                        <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-                          <div className="flex items-start gap-2">
-                            {getFailureIcon(payment.failure_reason || "")}
-                            <div>
-                              <p className="text-sm font-medium text-destructive">Failure Reason</p>
-                              <p className="text-sm text-muted-foreground mt-0.5">
-                                {payment.failure_reason || "Unknown error"}
-                              </p>
-                            </div>
-                          </div>
+                        <div>
+                          <p className="font-medium">{payment.customer_name || "Unknown"}</p>
+                          <p className="text-sm text-muted-foreground">{payment.email}</p>
                         </div>
+                      </div>
+                      {getStatusBadge(payment.status)}
+                    </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Plan</p>
-                            <p className="font-medium">{payment.plan_name}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Amount</p>
-                            <p className="font-medium">₦{payment.amount.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Failed On</p>
-                            <p className="font-medium flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(payment.failed_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Reference</p>
-                            <p className="font-mono text-xs truncate">{payment.reference}</p>
-                          </div>
+                    <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
+                      <div className="flex items-start gap-2">
+                        {getFailureIcon(payment.failure_reason || "")}
+                        <div>
+                          <p className="text-sm font-medium text-destructive">Failure Reason</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {payment.failure_reason || "Unknown error"}
+                          </p>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} of {filteredPayments.length}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                          className="gap-1"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          <span className="hidden sm:inline">Previous</span>
-                        </Button>
-                        <span className="text-sm font-medium px-2">
-                          {currentPage} / {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                          className="gap-1"
-                        >
-                          <span className="hidden sm:inline">Next</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
-                  )}
-                </>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Plan</p>
+                        <p className="font-medium">{payment.plan_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Amount</p>
+                        <p className="font-medium">₦{payment.amount.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Failed On</p>
+                        <p className="font-medium flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(payment.failed_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Reference</p>
+                        <p className="font-mono text-xs truncate">{payment.reference}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} of {filteredPayments.length}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="hidden sm:inline">Previous</span>
+                    </Button>
+                    <span className="text-sm font-medium px-2">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="gap-1"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               )}
-            </div>
-            <FloatingSupport />
-          </main>
-        </SidebarInset>
+            </>
+          )}
+        </div>
+        <FloatingSupport />
+      </main>
+    </SidebarInset>
   );
 };
 

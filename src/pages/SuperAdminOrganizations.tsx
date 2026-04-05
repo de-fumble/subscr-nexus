@@ -16,6 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { SuperAdminMessageDialog } from "@/components/SuperAdminMessageDialog";
+import { Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Organization {
   id: string;
@@ -115,7 +118,8 @@ export default function SuperAdminOrganizations() {
                   <TableHead>Status / Integration</TableHead>
                   <TableHead className="text-right">Adoption</TableHead>
                   <TableHead className="text-right">Performance</TableHead>
-                  <TableHead className="text-right pr-6">Joined</TableHead>
+                  <TableHead className="text-right">Joined</TableHead>
+                  <TableHead className="text-right pr-6">Message</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,6 +167,21 @@ export default function SuperAdminOrganizations() {
                     </TableCell>
                     <TableCell className="text-right pr-6 text-muted-foreground text-sm">
                       {new Date(org.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <SuperAdminMessageDialog 
+                        organization={org}
+                        trigger={
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

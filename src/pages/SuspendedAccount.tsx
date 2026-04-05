@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Ban, Mail, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, Ban, Mail, AlertTriangle, Clock, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface SuspensionInfo {
-  is_suspended: boolean;
-  suspension_reason: string | null;
-  suspended_at: string | null;
+  type: "platform" | "clocked_out" | "staff_suspended";
+  is_suspended?: boolean;
+  suspension_reason?: string | null;
+  suspended_at?: string | null;
   org_id: string;
   org_name: string;
 }
@@ -45,43 +46,91 @@ export default function SuspendedAccount() {
         return;
       }
 
-      const { data: org, error } = await supabase
+      // First check if user is an org owner
+      const { data: ownedOrg } = await supabase
         .from("organizations")
         .select("id, org_name, is_suspended, suspension_reason, suspended_at")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error || !org) {
+      if (ownedOrg) {
+        if (!ownedOrg.is_suspended) {
+          navigate("/dashboard");
+          return;
+        }
+
+        setSuspensionInfo({
+          type: "platform",
+          is_suspended: ownedOrg.is_suspended,
+          suspension_reason: ownedOrg.suspension_reason,
+          suspended_at: ownedOrg.suspended_at,
+          org_id: ownedOrg.id,
+          org_name: ownedOrg.org_name,
+        });
+
+        fetchAppeals(ownedOrg.id);
+        setLoading(false);
+        return;
+      }
+
+      // Check if user is a staff member
+      const { data: membership } = await supabase
+        .from("organization_members")
+        .select("org_id, is_suspended")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (membership) {
+        const { data: org } = await supabase
+          .from("organizations")
+          .select("id, org_name, is_suspended, is_clocked_out, suspension_reason, suspended_at")
+          .eq("id", membership.org_id)
+          .single();
+
+        if (org.is_suspended) {
+          setSuspensionInfo({
+            type: "platform",
+            is_suspended: org.is_suspended,
+            suspension_reason: org.suspension_reason,
+            suspended_at: org.suspended_at,
+            org_id: org.id,
+            org_name: org.org_name,
+          });
+          // Staff don't see appeals form typically, but we fetch it just in case
+          fetchAppeals(org.id);
+        } else if (membership.is_suspended) {
+          setSuspensionInfo({
+            type: "staff_suspended",
+            org_id: org.id,
+            org_name: org.org_name,
+          });
+        } else if (org.is_clocked_out) {
+          setSuspensionInfo({
+            type: "clocked_out",
+            org_id: org.id,
+            org_name: org.org_name,
+          });
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
         navigate("/auth");
-        return;
       }
-
-      if (!org.is_suspended) {
-        navigate("/dashboard");
-        return;
-      }
-
-      setSuspensionInfo({
-        is_suspended: org.is_suspended,
-        suspension_reason: org.suspension_reason,
-        suspended_at: org.suspended_at,
-        org_id: org.id,
-        org_name: org.org_name,
-      });
-
-      // Fetch existing appeals
-      const { data: existingAppeals } = await supabase
-        .from("suspension_appeals")
-        .select("*")
-        .eq("org_id", org.id)
-        .order("created_at", { ascending: false });
-
-      setAppeals(existingAppeals || []);
     } catch (error) {
       console.error("Error checking suspension:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAppeals = async (orgId: string) => {
+    const { data: existingAppeals } = await supabase
+      .from("suspension_appeals")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: false });
+
+    setAppeals(existingAppeals || []);
   };
 
   const handleSubmitAppeal = async (e: React.FormEvent) => {
@@ -124,6 +173,66 @@ export default function SuspendedAccount() {
 
   const pendingAppeal = appeals.find(a => a.status === "pending");
   const rejectedAppeals = appeals.filter(a => a.status === "rejected");
+
+  if (suspensionInfo.type === "clocked_out") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-6">
+        <div className="w-full max-w-md space-y-6">
+          <Card className="border-border">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Clock className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <CardTitle className="text-2xl">Workspace Unavailable</CardTitle>
+              <CardDescription>
+                <strong>{suspensionInfo.org_name}</strong> is currently clocked out.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Your organization owner has temporarily restricted access. Please check back later or contact your administrator.
+              </p>
+              <div className="pt-4 border-t">
+                <Button variant="outline" onClick={handleSignOut} className="w-full">
+                  Sign Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (suspensionInfo.type === "staff_suspended") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-amber-500/5 flex items-center justify-center p-6">
+        <div className="w-full max-w-md space-y-6">
+          <Card className="border-amber-500/20">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
+                <UserX className="h-8 w-8 text-amber-500" />
+              </div>
+              <CardTitle className="text-2xl text-amber-600">Access Suspended</CardTitle>
+              <CardDescription>
+                Your access to <strong>{suspensionInfo.org_name}</strong> has been suspended.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Your organization owner has suspended your staff account. Please contact your administrator for more information.
+              </p>
+              <div className="pt-4 border-t">
+                <Button variant="outline" onClick={handleSignOut} className="w-full">
+                  Sign Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-destructive/5 flex items-center justify-center p-6">

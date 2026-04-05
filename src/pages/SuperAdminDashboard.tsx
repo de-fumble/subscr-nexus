@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SendNotificationDialog } from "@/components/SendNotificationDialog";
+import { SuperAdminMessageDialog } from "@/components/SuperAdminMessageDialog";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -121,7 +122,10 @@ export default function SuperAdminDashboard() {
             <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
             Refresh
           </Button>
-          <SendNotificationDialog />
+          <div className="flex gap-2">
+            <SendNotificationDialog />
+            <SuperAdminMessageDialog />
+          </div>
         </div>
       </div>
 

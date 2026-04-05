@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.initialize-one-time-payment]
 verify_jwt = false
+
+[functions.superadmin]
+verify_jwt = false

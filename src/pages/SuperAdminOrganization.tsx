@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { SuperAdminMessageDialog } from "@/components/SuperAdminMessageDialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -206,6 +207,13 @@ export default function SuperAdminOrganization() {
               Suspend Organization
             </Button>
           )}
+          <SuperAdminMessageDialog 
+            organization={{
+              id: org.id,
+              org_name: org.org_name,
+              email: org.email
+            }}
+          />
         </div>
       </div>
 

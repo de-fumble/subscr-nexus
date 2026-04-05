@@ -138,6 +138,10 @@ serve(async (req) => {
         result = await getEligiblePayouts(supabase);
         break;
 
+      case 'send_email':
+        result = await sendEmail(supabase, user.id, params);
+        break;
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown action' }), {
           status: 400,
@@ -1185,4 +1189,92 @@ async function rejectAppeal(supabase: any, actorId: string, appealId: string, ad
   });
 
   return { success: true };
+}
+
+async function sendEmail(supabase: any, actorId: string, params: any) {
+  const { org_id, recipient_email, subject, message } = params;
+  
+  if (!subject || !message) {
+    throw new Error("Subject and message are required");
+  }
+
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendApiKey) {
+    throw new Error("RESEND_API_KEY not configured in environment");
+  }
+
+  let recipients: string[] = [];
+
+  if (recipient_email) {
+    // Direct email provided
+    recipients = [recipient_email];
+    console.log(`Sending direct email to ${recipient_email}`);
+  } else if (org_id) {
+    // Single organization
+    const { data: org, error: orgError } = await supabase
+      .from("organizations")
+      .select("email, org_name")
+      .eq("id", org_id)
+      .single();
+
+    if (orgError || !org) throw new Error("Organization not found");
+    recipients = [org.email];
+    console.log(`Sending specific email to ${org.org_name} (${org.email})`);
+  } else {
+    // Broadcast to all organizations
+    const { data: orgs, error: orgsError } = await supabase
+      .from("organizations")
+      .select("email");
+
+    if (orgsError) throw orgsError;
+    recipients = (orgs || []).map((o: any) => o.email).filter(Boolean);
+    console.log(`Broadcasting email to ${recipients.length} organizations`);
+  }
+
+  if (recipients.length === 0) {
+    throw new Error("No recipients found");
+  }
+
+  // Send via Resend
+  const resendRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify({
+      from: "Recurra <no-reply@support.recurrra.com>",
+      to: recipients,
+      subject: subject,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+          <h2 style="color: #1a1a2e; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">Message from Recurra Admin</h2>
+          <div style="padding: 20px 0; line-height: 1.6;">
+            ${message.replace(/\n/g, '<br/>')}
+          </div>
+          <p style="font-size: 12px; color: #999; margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px;">
+            This is an official administrative message from Recurra Platform.
+          </p>
+        </div>
+      `,
+    }),
+  });
+
+  const resendData = await resendRes.json();
+
+  if (!resendRes.ok) {
+    console.error("Resend delivery failed:", resendData);
+    throw new Error(`Failed to deliver email: ${resendData.message || 'Unknown error'}`);
+  }
+
+  // Audit the action
+  await supabase.from("audit_logs").insert({
+    actor_id: actorId,
+    action: org_id ? "send_email_direct" : "send_email_broadcast",
+    entity_type: "organization",
+    entity_id: org_id || "broadcast_all",
+    details: { subject, recipient_count: recipients.length },
+  });
+
+  return { success: true, message: `Email delivered to ${recipients.length} recipient(s).` };
 }

@@ -135,7 +135,17 @@ const DashboardRetryQueue = () => {
 
       if (error) throw error;
 
-      setSubscribers(data?.retryQueue || []);
+      const queue = data?.retryQueue || [];
+      const filteredQueue = queue.filter((sub: any) => {
+        const planName = (sub.plan_name || "").toLowerCase();
+        const isExcluded = 
+          planName === "standard payment" || 
+          planName === "one-time payment" || 
+          planName.includes("quick checkout");
+        return !isExcluded;
+      });
+
+      setSubscribers(filteredQueue);
     } catch (error) {
       console.error("Error fetching retry queue:", error);
       toast.error("Failed to load retry queue");
