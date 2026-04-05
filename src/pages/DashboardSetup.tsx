@@ -8,6 +8,7 @@ import { useOrgRole } from "@/hooks/useOrgRole";
 import { PremiumLoader } from "@/components/PremiumLoader";
 import { ArrowRight, Rocket } from "lucide-react";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import logoImage from "@/assets/logo.svg";
 
 interface Organization {
   id: string;
@@ -88,16 +89,20 @@ const DashboardSetup = () => {
       </header>
 
       <main className="flex-1 overflow-auto">
-        <div className="mx-auto px-3 sm:px-6 py-4 sm:py-8 max-w-3xl space-y-4 sm:space-y-6">
-          <div className="text-center space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
-            <div className="mx-auto flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-accent/10 mb-3 sm:mb-4">
-              <Rocket className="h-5 w-5 sm:h-7 sm:w-7 text-accent" />
+        <div className="mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl space-y-6 sm:space-y-10">
+          <div className="text-center space-y-3 mb-2 sm:mb-6">
+            <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-background shadow-xl border border-border/50 mb-6 group transition-all duration-500 hover:scale-110 hover:shadow-accent/20">
+              <img 
+                src={logoImage} 
+                alt="Recurra Logo" 
+                className="h-10 w-10 sm:h-12 sm:w-12 object-contain transition-transform duration-500 group-hover:rotate-6 rounded-full" 
+              />
             </div>
-            <h2 className="text-lg sm:text-2xl font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight px-4">
               Welcome to {organization?.org_name || "Recurra"}
             </h2>
-            <p className="text-xs sm:text-base text-muted-foreground max-w-md mx-auto px-2">
-              Complete the steps below to start collecting payments.
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xs sm:max-w-md mx-auto px-6">
+              Complete these few steps to start collecting payments.
             </p>
           </div>
 

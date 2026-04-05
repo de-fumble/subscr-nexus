@@ -88,103 +88,120 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
   ];
 
   return (
-    <Card className="glass-card border-0 shadow-[var(--shadow-medium)] mb-6 border-accent/20">
-      <CardHeader className="px-4 sm:px-6 py-4 sm:py-6">
-        <CardTitle className="text-base sm:text-xl font-bold text-foreground">
-          Setup Your Payment System
-        </CardTitle>
-        <CardDescription className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
-          Complete these steps to start collecting payments
-        </CardDescription>
-        <div className="mt-3 sm:mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs sm:text-sm font-medium text-foreground">
-              Progress: {completedSteps} of 4 steps
-            </span>
-            <span className="text-xs sm:text-sm text-muted-foreground">
-              {Math.round(progressPercentage)}%
-            </span>
+    <Card className="glass-card border-0 shadow-2xl mb-8 border-accent/20 overflow-hidden rounded-3xl">
+      <CardHeader className="px-5 sm:px-8 py-4 sm:py-5 bg-muted/40 border-b border-border/50 relative overflow-hidden">
+        {/* Progress background glow */}
+        <div 
+          className="absolute inset-0 bg-accent/5 transition-all duration-1000" 
+          style={{ width: `${progressPercentage}%` }}
+        />
+        
+        <div className="relative flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col">
+              <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                Setup Checklist
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                Getting you ready for business
+              </CardDescription>
+            </div>
           </div>
-          <Progress value={progressPercentage} className="h-2" />
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end shrink-0">
+              <span className="text-xl sm:text-2xl font-black text-accent tabular-nums leading-none">
+                {Math.round(progressPercentage)}%
+              </span>
+              <span className="text-[8px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+                Setup Progress
+              </span>
+            </div>
+            <div className="h-8 w-px bg-border/50 hidden sm:block" />
+            <div className="hidden sm:flex flex-col items-start px-3 py-1 bg-accent/10 rounded-lg border border-accent/20">
+              <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none">
+                Step {completedSteps} / 4
+              </span>
+              <span className="text-[8px] font-medium text-muted-foreground mt-0.5">
+                Onboarding Progress
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 relative">
+          <Progress value={progressPercentage} className="h-1.5 rounded-full bg-accent/10" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+      <CardContent className="p-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border/40">
         {steps.map((step, index) => {
           const Icon = step.icon;
           const isCompleted = step.completed;
           const isDisabled = step.disabled;
 
-          return (
-            <div
+          return (            <div
               key={step.id}
               className={cn(
-                "flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-all",
+                "group relative flex gap-4 p-4 sm:p-6 transition-all duration-300",
+                index < 2 && "md:border-b md:border-border/40",
                 isCompleted
-                  ? "bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
+                  ? "bg-green-50/10 dark:bg-green-950/5"
                   : isDisabled
-                    ? "bg-muted/30 border-border/50 opacity-60"
-                    : "bg-muted/30 border-border/50 hover:bg-muted/50"
+                    ? "bg-muted/10 opacity-60"
+                    : "hover:bg-accent/[0.02] active:bg-accent/[0.04]"
               )}
             >
-              <div className="flex items-start gap-3 sm:contents">
-                <div className="flex-shrink-0 mt-0.5">
+              <div className="flex flex-col items-center shrink-0">
+                <div className={cn(
+                  "flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl transition-all duration-500 shadow-sm",
+                  isCompleted
+                    ? "bg-green-500/20 text-green-600 dark:text-green-400"
+                    : isDisabled
+                      ? "bg-muted text-muted-foreground/50"
+                      : "bg-accent/10 text-accent group-hover:scale-110 group-hover:shadow-md group-hover:shadow-accent/10"
+                )}>
                   {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
+                    <CheckCircle2 className="h-4 w-4 sm:h-6 sm:w-6" />
                   ) : (
-                    <Circle className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0 sm:hidden">
-                  <div className="flex items-center gap-2">
-                    <Icon className={cn(
-                      "h-4 w-4 shrink-0",
-                      isCompleted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                    )} />
-                    <h3 className={cn(
-                      "font-semibold text-sm text-foreground",
-                      isCompleted && "text-green-700 dark:text-green-300"
-                    )}>
-                      Step {step.id}: {step.title}
-                    </h3>
-                  </div>
-                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="hidden sm:flex items-center gap-2 mb-2">
-                  <Icon className={cn(
-                    "h-5 w-5",
-                    isCompleted ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                  )} />
+
+              <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
+                <div className="min-w-0">
                   <h3 className={cn(
-                    "font-semibold text-foreground",
-                    isCompleted && "text-green-700 dark:text-green-300"
+                    "text-sm sm:text-base font-bold leading-none mb-1.5 tracking-tight",
+                    isCompleted ? "text-green-700 dark:text-green-300" : "text-foreground"
                   )}>
-                    Step {step.id}: {step.title}
+                    {step.title}
                   </h3>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                    {step.description}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  {step.description}
-                </p>
-                <div className="mt-3 sm:mt-2 flex sm:justify-end">
+
+                <div className="shrink-0 flex items-center">
                   <Button
-                    variant={isCompleted ? "outline" : "default"}
+                    variant={isCompleted ? "ghost" : "default"}
                     size="sm"
                     onClick={step.onClick}
                     disabled={isDisabled || isCompleted}
                     className={cn(
-                      "w-full sm:w-auto gap-2 text-xs sm:text-sm",
-                      isCompleted && "border-green-300 dark:border-green-700 text-green-700 dark:text-green-300"
+                      "w-full h-8 sm:h-9 px-4 text-[10px] sm:text-xs font-bold rounded-lg transition-all duration-300",
+                      isCompleted 
+                        ? "text-green-600 hover:text-green-600 bg-transparent cursor-default" 
+                        : "bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.01]"
                     )}
                   >
                     {isCompleted ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" />
-                        Completed
-                      </>
+                      <span className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Done
+                      </span>
                     ) : (
                       <>
                         {step.action}
-                        {step.action.includes("Copy") ? <Copy className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                        {step.action.includes("Copy") ? <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-1.5" /> : <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-1.5" />}
                       </>
                     )}
                   </Button>
@@ -193,26 +210,29 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
             </div>
           );
         })}
+        </div>
 
         {hasPlans && orgId && (
-          <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-accent/10 rounded-lg border border-accent/20">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-foreground mb-1">
-                  Ready to share with customers?
+          <div className="p-4 sm:p-6 bg-accent/5 border-t border-accent/10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
+              <div className="min-w-0 text-center sm:text-left">
+                <p className="text-[10px] font-bold text-foreground mb-1 uppercase tracking-[0.2em] opacity-70">
+                  Your Public Hub
                 </p>
-                <p className="text-xs text-muted-foreground break-all">
-                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{window.location.origin}/plans-hub/{orgId}</code>
-                </p>
+                <div className="flex items-center justify-center sm:justify-start gap-2 overflow-hidden">
+                  <code className="text-[10px] sm:text-xs bg-muted/70 px-2 py-1 rounded border border-border/50 truncate font-mono">
+                    {window.location.origin}/plans-hub/{orgId}
+                  </code>
+                </div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/plans")}
-                className="gap-2 shrink-0 w-full sm:w-auto"
+                className="gap-2 shrink-0 h-9 sm:h-10 px-4 sm:px-6 rounded-lg border-accent/20 hover:bg-accent/10 transition-all duration-300"
               >
                 <ExternalLink className="h-4 w-4" />
-                View Plans Hub
+                View Hub
               </Button>
             </div>
           </div>
