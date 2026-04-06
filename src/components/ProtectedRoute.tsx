@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { Loader2 } from "lucide-react";
+import { PremiumLoader } from "@/components/PremiumLoader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -92,11 +92,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
-      </div>
-    );
+    return <PremiumLoader message="Loading..." fullScreen />;
   }
 
   if (!session) {

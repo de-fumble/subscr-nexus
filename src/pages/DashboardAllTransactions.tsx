@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { PremiumLoader } from "@/components/PremiumLoader";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -317,19 +318,7 @@ export default function DashboardAllTransactions() {
 
   // ── Skeleton ────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-                <SidebarInset className="flex-1 flex flex-col">
-            <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-4">
-              <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity" />
-              <h1 className="text-sm font-semibold">All Transactions</h1>
-            </header>
-            <main className="flex-1 p-6 space-y-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />
-              ))}
-            </main>
-          </SidebarInset>
-    );
+    return <PremiumLoader message="Loading transactions..." />;
   }
 
   return (

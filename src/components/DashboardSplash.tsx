@@ -69,7 +69,7 @@ export function DashboardSplash() {
 
                     {/* Progress Bar Line */}
                     <div className="w-full h-1 bg-muted overflow-hidden rounded-full">
-                        <div className="h-full bg-primary rounded-full animate-[progress_1.5s_ease-in-out_infinite]" style={{ width: '40%', transformOrigin: 'left' }} />
+                        <div className="h-full bg-primary rounded-full animate-[progress_1.5s_ease-in-out_infinite]" style={{ width: "40%", transformOrigin: "left" }} />
                     </div>
 
                 </div>
