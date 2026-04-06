@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   { name: 'Overview', href: '/superadmin', icon: LayoutDashboard },
@@ -49,11 +50,10 @@ export function SuperAdminSidebar() {
   const { open, isMobile, openMobile } = useSidebar();
   const isExpanded = isMobile ? openMobile : open;
 
+  const { signOut } = useAuth();
+
   const handleSignOut = async () => {
-    localStorage.removeItem("vite-ui-theme");
-    await supabase.auth.signOut();
-    toast.success("Signed out successfully");
-    navigate("/auth");
+    await signOut();
   };
 
   const isActive = (path: string) => location.pathname === path;

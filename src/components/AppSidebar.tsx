@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { useOrgRole } from "@/hooks/useOrgRole";
+import { useAuth } from "@/hooks/useAuth";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -47,6 +48,7 @@ export function AppSidebar() {
   const isExpanded = isMobile ? openMobile : open;
   const { isSuperadmin } = useSuperadmin();
   const { role, canAccessSettings } = useOrgRole();
+  const { signOut } = useAuth();
 
   const { data: session } = useQuery({
     queryKey: ["sidebar-session"],
@@ -150,15 +152,11 @@ export function AppSidebar() {
   const displayEmail = role === 'staff' ? userEmail : organization?.email;
 
   const handleSignOut = async () => {
-    localStorage.removeItem("vite-ui-theme");
-
     if (organization) {
       await logAuditEvent("logout", "organization", organization.id || "unknown", "auth", { email: displayEmail }, role || "Owner");
     }
 
-    await supabase.auth.signOut();
-    toast.success("Signed out successfully");
-    navigate("/auth");
+    await signOut();
   };
 
   const isActive = (path: string) => location.pathname === path;

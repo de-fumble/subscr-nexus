@@ -24,6 +24,7 @@ import {
   EyeOff,
   Zap
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { RefundRequestDialog } from "@/components/RefundRequestDialog";
 import { AutomatePaymentDialog } from "@/components/AutomatePaymentDialog";
 import {
@@ -148,12 +149,10 @@ const UserDashboard = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    // Reset theme to light mode on sign-out so the next login starts fresh
-    localStorage.removeItem("vite-ui-theme");
+  const { signOut } = useAuth();
 
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const getDaysUntilBilling = (nextPaymentDate: string | null) => {

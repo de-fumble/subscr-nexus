@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Ban, Mail, AlertTriangle, Clock, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SuspensionInfo {
   type: "platform" | "clocked_out" | "staff_suspended";
@@ -156,9 +157,10 @@ export default function SuspendedAccount() {
     }
   };
 
+  const { signOut } = useAuth();
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+    await signOut();
   };
 
   if (loading) {

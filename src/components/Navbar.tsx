@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import logoImage from "@/assets/logo.svg";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,9 +23,10 @@ const Navbar = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const { signOut } = useAuth();
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+    await signOut();
   };
 
   // Mobile Sidebar Component - rendered via Portal
