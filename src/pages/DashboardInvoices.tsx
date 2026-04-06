@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { toast } from "sonner";
-import { Receipt, Plus, ArrowLeft, FileText } from "lucide-react";
+import { Receipt, Plus, ArrowLeft, FileText, Sparkles, ShieldCheck, Send, Wand2 } from "lucide-react";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
 import { FloatingSupport } from "@/components/FloatingSupport";
 
@@ -25,6 +25,12 @@ const DashboardInvoices = () => {
   const [userEmail, setUserEmail] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+
+  const openInvoiceStudio = (templateName?: string) => {
+    setSelectedTemplate(templateName || null);
+    setShowCreateDialog(true);
+  };
 
   useEffect(() => {
     fetchData();
@@ -79,25 +85,7 @@ const DashboardInvoices = () => {
   };
 
   if (loading) {
-    return (
-      <SidebarInset className="flex-1 flex flex-col">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-          <SidebarTrigger />
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-accent" />
-            Create Invoice
-          </h1>
-        </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <div className="max-w-4xl mx-auto space-y-4">
-            <div className="h-64 bg-muted animate-pulse rounded-xl" />
-            <div className="grid md:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, i) => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
-            </div>
-          </div>
-        </main>
-      </SidebarInset>
-    );
+    return <PremiumLoader message="Loading invoice studio..." />;
   }
 
   return (
@@ -118,21 +106,43 @@ const DashboardInvoices = () => {
 
       <main className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="max-w-4xl mx-auto space-y-6">
-          <Card className="p-8 glass-card">
+          <Card className="p-8 glass-card border-border/40 relative overflow-hidden">
+            <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
             <div className="text-center space-y-6">
-              <div className="mx-auto w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center">
+              <div className="mx-auto w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center ring-8 ring-accent/5">
                 <FileText className="h-10 w-10 text-accent" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-2">Create Professional Invoices</h2>
+                <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+                  Create Premium Invoices
+                  <Sparkles className="h-5 w-5 text-accent" />
+                </h2>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Generate and send professional invoices to your customers.
-                  Download as PDF or send directly via email.
+                  Generate and send beautifully structured invoices with smart defaults,
+                  instant PDF export, and direct email delivery.
                 </p>
               </div>
-              <Button size="lg" className="gap-2" onClick={() => setShowCreateDialog(true)}>
+              <Button size="lg" className="gap-2 rounded-full px-7" onClick={() => openInvoiceStudio()}>
                 <Plus className="h-5 w-5" />
-                Create New Invoice
+                Open Invoice Studio
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="p-5 sm:p-6 glass-card border-border/40">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <Wand2 className="h-4 w-4 text-accent" />
+              <p className="text-sm font-semibold">Quick Start Templates</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => openInvoiceStudio("Consultation")}>
+                Consultation
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => openInvoiceStudio("Starter Package")}>
+                Starter Package
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => openInvoiceStudio("Monthly Retainer")}>
+                Monthly Retainer
               </Button>
             </div>
           </Card>
@@ -140,11 +150,11 @@ const DashboardInvoices = () => {
           <div className="grid md:grid-cols-3 gap-4">
             <Card className="p-6 glass-card text-center">
               <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-blue-500" />
+                <ShieldCheck className="h-6 w-6 text-blue-500" />
               </div>
-              <h3 className="font-semibold mb-1">Professional Design</h3>
+              <h3 className="font-semibold mb-1">Premium Design</h3>
               <p className="text-sm text-muted-foreground">
-                Clean, professional invoice template with your organization branding
+                Clean invoice layout with your organization details, ready for clients.
               </p>
             </Card>
             <Card className="p-6 glass-card text-center">
@@ -158,7 +168,7 @@ const DashboardInvoices = () => {
             </Card>
             <Card className="p-6 glass-card text-center">
               <div className="mx-auto w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
-                <Plus className="h-6 w-6 text-purple-500" />
+                <Send className="h-6 w-6 text-purple-500" />
               </div>
               <h3 className="font-semibold mb-1">Download or Send</h3>
               <p className="text-sm text-muted-foreground">
@@ -177,6 +187,7 @@ const DashboardInvoices = () => {
           orgId={organization.id}
           orgName={organization.org_name}
           orgEmail={organization.email}
+          initialTemplateName={selectedTemplate}
         />
       )}
     </SidebarInset>

@@ -1,0 +1,20 @@
+{
+  "name": "Recurra",
+  "short_name": "Recurra",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#180973",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/recurra-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

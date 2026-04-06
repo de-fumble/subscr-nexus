@@ -54,9 +54,11 @@ const Navbar = () => {
 
             <div className="flex flex-col space-y-2">
               {[
+                { label: "Home", href: "/", delay: "50ms" },
                 { label: "Features", href: "/#features", delay: "100ms" },
                 { label: "Pricing", href: "/#pricing", delay: "150ms" },
                 { label: "About", href: "/about", delay: "200ms" },
+                { label: "Verify Payment", href: "/verify-transaction", delay: "250ms" },
               ].map((item, index) => (
                 <a
                   key={index}
@@ -74,7 +76,7 @@ const Navbar = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`text-lg font-mono font-medium text-accent hover:text-accent/80 hover:bg-accent/10 px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}
-                style={{ transitionDelay: "250ms" }}
+                style={{ transitionDelay: "300ms" }}
                 onClick={() => setIsOpen(false)}
               >
                 Join Community
@@ -144,6 +146,9 @@ const Navbar = () => {
             </a>
             <Link to="/about" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
               About
+            </Link>
+            <Link to="/verify-transaction" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
+              Verify Payment
             </Link>
             {session ? (
               <>

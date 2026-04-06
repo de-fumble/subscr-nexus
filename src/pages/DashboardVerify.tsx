@@ -7,6 +7,8 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { VerifyTransactionCard } from "@/components/VerifyTransactionCard";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { Card } from "@/components/ui/card";
+import { ShieldCheck, ReceiptText } from "lucide-react";
 
 
 interface Organization {
@@ -96,7 +98,23 @@ export default function DashboardVerify() {
       </header>
 
       <main className="flex-1 overflow-auto">
-        <div className="container max-w-3xl py-6 sm:py-8 px-4 sm:px-6">
+        <div className="container max-w-4xl py-6 sm:py-8 px-4 sm:px-6 space-y-5">
+          <Card className="p-5 sm:p-6 border-border/40 bg-gradient-to-br from-accent/5 to-background">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-accent" />
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
+                  Transaction Verification Hub
+                  <ReceiptText className="h-4 w-4 text-accent" />
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Verify transaction references instantly and generate downloadable receipts for confirmed payments.
+                </p>
+              </div>
+            </div>
+          </Card>
           <VerifyTransactionCard organization={organization} />
         </div>
         <FloatingSupport />

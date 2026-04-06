@@ -150,15 +150,25 @@ interface InvoiceData {
   dueDate: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   orgName: string;
   orgEmail: string;
   items: InvoiceItem[];
   subtotal: number;
   total: number;
+  currency: string;
   notes: string;
 }
 
 export function InvoicePDFDocument({ data }: { data: InvoiceData }) {
+  const formatCurrency = (amount: number) => {
+    const code = data.currency || "NGN";
+    return `${code} ${amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -180,6 +190,7 @@ export function InvoicePDFDocument({ data }: { data: InvoiceData }) {
             <Text style={styles.sectionTitle}>Bill To</Text>
             <Text style={styles.value}>{data.customerName}</Text>
             {data.customerEmail && <Text style={styles.label}>{data.customerEmail}</Text>}
+            {data.customerPhone && <Text style={styles.label}>{data.customerPhone}</Text>}
           </View>
           <View style={styles.section}>
             <View style={styles.row}>
@@ -205,9 +216,9 @@ export function InvoicePDFDocument({ data }: { data: InvoiceData }) {
             <View key={index} style={styles.tableRow}>
               <Text style={styles.colDescription}>{item.description}</Text>
               <Text style={styles.colQty}>{item.quantity}</Text>
-              <Text style={styles.colPrice}>₦{item.unitPrice.toLocaleString()}</Text>
+              <Text style={styles.colPrice}>{formatCurrency(item.unitPrice)}</Text>
               <Text style={styles.colTotal}>
-                ₦{(item.quantity * item.unitPrice).toLocaleString()}
+                {formatCurrency(item.quantity * item.unitPrice)}
               </Text>
             </View>
           ))}
@@ -217,11 +228,11 @@ export function InvoicePDFDocument({ data }: { data: InvoiceData }) {
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.label}>Subtotal</Text>
-            <Text>₦{data.subtotal.toLocaleString()}</Text>
+            <Text>{formatCurrency(data.subtotal)}</Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
             <Text style={styles.grandTotalText}>Total</Text>
-            <Text style={styles.grandTotalText}>₦{data.total.toLocaleString()}</Text>
+            <Text style={styles.grandTotalText}>{formatCurrency(data.total)}</Text>
           </View>
         </View>
 

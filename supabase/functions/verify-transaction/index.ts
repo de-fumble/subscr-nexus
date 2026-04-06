@@ -13,25 +13,26 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const hasAuth = !!authHeader;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    let userId: string | null = null;
+    let supabaseAuth: any = null;
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (hasAuth && authHeader !== "Bearer undefined") {
+      try {
+        supabaseAuth = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+          { global: { headers: { Authorization: authHeader } } }
+        );
+
+        const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+        if (user && !userError) {
+          userId = user.id;
+        }
+      } catch (error) {
+        console.error("Auth error (proceeding as guest):", error);
+      }
     }
 
     const { reference } = await req.json();
@@ -43,35 +44,40 @@ serve(async (req) => {
       );
     }
 
-    // Get organization - check if owner first, then staff
+    // Get organization - check if owner first, then staff (optional for public callers)
     let org = null;
+    let orgName: string | null = null;
     let paystackSecretKey = null;
     
-    const { data: ownedOrg } = await supabase
-      .from("organizations")
-      .select("paystack_secret_key")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (ownedOrg) {
-      org = ownedOrg;
-      paystackSecretKey = org.paystack_secret_key;
-    } else {
-      // Check if user is a staff member
-      const { data: membership } = await supabase
-        .from("organization_members")
-        .select("org_id")
-        .eq("user_id", user.id)
+    if (userId && supabaseAuth) {
+      const { data: ownedOrg } = await supabaseAuth
+        .from("organizations")
+        .select("paystack_secret_key, org_name")
+        .eq("user_id", userId)
         .maybeSingle();
 
-      if (membership) {
-        const { data: staffOrg } = await supabase
-          .from("organizations")
-          .select("paystack_secret_key")
-          .eq("id", membership.org_id)
-          .single();
-        org = staffOrg;
-        paystackSecretKey = org?.paystack_secret_key;
+      if (ownedOrg) {
+        org = ownedOrg;
+        paystackSecretKey = org.paystack_secret_key;
+        orgName = org.org_name || null;
+      } else {
+        // Check if user is a staff member
+        const { data: membership } = await supabaseAuth
+          .from("organization_members")
+          .select("org_id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (membership) {
+          const { data: staffOrg } = await supabaseAuth
+            .from("organizations")
+            .select("paystack_secret_key, org_name")
+            .eq("id", membership.org_id)
+            .single();
+          org = staffOrg;
+          paystackSecretKey = org?.paystack_secret_key;
+          orgName = org?.org_name || null;
+        }
       }
     }
 
@@ -108,6 +114,8 @@ serve(async (req) => {
     }
 
     const txn = verifyData.data;
+
+    orgName = orgName || txn.metadata?.org_name || null;
     
     // Log full transaction data for debugging
     console.log("Full Paystack transaction data:", JSON.stringify(txn, null, 2));
@@ -152,10 +160,14 @@ serve(async (req) => {
       
       const { data: planData } = await serviceClient
         .from("subscription_plans")
-        .select("name")
+        .select("name, organizations(org_name)")
         .eq("paystack_plan_code", planCode)
         .maybeSingle();
       
+      if (planData?.organizations?.org_name && !orgName) {
+        orgName = planData.organizations.org_name;
+      }
+
       if (planData?.name) {
         planName = planData.name;
         console.log("Plan name from database:", planName);
@@ -179,13 +191,16 @@ serve(async (req) => {
         
         const { data: paymentData } = await serviceClient
           .from("one_time_payments")
-          .select("name")
+          .select("name, organizations(org_name)")
           .eq("id", txn.metadata.payment_id)
           .maybeSingle();
         
         if (paymentData?.name) {
           planName = paymentData.name;
           console.log("Plan name from one_time_payments:", planName);
+          if (paymentData?.organizations?.org_name && !orgName) {
+            orgName = paymentData.organizations.org_name;
+          }
         } else {
           planName = "One Time Payment";
         }
@@ -196,6 +211,8 @@ serve(async (req) => {
     
     console.log("Final plan name:", planName);
 
+    const paymentType = isOneTimePayment ? "Quick Checkout" : "Standard Payment";
+
     const transaction = {
       reference: txn.reference,
       amount: txn.amount,
@@ -205,6 +222,8 @@ serve(async (req) => {
       paid_at: txn.paid_at || txn.transaction_date,
       plan: planName,
       currency: txn.currency,
+      organization_name: orgName || "N/A",
+      payment_type: paymentType,
     };
 
     return new Response(
