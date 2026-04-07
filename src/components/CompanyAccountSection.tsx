@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Edit2, Save, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Building2, Edit2, Save, X, CheckCircle2, Loader2, Lock, Edit3 } from "lucide-react";
+import { KYCEditRequestDialog } from "./KYCEditRequestDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ interface CompanyAccountSectionProps {
     account_number?: string;
     account_name?: string;
     bank_name?: string;
+    kyc_verified?: boolean;
   };
   onUpdate: () => void;
 }
@@ -143,9 +145,18 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
             <CardTitle>Company Bank Account</CardTitle>
           </div>
           {hasAccountDetails && !isEditing && (
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-              <Edit2 className="h-4 w-4" />
-            </Button>
+            organization.kyc_verified ? (
+              <KYCEditRequestDialog orgId={organization.id}>
+                <Button variant="ghost" size="sm" className="text-accent hover:text-accent hover:bg-accent/5 gap-2">
+                  <Edit3 className="h-4 w-4" />
+                  Request Edit
+                </Button>
+              </KYCEditRequestDialog>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )
           )}
         </div>
         <CardDescription>
@@ -161,9 +172,18 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
             <p className="text-sm text-muted-foreground mb-4">
               No bank account details added yet
             </p>
-            <Button onClick={() => setIsEditing(true)}>
-              Add Bank Account
-            </Button>
+            {organization.kyc_verified ? (
+              <KYCEditRequestDialog orgId={organization.id}>
+                <Button className="gap-2">
+                   <Edit3 className="h-4 w-4" />
+                   Request to Add Bank Account
+                </Button>
+              </KYCEditRequestDialog>
+            ) : (
+              <Button onClick={() => setIsEditing(true)}>
+                Add Bank Account
+              </Button>
+            )}
           </div>
         ) : isEditing ? (
           <div className="space-y-4">
@@ -264,6 +284,12 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
               <span className="text-sm text-muted-foreground">Account Name</span>
               <span className="text-sm font-medium">{organization.account_name}</span>
             </div>
+            {organization.kyc_verified && (
+              <div className="flex items-center gap-2 p-3 mt-2 rounded-lg bg-accent/5 border border-accent/10 text-xs text-muted-foreground">
+                <Lock className="h-3 w-3 text-accent" />
+                Verified bank details are locked. Request an edit to make changes.
+              </div>
+            )}
             <div className="flex justify-between py-2">
               <span className="text-sm text-muted-foreground">Account Number</span>
               <span className="text-sm font-medium">{organization.account_number}</span>

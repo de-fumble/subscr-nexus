@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileCheck, Upload, Building, Users, Briefcase, DollarSign, CheckCircle2, Clock } from "lucide-react";
+import { FileCheck, Upload, Building, Users, Briefcase, DollarSign, CheckCircle2, Clock, Lock, Edit3 } from "lucide-react";
+import { KYCEditRequestDialog } from "./KYCEditRequestDialog";
 
 interface KYCData {
   business_nature: string | null;
@@ -149,6 +150,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
   };
 
   const isComplete = formData.business_name && formData.business_type && formData.staff_count && formData.monthly_revenue;
+  const isVerified = kycData.kyc_verified;
 
   return (
     <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
@@ -190,7 +192,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
               onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
               placeholder="Enter your business name"
               className="glass-card border-border/50"
-              disabled={disabled}
+              disabled={disabled || isVerified}
             />
           </div>
 
@@ -202,7 +204,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             <Select
               value={formData.business_type}
               onValueChange={(value) => setFormData({ ...formData, business_type: value })}
-              disabled={disabled}
+              disabled={disabled || isVerified}
             >
               <SelectTrigger className="glass-card border-border/50">
                 <SelectValue placeholder="Select business type" />
@@ -225,7 +227,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             <Select
               value={formData.staff_count}
               onValueChange={(value) => setFormData({ ...formData, staff_count: value })}
-              disabled={disabled}
+              disabled={disabled || isVerified}
             >
               <SelectTrigger className="glass-card border-border/50">
                 <SelectValue placeholder="Select staff count" />
@@ -248,7 +250,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             <Select
               value={formData.monthly_revenue}
               onValueChange={(value) => setFormData({ ...formData, monthly_revenue: value })}
-              disabled={disabled}
+              disabled={disabled || isVerified}
             >
               <SelectTrigger className="glass-card border-border/50">
                 <SelectValue placeholder="Select revenue range" />
@@ -271,7 +273,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             onChange={(e) => setFormData({ ...formData, business_nature: e.target.value })}
             placeholder="Briefly describe what your business does and how you plan to use Recurra..."
             className="glass-card border-border/50 min-h-[100px]"
-            disabled={disabled}
+            disabled={disabled || isVerified}
           />
         </div>
 
@@ -300,7 +302,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
                 <Button
                   variant="outline"
                   className="gap-2"
-                  disabled={uploading || disabled}
+                  disabled={uploading || disabled || isVerified}
                   onClick={() => document.getElementById("doc-upload")?.click()}
                 >
                   <Upload className="h-4 w-4" />
@@ -324,14 +326,29 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
           )}
         </div>
 
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={saving || !isComplete || disabled}
-            className="bg-accent hover:bg-accent/90 gap-2"
-          >
-            {saving ? "Saving..." : "Save KYC Information"}
-          </Button>
+        <div className="flex justify-end pt-4 border-t">
+          {isVerified ? (
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-accent/5 px-4 py-2 rounded-lg border border-accent/10">
+                <Lock className="h-4 w-4 text-accent" />
+                This profile is verified and locked. Contact admin for changes.
+              </div>
+              <KYCEditRequestDialog orgId={orgId}>
+                <Button variant="outline" className="gap-2 w-full sm:w-auto border-accent/20 hover:bg-accent/5">
+                  <Edit3 className="h-4 w-4 text-accent" />
+                  Request Edit
+                </Button>
+              </KYCEditRequestDialog>
+            </div>
+          ) : (
+            <Button
+              onClick={handleSave}
+              disabled={saving || !isComplete || disabled}
+              className="bg-accent hover:bg-accent/90 gap-2 w-full sm:w-auto"
+            >
+              {saving ? "Saving..." : "Save KYC Information"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

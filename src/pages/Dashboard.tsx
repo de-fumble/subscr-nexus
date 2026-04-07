@@ -22,6 +22,7 @@ import { SetupProgressCard } from "@/components/SetupProgressCard";
 import { NotificationIcon } from "@/components/NotificationIcon";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { FounderInsight } from "@/components/FounderInsight";
+import { KYCApprovalModal } from "@/components/KYCApprovalModal";
 interface Organization {
   id: string;
   org_name: string;
@@ -169,6 +170,7 @@ const Dashboard = () => {
   const [showRevenueDetailsDialog, setShowRevenueDetailsDialog] = useState(false);
   const [showTransactionFilterDialog, setShowTransactionFilterDialog] = useState(false);
   const [hideValues, setHideValues] = useState(false);
+  const [kycApprovalNotification, setKycApprovalNotification] = useState<string | null>(null);
   const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)', 'hsl(330, 81%, 60%)'];
   const failedPaymentsPieData = [{
     name: 'Abandoned',
@@ -195,8 +197,33 @@ const Dashboard = () => {
   useEffect(() => {
     if (organization) {
       fetchTimeSeriesData();
+      checkKYCApproval();
     }
   }, [organization, chartPeriod]);
+
+  const checkKYCApproval = async () => {
+    if (!organization) return;
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("org_id", organization.id)
+        .eq("type", "kyc_approval")
+        .eq("is_read", false)
+        .maybeSingle();
+
+      if (!error && data) {
+        console.log("Found KYC approval notification:", data.id);
+        setKycApprovalNotification(data.id);
+      } else if (error) {
+        console.error("Error checking KYC approval notification:", error);
+      } else {
+        console.log("No unread KYC approval notification found for org:", organization.id);
+      }
+    } catch (err) {
+      console.error("Error checking KYC approval notification:", err);
+    }
+  };
   const fetchTimeSeriesData = async () => {
     if (!organization) return;
     const now = new Date();
@@ -1125,6 +1152,13 @@ const Dashboard = () => {
     <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
 
     <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
+
+    {kycApprovalNotification && (
+      <KYCApprovalModal 
+        notificationId={kycApprovalNotification} 
+        onClose={() => setKycApprovalNotification(null)} 
+      />
+    )}
   </SidebarInset>
   );
 };

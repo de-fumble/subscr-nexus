@@ -355,6 +355,8 @@ export type Database = {
           org_id: string
           read_at: string | null
           title: string
+          type: string | null
+          created_by: string | null
         }
         Insert: {
           created_at?: string
@@ -364,6 +366,8 @@ export type Database = {
           org_id: string
           read_at?: string | null
           title: string
+          type?: string | null
+          created_by?: string | null
         }
         Update: {
           created_at?: string
@@ -373,6 +377,8 @@ export type Database = {
           org_id?: string
           read_at?: string | null
           title?: string
+          type?: string | null
+          created_by?: string | null
         }
         Relationships: [
           {
