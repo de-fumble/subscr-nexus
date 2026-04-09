@@ -70,7 +70,7 @@ const Auth = () => {
               "Content-Type": "application/json",
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email, clientOrigin: window.location.origin }),
           }
         );
         const data = await res.json();

@@ -20,7 +20,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { email } = await req.json();
+    const { email, clientOrigin } = await req.json();
 
     if (!email) {
       return new Response(
@@ -29,25 +29,7 @@ serve(async (req) => {
       );
     }
 
-    // Use Supabase's built-in password reset which generates a proper recovery link
-    const origin = req.headers.get("origin") || "https://recurrra.lovable.app";
-    
-    const { error: resetError } = await supabaseClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${origin}/reset-password`,
-      },
-    });
-
-    if (resetError) {
-      console.error("Reset link error:", resetError);
-      // Don't reveal if email exists or not
-      return new Response(
-        JSON.stringify({ success: true, message: "If the email exists, a reset link has been sent." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const origin = clientOrigin || req.headers.get("origin") || "https://recurrra.lovable.app";
 
     // Generate a reset link using Supabase's built-in auth
     const { data: linkData, error: linkError } = await supabaseClient.auth.admin.generateLink({
@@ -67,7 +49,17 @@ serve(async (req) => {
       );
     }
 
-    const resetLink = linkData.properties?.action_link || `${origin}/reset-password`;
+    let resetLink = linkData.properties?.action_link || `${origin}/reset-password`;
+
+    try {
+      if (resetLink.includes("redirect_to=") && origin) {
+        const url = new URL(resetLink);
+        url.searchParams.set("redirect_to", `${origin}/reset-password`);
+        resetLink = url.toString();
+      }
+    } catch (e) {
+      console.error("Error patching redirect_to", e);
+    }
 
     // Send custom email via Resend
     const htmlBody = `
