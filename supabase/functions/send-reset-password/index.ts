@@ -70,7 +70,7 @@ serve(async (req) => {
         </div>
         <div style="padding: 30px;">
           <p style="color: #4a5568; font-size: 15px; line-height: 1.6;">
-            Click the button below to set a new password. This link will expire in 1 hour.
+            Click the button below to set a new password. This link will expire in 30 minutes.
           </p>
           <div style="text-align: center; margin: 32px 0;">
             <a href="${resetLink}" 
