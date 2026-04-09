@@ -16,6 +16,7 @@ interface Organization {
   email: string;
   paystack_secret_key?: string | null;
   paystack_public_key?: string | null;
+  recurra_handling_request?: boolean | null;
 }
 
 const DashboardSetup = () => {
@@ -39,7 +40,7 @@ const DashboardSetup = () => {
       let orgData = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, paystack_secret_key, paystack_public_key")
+        .select("id, org_name, email, paystack_secret_key, paystack_public_key, recurra_handling_request")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -54,7 +55,7 @@ const DashboardSetup = () => {
         if (membership) {
           const { data: staffOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, paystack_secret_key, paystack_public_key")
+            .select("id, org_name, email, paystack_secret_key, paystack_public_key, recurra_handling_request")
             .eq("id", membership.org_id)
             .maybeSingle();
           orgData = staffOrg;
@@ -79,7 +80,7 @@ const DashboardSetup = () => {
 
   if (loading) return <PremiumLoader message="Loading setup..." />;
 
-  const setupComplete = !!organization?.paystack_secret_key && hasPlans;
+  const setupComplete = (!!organization?.paystack_secret_key || organization?.recurra_handling_request) && hasPlans;
 
   return (
     <SidebarInset className="flex-1 flex flex-col">
@@ -107,7 +108,7 @@ const DashboardSetup = () => {
           </div>
 
           <SetupProgressCard
-            hasPaymentProvider={!!organization?.paystack_secret_key}
+            hasPaymentProvider={!!organization?.paystack_secret_key || organization?.recurra_handling_request || false}
             hasPlans={hasPlans}
             orgId={organization?.id}
             orgName={organization?.org_name}

@@ -142,6 +142,10 @@ serve(async (req) => {
         result = await sendEmail(supabase, user.id, params);
         break;
 
+      case 'update_api_keys':
+        result = await updateApiKeys(supabase, user.id, params.org_id, params.public_key, params.secret_key);
+        break;
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown action' }), {
           status: 400,
@@ -1277,4 +1281,26 @@ async function sendEmail(supabase: any, actorId: string, params: any) {
   });
 
   return { success: true, message: `Email delivered to ${recipients.length} recipient(s).` };
+}
+
+async function updateApiKeys(supabase: any, actorId: string, orgId: string, publicKey: string, secretKey: string) {
+  const { error } = await supabase
+    .from('organizations')
+    .update({
+      paystack_public_key: publicKey,
+      paystack_secret_key: secretKey,
+    })
+    .eq('id', orgId);
+
+  if (error) throw error;
+
+  await supabase.from('audit_logs').insert({
+    actor_id: actorId,
+    action: 'update_api_keys',
+    entity_type: 'organization',
+    entity_id: orgId,
+    details: { update_type: 'paystack_keys' },
+  });
+
+  return { success: true };
 }

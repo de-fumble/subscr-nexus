@@ -11,6 +11,7 @@ import {
   LogOut,
   UserIcon,
   LayoutGrid,
+  Webhook,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -39,6 +40,7 @@ const navigation = [
   { name: 'Appeals', href: '/superadmin/appeals', icon: Scale },
   { name: 'Defaulters', href: '/superadmin/defaulters', icon: Ban },
   { name: 'Logs', href: '/superadmin/logs', icon: FileText },
+  { name: 'API Management', href: '/superadmin/api-keys', icon: Webhook },
   { name: 'Licenses', href: '/superadmin/licenses', icon: Key },
   { name: 'KYC', href: '/superadmin/kyc', icon: FileCheck },
   { name: 'Profile', href: '/superadmin/profile', icon: UserIcon },

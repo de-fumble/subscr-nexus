@@ -38,6 +38,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import SuperAdminOrganization from "./pages/SuperAdminOrganization";
 import SuperAdminOrganizations from "./pages/SuperAdminOrganizations";
+import SuperAdminApiKeys from "./pages/SuperAdminApiKeys";
 import SuperAdminPayouts from "./pages/SuperAdminPayouts";
 import SuperAdminDeletions from "./pages/SuperAdminDeletions";
 import SuperAdminDefaulters from "./pages/SuperAdminDefaulters";
@@ -136,6 +137,7 @@ const App = () => (
                 <Route path="/superadmin/profile" element={<ProtectedRoute><SuperAdminProfile /></ProtectedRoute>} />
                 <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
                 <Route path="/superadmin/organizations" element={<ProtectedRoute><SuperAdminOrganizations /></ProtectedRoute>} />
+                <Route path="/superadmin/api-keys" element={<ProtectedRoute><SuperAdminApiKeys /></ProtectedRoute>} />
                 <Route path="/superadmin/payouts" element={<ProtectedRoute><SuperAdminPayouts /></ProtectedRoute>} />
                 <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminDeletions /></ProtectedRoute>} />
                 <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />

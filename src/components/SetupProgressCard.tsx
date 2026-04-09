@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle2, Circle, ArrowRight, Key, CreditCard, Share2, ExternalLink, Webhook, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SetupProgressCardProps {
   hasPaymentProvider: boolean;
@@ -16,6 +19,7 @@ interface SetupProgressCardProps {
 export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName }: SetupProgressCardProps) {
   const navigate = useNavigate();
   const webhookUrl = "https://hhldoattlleyetxylfav.supabase.co/functions/v1/paystack-webhook";
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Calculate progress percentage
   // Step 4 (sharing) is automatically considered complete if plans exist
@@ -40,7 +44,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
       completed: hasPaymentProvider,
       action: "Configure Payment",
       icon: Key,
-      onClick: () => navigate("/dashboard/settings"),
+      onClick: () => setIsPaymentModalOpen(true),
     },
     {
       id: 2,
@@ -238,6 +242,81 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
           </div>
         )}
       </CardContent>
+
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="sm:max-w-[700px] border-accent/20 bg-background/95 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Choose Payment Configuration</DialogTitle>
+            <DialogDescription className="text-muted-foreground mt-2">
+              How would you like to handle payments on your platform?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+            <Card 
+              className="relative overflow-hidden cursor-pointer hover:border-accent/50 transition-all group border-2 border-transparent hover:border-accent"
+              onClick={async () => {
+                setIsPaymentModalOpen(false);
+                if (orgId) {
+                  try {
+                    const { error } = await supabase.from("organizations").update({ recurra_handling_request: true }).eq("id", orgId);
+                    if (error) throw error;
+                    toast.success("Recurra Payment Handling selected.");
+                    setTimeout(() => window.location.reload(), 1000);
+                  } catch (error: any) {
+                    toast.error("Failed to set preference: " + error.message);
+                  }
+                } else {
+                  toast.success("Recurra Payment Handling selected.");
+                }
+              }}
+            >
+              <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
+                <CardTitle className="text-base text-foreground flex items-center gap-2">
+                  <span className="flex h-8 w-8 rounded-full bg-accent/10 items-center justify-center text-accent">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </span>
+                  Let Recurra Handle It
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">2.5% charge</strong> on every payment made as Recurra's fee.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  You do not have to set anything up. Just login and start collecting payments immediately.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="relative overflow-hidden cursor-pointer hover:border-accent/50 transition-all group border-2 border-transparent hover:border-accent"
+              onClick={() => {
+                setIsPaymentModalOpen(false);
+                navigate("/dashboard/settings");
+              }}
+            >
+              <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardHeader className="pb-3 border-b border-border/40">
+                <CardTitle className="text-base text-foreground flex items-center gap-2">
+                  <span className="flex h-8 w-8 rounded-full bg-muted items-center justify-center text-muted-foreground group-hover:text-accent transition-colors">
+                    <Key className="h-4 w-4" />
+                  </span>
+                  Configure Your Own
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">0% charge</strong> from Recurra. No prior fee unless payment for the software license is required.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Full control of your business and payment flow by connecting your own Paystack gateway.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

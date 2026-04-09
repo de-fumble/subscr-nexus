@@ -27,6 +27,7 @@ interface Organization {
   created_at: string;
   is_suspended: boolean;
   paystack_connected: boolean;
+  recurra_handling_request?: boolean;
   total_plans: number;
   active_plans: number;
   active_subscribers: number;
@@ -142,6 +143,12 @@ export default function SuperAdminOrganizations() {
                            <div className={cn("w-1.5 h-1.5 rounded-full mr-1.5", org.paystack_connected ? "bg-emerald-500" : "bg-muted-foreground/50")} />
                            {org.paystack_connected ? "Paystack Active" : "No Gateway"}
                         </span>
+                        {org.recurra_handling_request && !org.paystack_connected && (
+                          <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-none hover:bg-blue-500/20 mt-1">Requested Recurra</Badge>
+                        )}
+                        {org.recurra_handling_request && org.paystack_connected && (
+                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 border-none hover:bg-purple-500/20 mt-1">Recurra Managed</Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">

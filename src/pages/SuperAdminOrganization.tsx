@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle, RefreshCw, CreditCard } from "lucide-react";
+import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle, RefreshCw, CreditCard, Key } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
 import {
   Table,
@@ -88,6 +90,9 @@ export default function SuperAdminOrganization() {
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [apiKeysDialogOpen, setApiKeysDialogOpen] = useState(false);
+  const [publicKey, setPublicKey] = useState("");
+  const [secretKey, setSecretKey] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isSuperadmin) {
@@ -120,6 +125,30 @@ export default function SuperAdminOrganization() {
       fetchData();
     }
   }, [isSuperadmin, orgId, fetchData]);
+
+  useEffect(() => {
+    if (details?.organization && apiKeysDialogOpen) {
+      setPublicKey(details.organization.paystack_public_key || "");
+      setSecretKey(details.organization.paystack_secret_key || "");
+    }
+  }, [details, apiKeysDialogOpen]);
+
+  const handleUpdateKeys = async () => {
+    setActionLoading(true);
+    try {
+      if (!publicKey || !secretKey) {
+        throw new Error("Both keys are required.");
+      }
+      await invokeSuperadmin('update_api_keys', { org_id: orgId, public_key: publicKey, secret_key: secretKey });
+      toast.success('API keys updated successfully');
+      setApiKeysDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update API keys');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleSuspend = async () => {
     setActionLoading(true);
@@ -196,6 +225,18 @@ export default function SuperAdminOrganization() {
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+          {org.recurra_handling_request && !org.paystack_secret_key && (
+            <Button size="sm" variant="secondary" onClick={() => setApiKeysDialogOpen(true)} className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">
+              <Key className="h-4 w-4 mr-2" />
+              Configure Recurra Keys
+            </Button>
+          )}
+          {org.recurra_handling_request && org.paystack_secret_key && (
+             <Button size="sm" variant="outline" onClick={() => setApiKeysDialogOpen(true)}>
+              <Key className="h-4 w-4 mr-2" />
+              Manage Recurra Keys
+            </Button>
+          )}
           {org.is_suspended ? (
             <Button size="sm" onClick={handleRestore} disabled={actionLoading}>
               <CheckCircle className="h-4 w-4 mr-2" />
@@ -790,6 +831,45 @@ export default function SuperAdminOrganization() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={apiKeysDialogOpen} onOpenChange={setApiKeysDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Recurra Gateway Keys</DialogTitle>
+            <DialogDescription>
+              Provide the Recurra platform gateway keys for this organization's transactions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="publicKey">Public Key</Label>
+              <Input 
+                id="publicKey" 
+                placeholder="pk_..." 
+                value={publicKey}
+                onChange={(e) => setPublicKey(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="secretKey">Secret Key</Label>
+              <Input 
+                id="secretKey" 
+                type="password"
+                placeholder="sk_..." 
+                value={secretKey}
+                onChange={(e) => setSecretKey(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApiKeysDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateKeys} disabled={actionLoading}>
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Key className="h-4 w-4 mr-2" />}
+              Save API Keys
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Suspend Dialog */}
       <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
