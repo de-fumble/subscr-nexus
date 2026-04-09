@@ -48,8 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: { event_type: "logout" }
       }).catch(() => {});
 
-      // 2. Clear local storage
+      // 2. Clear local storage and session-specific flags
       localStorage.removeItem("vite-ui-theme");
+      sessionStorage.removeItem("setup_redirect_done");
+      sessionStorage.removeItem("hasSeenSetup");
 
       // 3. Start sign-out animation
       setIsSigningOut(true);

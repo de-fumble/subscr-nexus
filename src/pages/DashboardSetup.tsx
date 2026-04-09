@@ -40,7 +40,7 @@ const DashboardSetup = () => {
       let orgData = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, paystack_secret_key, paystack_public_key, recurra_handling_request")
+        .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -55,7 +55,7 @@ const DashboardSetup = () => {
         if (membership) {
           const { data: staffOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, paystack_secret_key, paystack_public_key, recurra_handling_request")
+            .select("*")
             .eq("id", membership.org_id)
             .maybeSingle();
           orgData = staffOrg;
@@ -118,8 +118,11 @@ const DashboardSetup = () => {
             <Button
               size="lg"
               onClick={() => {
-                sessionStorage.setItem("hasSeenSetup", "true");
-                navigate("/dashboard");
+                // The user intentionally chose to continue to the dashboard.
+                // We keep the redirect guard in place so Dashboard won't send
+                // them back here automatically on this session.
+                sessionStorage.setItem("setup_redirect_done", "true");
+                navigate("/dashboard", { replace: true });
               }}
               className="gap-2 rounded-full px-8"
             >

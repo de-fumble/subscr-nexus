@@ -35,6 +35,7 @@ interface Organization {
   kyc_submitted_at?: string | null;
   paystack_secret_key?: string | null;
   paystack_public_key?: string | null;
+  recurra_handling_request?: boolean | null;
 }
 interface SubscriptionPlan {
   id: string;
@@ -307,8 +308,14 @@ const Dashboard = () => {
       setUserEmail(user.email);
       let orgData = null;
       const {
-        data: ownedOrg
-      } = await supabase.from("organizations").select("*, paystack_secret_key, paystack_public_key").eq("user_id", user.id).maybeSingle();
+        data: ownedOrg,
+        error: ownedOrgError
+      } = await supabase.from("organizations").select("*").eq("user_id", user.id).maybeSingle();
+
+      if (ownedOrgError) {
+        console.error("Error fetching owned org:", ownedOrgError);
+      }
+
       if (ownedOrg) {
         orgData = ownedOrg;
       } else {
@@ -317,19 +324,37 @@ const Dashboard = () => {
         } = await supabase.from("organization_members").select("org_id").eq("user_id", user.id).maybeSingle();
         if (membership) {
           const {
-            data: staffOrg
-          } = await supabase.from("organizations").select("*, paystack_secret_key, paystack_public_key").eq("id", membership.org_id).maybeSingle();
+            data: staffOrg,
+            error: staffOrgError
+          } = await supabase.from("organizations").select("*").eq("id", membership.org_id).maybeSingle();
+          if (staffOrgError) {
+            console.error("Error fetching staff org:", staffOrgError);
+          }
           orgData = staffOrg;
         }
       }
       if (!orgData) {
+        // Before erroring out, check if this user is a superadmin —
+        // they don't have an org and should go to /superadmin, not /auth.
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "superadmin")
+          .maybeSingle();
+
+        if (roleData) {
+          navigate("/superadmin", { replace: true });
+          return;
+        }
+
         console.error("No organization found for user");
-        toast.error("No organization found");
+        toast.error("No organization found. Please contact support.");
         navigate("/auth");
         return;
       }
 
-      const hasPaymentProvider = !!orgData.paystack_secret_key;
+      const hasPaymentProvider = !!orgData.paystack_secret_key || orgData.recurra_handling_request;
       let hasPlans = false;
 
       const { count: planCount } = await supabase
@@ -342,8 +367,12 @@ const Dashboard = () => {
         hasPlans = true;
       }
 
-      if ((!hasPaymentProvider || !hasPlans) && sessionStorage.getItem("hasSeenSetup") !== "true") {
-        navigate("/dashboard/setup");
+      // Redirect to setup only if neither payment method is configured AND
+      // no plans exist. recurra_handling_request=true counts as configured.
+      // The sessionStorage flag prevents re-entrance loops during the same session.
+      if (!hasPaymentProvider && !hasPlans && sessionStorage.getItem("setup_redirect_done") !== "true") {
+        sessionStorage.setItem("setup_redirect_done", "true");
+        navigate("/dashboard/setup", { replace: true });
         return;
       }
 
