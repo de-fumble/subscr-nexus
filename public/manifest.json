@@ -7,9 +7,10 @@
   "theme_color": "#180973",
   "icons": [
     {
-      "src": "/favicon.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/recurra-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
       "src": "/recurra-logo.png",
