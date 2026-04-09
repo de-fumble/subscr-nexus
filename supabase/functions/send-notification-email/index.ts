@@ -50,7 +50,7 @@ serve(async (req) => {
       );
     }
 
-    // Only send to org owners — check if this user owns an organization
+    // Only send to org owners
     const { data: org, error: orgError } = await supabaseClient
       .from("organizations")
       .select("id, org_name, email")
@@ -65,7 +65,6 @@ serve(async (req) => {
       );
     }
 
-    // Not an org owner (could be staff/admin member or user account) — skip silently
     if (!org) {
       return new Response(
         JSON.stringify({ success: true, skipped: true, reason: "Not an organization owner" }),
@@ -124,9 +123,7 @@ serve(async (req) => {
               A login to your Recurra account was detected on <strong>${now}</strong>.
             </p>
             <div style="background: #f0fff4; border-left: 4px solid #48bb78; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 20px 0;">
-              <p style="color: #276749; margin: 0; font-size: 14px;">
-                ✅ If this was you, no action is needed.
-              </p>
+              <p style="color: #276749; margin: 0; font-size: 14px;">✅ If this was you, no action is needed.</p>
             </div>
             <div style="background: #fff5f5; border-left: 4px solid #fc8181; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 20px 0;">
               <p style="color: #9b2c2c; margin: 0; font-size: 14px;">
@@ -180,6 +177,21 @@ serve(async (req) => {
     });
 
     const resendData = await resendRes.json();
+
+    // Log the email attempt
+    if (org?.id) {
+      const { error: logErr } = await supabaseClient.from("email_logs").insert({
+        recipient_email: recipientEmail,
+        recipient_name: orgName,
+        org_id: org.id,
+        subject,
+        email_type: event_type,
+        status: resendRes.ok ? "sent" : "failed",
+        resend_id: resendData.id ?? null,
+        error_message: resendRes.ok ? null : JSON.stringify(resendData),
+      });
+      if (logErr) console.error("Failed to log email:", logErr);
+    }
 
     if (!resendRes.ok) {
       console.error("Resend error:", resendData);

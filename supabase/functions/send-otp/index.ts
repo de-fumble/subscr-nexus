@@ -91,8 +91,8 @@ serve(async (req) => {
         throw new Error("Failed to update OTP");
       }
 
-      // Send email
-      await sendOTPEmail(RESEND_API_KEY, email, otp);
+      // Send email and log it
+      await sendOTPEmail(RESEND_API_KEY, email, otp, supabaseClient);
 
       return new Response(
         JSON.stringify({ 
@@ -128,8 +128,8 @@ serve(async (req) => {
       throw new Error("Failed to create OTP record");
     }
 
-    // Send email
-    await sendOTPEmail(RESEND_API_KEY, email, otp);
+    // Send email and log it
+    await sendOTPEmail(RESEND_API_KEY, email, otp, supabaseClient);
 
     return new Response(
       JSON.stringify({ 
@@ -150,7 +150,7 @@ serve(async (req) => {
   }
 });
 
-async function sendOTPEmail(apiKey: string, email: string, otp: string) {
+async function sendOTPEmail(apiKey: string, email: string, otp: string, supabaseClient?: any) {
   const htmlBody = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px 30px; text-align: center;">
@@ -188,9 +188,23 @@ async function sendOTPEmail(apiKey: string, email: string, otp: string) {
     }),
   });
 
+  const resendData = await res.json();
+
+  // Log to email_logs
+  if (supabaseClient) {
+    const { error: logErr } = await supabaseClient.from("email_logs").insert({
+      recipient_email: email,
+      subject: "Your Recurra Verification Code",
+      email_type: "otp",
+      status: res.ok ? "sent" : "failed",
+      resend_id: resendData.id ?? null,
+      error_message: res.ok ? null : JSON.stringify(resendData),
+    });
+    if (logErr) console.error("Failed to log email:", logErr);
+  }
+
   if (!res.ok) {
-    const data = await res.json();
-    console.error("Resend error:", data);
+    console.error("Resend error:", resendData);
     throw new Error("Failed to send OTP email");
   }
 }

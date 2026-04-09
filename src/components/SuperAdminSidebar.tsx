@@ -12,6 +12,7 @@ import {
   UserIcon,
   LayoutGrid,
   Webhook,
+  Mail,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -41,6 +42,7 @@ const navigation = [
   { name: 'Defaulters', href: '/superadmin/defaulters', icon: Ban },
   { name: 'Logs', href: '/superadmin/logs', icon: FileText },
   { name: 'API Management', href: '/superadmin/api-keys', icon: Webhook },
+  { name: 'Email History', href: '/superadmin/email-history', icon: Mail },
   { name: 'Licenses', href: '/superadmin/licenses', icon: Key },
   { name: 'KYC', href: '/superadmin/kyc', icon: FileCheck },
   { name: 'Profile', href: '/superadmin/profile', icon: UserIcon },

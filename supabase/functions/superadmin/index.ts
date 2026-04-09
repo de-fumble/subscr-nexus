@@ -1280,6 +1280,21 @@ async function sendEmail(supabase: any, actorId: string, params: any) {
     details: { subject, recipient_count: recipients.length },
   });
 
+  // Log to email_logs for Email History dashboard
+  const emailLogsPayload = recipients.map(email => ({
+    recipient_email: email,
+    org_id: org_id || null, // Best effort if it was a broadcast
+    subject: subject,
+    email_type: "superadmin_message",
+    status: "sent",
+    resend_id: resendData.id ?? null,
+  }));
+
+  const { error: logErr } = await supabase.from("email_logs").insert(emailLogsPayload);
+  if (logErr) {
+    console.error("Failed to insert into email_logs:", logErr);
+  }
+
   return { success: true, message: `Email delivered to ${recipients.length} recipient(s).` };
 }
 

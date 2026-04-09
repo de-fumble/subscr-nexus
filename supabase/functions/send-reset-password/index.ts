@@ -110,6 +110,26 @@ serve(async (req) => {
 
     const resendData = await resendRes.json();
 
+    // Log the email attempt (fire-and-forget)
+    const { data: orgRow } = await supabaseClient
+      .from("organizations")
+      .select("id, org_name")
+      .eq("email", email)
+      .maybeSingle();
+
+    const { error: logErr } = await supabaseClient.from("email_logs").insert({
+      recipient_email: email,
+      recipient_name: orgRow?.org_name ?? null,
+      org_id: orgRow?.id ?? null,
+      subject: "Reset Your Recurra Password",
+      email_type: "password_reset",
+      status: resendRes.ok ? "sent" : "failed",
+      resend_id: resendData.id ?? null,
+      error_message: resendRes.ok ? null : JSON.stringify(resendData),
+    });
+
+    if (logErr) console.error("Failed to log email:", logErr);
+
     if (!resendRes.ok) {
       console.error("Resend error:", resendData);
       // Still return success to not reveal email existence
