@@ -277,6 +277,50 @@ serve(async (req) => {
     console.log("Filtered organization transactions:", orgTransactions.length);
 
 
+    // Handle sync_one_time_payments action - syncs missing standard payments from Paystack to DB
+    if (action === "sync_one_time_payments") {
+      console.log("Processing sync_one_time_payments action for org:", org.id);
+      
+      const successfulOneTimeTransactions = orgTransactions.filter(
+        (txn: any) => txn.status === "success" && (
+          txn.metadata?.payment_type === "one_time" || 
+          txn.metadata?.payment_id ||
+          orgOtpReferences.has(txn.reference) || 
+          orgOtpTxnReferences.has(txn.reference)
+        )
+      );
+
+      const toInsert = successfulOneTimeTransactions.map((txn: any) => {
+        return {
+          payment_id: txn.metadata?.payment_id,
+          amount: txn.amount / 100,
+          payer_email: txn.customer?.email || "Unknown",
+          payer_name: txn.metadata?.customer_name || (txn.customer?.first_name ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim() : "Unknown"),
+          paystack_reference: txn.reference,
+          paid_at: txn.paid_at || txn.created_at,
+        };
+      }).filter((t: any) => !!t.payment_id && !!t.paystack_reference);
+
+      let syncedCount = 0;
+      for (const txn of toInsert) {
+        // Upsert based on paystack_reference to prevent duplicates
+        const { error } = await supabase
+          .from("one_time_payment_transactions")
+          .upsert(txn, { onConflict: "paystack_reference" });
+          
+        if (error) {
+          console.error("Error syncing transaction:", txn.paystack_reference, error);
+        } else {
+          syncedCount++;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, synced: syncedCount, totalFound: toInsert.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Handle failed_transactions action - return failed/abandoned transactions
     if (action === "failed_transactions") {
       const failedTransactions = orgTransactions.filter(

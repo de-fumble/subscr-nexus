@@ -139,6 +139,35 @@ const OneTimePayments = () => {
     }
   };
 
+  const syncMissingPayments = async () => {
+    if (!organization) {
+      fetchPayments(true); // Fallback to normal refresh
+      return;
+    }
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: {
+          action: "sync_one_time_payments",
+          orgId: organization.id,
+        },
+      });
+
+      if (error) {
+        console.error("Sync error response:", error);
+      } else if (data?.synced > 0) {
+        toast.success(`Synced ${data.synced} missing standard payment${data.synced > 1 ? 's' : ''}!`);
+      }
+      
+      // Always fetch latest data after sync attempt
+      await fetchPayments(true);
+    } catch (error) {
+      console.error("Error syncing payments:", error);
+      // Still try to refresh local data even if sync fails
+      await fetchPayments(true);
+    }
+  };
+
   const copyPaymentLink = (paymentId: string) => {
     const link = `${window.location.origin}/pay/${paymentId}`;
     navigator.clipboard.writeText(link);
@@ -424,9 +453,10 @@ const OneTimePayments = () => {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => fetchPayments(true)}
+                onClick={syncMissingPayments}
                 disabled={refreshing}
                 className="h-8 w-8 sm:h-9 sm:w-9"
+                title="Sync and Refresh"
               >
                 {refreshing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
