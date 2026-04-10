@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { reference } = await req.json();
+    const { reference, payment_id } = await req.json();
 
     if (!reference) {
       return new Response(
@@ -41,7 +41,20 @@ serve(async (req) => {
       );
     }
 
-    const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
+    let paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
+
+    // If payment_id is provided, try to fetch the organization's secret key
+    if (payment_id) {
+      const { data: payment } = await supabase
+        .from("one_time_payments")
+        .select("organizations(paystack_secret_key)")
+        .eq("id", payment_id)
+        .single();
+        
+      if (payment?.organizations?.paystack_secret_key) {
+        paystackSecretKey = payment.organizations.paystack_secret_key;
+      }
+    }
 
     if (!paystackSecretKey) {
       return new Response(

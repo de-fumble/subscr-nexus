@@ -12,6 +12,7 @@ const PaymentCallback = () => {
   
   const reference = searchParams.get("reference");
   const trxref = searchParams.get("trxref");
+  const paymentId = searchParams.get("payment_id");
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -26,7 +27,7 @@ const PaymentCallback = () => {
       try {
         // Call edge function to verify and update payment
         const { data, error } = await supabase.functions.invoke("verify-one-time-payment", {
-          body: { reference: ref },
+          body: { reference: ref, payment_id: paymentId },
         });
 
         if (error) {

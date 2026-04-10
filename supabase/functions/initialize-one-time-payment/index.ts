@@ -59,7 +59,7 @@ serve(async (req) => {
       body: JSON.stringify({
         email,
         amount: Math.round(payment.amount * 100), // Paystack expects amount in kobo
-        callback_url: `${req.headers.get("origin")}/payment/callback`,
+        callback_url: `${req.headers.get("origin")}/payment/callback?payment_id=${payment_id}`,
         metadata: {
           payment_id,
           customer_name: name,
