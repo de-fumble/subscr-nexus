@@ -317,6 +317,13 @@ interface BillingProfile {
     const handleSyncFromPaystack = async () => {
       setSyncing(true);
       try {
+        // Refresh session to ensure JWT is not expired before calling edge function
+        const { data: refreshData, error: sessionError } = await supabase.auth.refreshSession();
+        if (sessionError || !refreshData.session) {
+          toast.error("Your session has expired. Please sign in again.");
+          return;
+        }
+
         const { data, error } = await supabase.functions.invoke("sync-billing-profiles");
 
         if (error) throw error;

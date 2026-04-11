@@ -84,8 +84,10 @@ serve(async (req) => {
     }
 
     const txn = verifyData.data;
-    const paymentId = txn.metadata?.payment_id;
-    const customerName = txn.metadata?.customer_name || "";
+    // payment_id from Paystack metadata (most reliable) OR from the request body as fallback
+    const paymentId = txn.metadata?.payment_id || payment_id;
+    const customerName = txn.metadata?.customer_name || 
+      (txn.customer?.first_name ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim() : "");
     const customerEmail = txn.customer?.email || "";
     const amount = txn.amount / 100; // Convert from kobo to naira
 
@@ -105,6 +107,7 @@ serve(async (req) => {
         payer_email: customerEmail,
         payer_name: customerName,
         paystack_reference: reference,
+        paid_at: txn.paid_at || new Date().toISOString(),
       });
 
     if (insertError) {

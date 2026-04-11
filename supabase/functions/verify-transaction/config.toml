@@ -1,0 +1,2 @@
+[verify-jwt]
+verify_jwt = false

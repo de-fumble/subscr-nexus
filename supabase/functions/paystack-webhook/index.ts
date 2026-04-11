@@ -154,8 +154,65 @@ serve(async (req) => {
 
     // Handle successful charge - clear any failed payment state
     if (event.event === "charge.success" && event.data.customer) {
-      const { reference, amount, customer, paid_at, authorization } = event.data;
+      const { reference, amount, customer, paid_at, authorization, metadata } = event.data;
 
+      // ── ONE-TIME PAYMENT PATH ────────────────────────────────────────────
+      // Check if this is a one-time/standard payment via metadata
+      const isOneTimePayment = metadata?.payment_type === "one_time" || !!metadata?.payment_id;
+      
+      if (isOneTimePayment && metadata?.payment_id) {
+        console.log("Processing one-time payment charge.success:", reference);
+        
+        // Fetch the org's paystack key to verify with the right key
+        const { data: otpPayment } = await supabase
+          .from("one_time_payments")
+          .select("id, org_id")
+          .eq("id", metadata.payment_id)
+          .single();
+
+        if (otpPayment) {
+          // Check for duplicate before inserting
+          const { data: existing } = await supabase
+            .from("one_time_payment_transactions")
+            .select("id")
+            .eq("paystack_reference", reference)
+            .maybeSingle();
+
+          if (!existing) {
+            const customerName = metadata?.customer_name
+              || (customer.first_name ? `${customer.first_name} ${customer.last_name || ""}`.trim() : customer.email);
+
+            const { error: otpInsertError } = await supabase
+              .from("one_time_payment_transactions")
+              .insert({
+                payment_id: otpPayment.id,
+                amount: amount / 100, // Convert kobo to naira
+                payer_email: customer.email,
+                payer_name: customerName,
+                paystack_reference: reference,
+                paid_at: paid_at || new Date().toISOString(),
+              });
+
+            if (otpInsertError) {
+              console.error("Error recording one-time payment transaction:", otpInsertError);
+            } else {
+              console.log("One-time payment transaction recorded via webhook:", reference);
+            }
+          } else {
+            console.log("One-time payment transaction already recorded:", reference);
+          }
+        } else {
+          console.warn("One-time payment not found in DB for payment_id:", metadata.payment_id);
+        }
+        
+        // Return early - don't process as subscription
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // ── SUBSCRIPTION PAYMENT PATH ────────────────────────────────────────
       // Find subscriber by customer code
       const { data: subscriber } = await supabase
         .from("subscribers")

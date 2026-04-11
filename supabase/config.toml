@@ -53,3 +53,30 @@ verify_jwt = false
 
 [functions.send-verification-email]
 verify_jwt = false
+
+[functions.sync-billing-profiles]
+verify_jwt = false
+
+[functions.create-plan]
+verify_jwt = false
+
+[functions.cancel-subscription]
+verify_jwt = false
+
+[functions.archive-plan]
+verify_jwt = false
+
+[functions.list-subscribers]
+verify_jwt = false
+
+[functions.ephemeral-ai-analysis]
+verify_jwt = false
+
+[functions.fetch-billing-profile-transactions]
+verify_jwt = false
+
+[functions.log-audit-event]
+verify_jwt = false
+
+[functions.purchase-license]
+verify_jwt = false

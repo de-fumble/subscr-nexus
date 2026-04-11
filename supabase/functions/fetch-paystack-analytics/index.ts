@@ -291,32 +291,61 @@ serve(async (req) => {
       );
 
       const toInsert = successfulOneTimeTransactions.map((txn: any) => {
+        const paymentId = txn.metadata?.payment_id;
+        if (!paymentId || !txn.reference) return null;
         return {
-          payment_id: txn.metadata?.payment_id,
+          payment_id: paymentId,
           amount: txn.amount / 100,
           payer_email: txn.customer?.email || "Unknown",
-          payer_name: txn.metadata?.customer_name || (txn.customer?.first_name ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim() : "Unknown"),
+          payer_name: txn.metadata?.customer_name || 
+            (txn.customer?.first_name ? `${txn.customer.first_name} ${txn.customer.last_name || ""}`.trim() : "Unknown"),
           paystack_reference: txn.reference,
           paid_at: txn.paid_at || txn.created_at,
         };
-      }).filter((t: any) => !!t.payment_id && !!t.paystack_reference);
+      }).filter(Boolean);
+
+      // Use service role client to bypass RLS for inserts
+      // (the table only has SELECT policies for org users)
+      const serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
 
       let syncedCount = 0;
+      let skippedCount = 0;
       for (const txn of toInsert) {
-        // Upsert based on paystack_reference to prevent duplicates
-        const { error } = await supabase
+        // Check if already exists first (to count accurately)
+        const { data: existing } = await serviceClient
           .from("one_time_payment_transactions")
-          .upsert(txn, { onConflict: "paystack_reference" });
+          .select("id")
+          .eq("paystack_reference", txn.paystack_reference)
+          .maybeSingle();
+
+        if (existing) {
+          skippedCount++;
+          continue;
+        }
+
+        const { error } = await serviceClient
+          .from("one_time_payment_transactions")
+          .insert(txn);
           
         if (error) {
-          console.error("Error syncing transaction:", txn.paystack_reference, error);
+          // Ignore duplicate key errors gracefully
+          if (error.code === "23505") {
+            skippedCount++;
+          } else {
+            console.error("Error syncing transaction:", txn.paystack_reference, error);
+          }
         } else {
           syncedCount++;
         }
       }
 
+      console.log(`Sync complete: ${syncedCount} inserted, ${skippedCount} already existed, ${toInsert.length} total found`);
+
       return new Response(
-        JSON.stringify({ success: true, synced: syncedCount, totalFound: toInsert.length }),
+        JSON.stringify({ success: true, synced: syncedCount, skipped: skippedCount, totalFound: toInsert.length }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
