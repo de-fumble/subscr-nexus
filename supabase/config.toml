@@ -19,7 +19,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.manage-staff]
-verify_jwt = true
+verify_jwt = false
 
 [functions.analytics-ai-insights]
 verify_jwt = false

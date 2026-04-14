@@ -124,7 +124,7 @@ const Subscribe = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+      <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
         {/* Premium background decorations */}
         <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute -left-60 -top-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-primary/20 to-accent/10 blur-3xl animate-pulse" />
@@ -146,8 +146,9 @@ const Subscribe = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-6 sm:py-10 lg:py-16">
-          <div className="max-w-2xl mx-auto">
+        <main className="flex-1 overflow-y-auto min-h-0 w-full">
+          <div className="container mx-auto px-4 py-6 sm:py-10 lg:py-16 pb-20">
+            <div className="max-w-2xl mx-auto">
             {/* Premium skeleton card */}
             <div className="rounded-3xl border border-border/50 bg-background/80 backdrop-blur-xl shadow-2xl overflow-hidden">
               {/* Organization header skeleton */}
@@ -226,7 +227,8 @@ const Subscribe = () => {
               <div className="h-4 w-64 rounded-full bg-muted/30 animate-pulse" />
             </div>
           </div>
-        </main>
+        </div>
+      </main>
       </div>
     );
   }
@@ -254,7 +256,7 @@ const Subscribe = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
       {/* Premium background decorations */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -left-60 -top-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-primary/20 to-accent/10 blur-3xl animate-pulse" />
@@ -278,8 +280,9 @@ const Subscribe = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 sm:py-10 lg:py-16">
-        <div className="max-w-2xl mx-auto">
+      <main className="flex-1 overflow-y-auto min-h-0 w-full">
+        <div className="container mx-auto px-4 py-6 sm:py-10 lg:py-16 pb-20">
+          <div className="max-w-2xl mx-auto">
           {/* Single Premium Card */}
           <div className="glass-card rounded-3xl border border-border/50 backdrop-blur-xl shadow-2xl overflow-hidden">
             {/* Organization Header with Profile */}
@@ -473,7 +476,8 @@ const Subscribe = () => {
             </p>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
     </div>
   );
 };
