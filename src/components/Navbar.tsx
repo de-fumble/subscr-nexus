@@ -7,9 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import logoImage from "@/assets/logo.svg";
 import { useAuth } from "@/hooks/useAuth";
+import { TrackTransactionsModal } from "./TrackTransactionsModal";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTrackOpen, setIsTrackOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
 
@@ -70,6 +72,16 @@ const Navbar = () => {
                   {item.label}
                 </a>
               ))}
+              <button
+                className={`text-left text-lg font-mono font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 px-4 py-3 rounded-xl transition-all duration-300 ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}
+                style={{ transitionDelay: "275ms" }}
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsTrackOpen(true);
+                }}
+              >
+                Track Transactions
+              </button>
 
               <a
                 href="https://t.me/+TrNKLnH49UZkMWNk"
@@ -150,6 +162,12 @@ const Navbar = () => {
             <Link to="/verify-transaction" className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono">
               Verify Payment
             </Link>
+            <button 
+              onClick={() => setIsTrackOpen(true)}
+              className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-105 font-mono"
+            >
+              Track Transactions
+            </button>
             {session ? (
               <>
                 <Link to="/dashboard">
@@ -187,6 +205,9 @@ const Navbar = () => {
 
       {/* Mobile Sidebar - Portaled to body */}
       <MobileSidebar />
+
+      {/* Modals */}
+      <TrackTransactionsModal open={isTrackOpen} onOpenChange={setIsTrackOpen} />
     </>
   );
 };

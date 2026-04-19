@@ -213,80 +213,110 @@ serve(async (req) => {
       }
 
       // ── SUBSCRIPTION PAYMENT PATH ────────────────────────────────────────
-      // Find subscriber by customer code
-      const { data: subscriber } = await supabase
-        .from("subscribers")
-        .select("id")
-        .eq("paystack_customer_code", customer.customer_code)
-        .single();
+      // Try to find the exact subscriber via subscription_code first (most precise)
+      const subscriptionCode = event.data.subscription?.subscription_code
+        || event.data.subscription_code
+        || null;
 
-      if (subscriber) {
-        // Clear failed payment state and update authorization code
-        const { error: updateError } = await supabase
+      let matchedSubscriberIds: string[] = [];
+
+      if (subscriptionCode) {
+        const { data: exactSub } = await supabase
+          .from("subscribers")
+          .select("id")
+          .eq("paystack_subscription_code", subscriptionCode)
+          .maybeSingle();
+
+        if (exactSub) {
+          matchedSubscriberIds = [exactSub.id];
+          console.log("Found subscriber by subscription_code:", subscriptionCode);
+        }
+      }
+
+      // Fallback: match by customer_code (handles all subscribers for this customer)
+      if (matchedSubscriberIds.length === 0 && customer.customer_code) {
+        const { data: allSubs } = await supabase
+          .from("subscribers")
+          .select("id")
+          .eq("paystack_customer_code", customer.customer_code);
+
+        matchedSubscriberIds = (allSubs || []).map((s: any) => s.id);
+        console.log(`Found ${matchedSubscriberIds.length} subscriber(s) by customer_code for reference: ${reference}`);
+      }
+
+      for (const subscriberId of matchedSubscriberIds) {
+        // Update authorization code and clear failed state
+        await supabase
           .from("subscribers")
           .update({
             payment_failed_at: null,
             retry_count: 0,
             paystack_authorization_code: authorization?.authorization_code || null,
           })
-          .eq("id", subscriber.id);
+          .eq("id", subscriberId);
 
-        if (updateError) {
-          console.error("Error clearing failed payment state:", updateError);
-        }
-
-        // Record transaction
-        const { error: transactionError } = await supabase
+        // Check for duplicate transaction before inserting
+        const { data: existingTx } = await supabase
           .from("transactions")
-          .insert({
-            subscriber_id: subscriber.id,
-            paystack_reference: reference,
-            amount: amount,
-            status: "success",
-            paid_at: paid_at,
-          });
+          .select("id")
+          .eq("paystack_reference", reference)
+          .eq("subscriber_id", subscriberId)
+          .maybeSingle();
 
-        if (transactionError) {
-          console.error("Error recording transaction:", transactionError);
+        if (!existingTx) {
+          const { error: transactionError } = await supabase
+            .from("transactions")
+            .insert({
+              subscriber_id: subscriberId,
+              paystack_reference: reference,
+              amount: amount,
+              status: "success",
+              paid_at: paid_at,
+            });
+
+          if (transactionError) {
+            console.error(`Error recording transaction for subscriber ${subscriberId}:`, transactionError);
+          } else {
+            console.log(`Transaction recorded for subscriber ${subscriberId}, ref: ${reference}`);
+          }
         } else {
-          console.log("Transaction recorded successfully, failed payment state cleared");
+          console.log(`Transaction already recorded for subscriber ${subscriberId}, ref: ${reference}`);
         }
 
-       // Update billing profile organization total_paid
-       const { data: subData } = await supabase
-         .from("subscribers")
-         .select("email, subscription_plans(org_id)")
-         .eq("id", subscriber.id)
-         .single();
+        // Update billing profile organization total_paid
+        const { data: subData } = await supabase
+          .from("subscribers")
+          .select("email, subscription_plans(org_id)")
+          .eq("id", subscriberId)
+          .single();
 
-       if (subData) {
-         const { data: profile } = await supabase
-           .from("billing_profiles")
-           .select("id")
-           .eq("email", subData.email)
-           .single();
+        if (subData) {
+          const { data: profileData } = await supabase
+            .from("billing_profiles")
+            .select("id")
+            .eq("email", subData.email)
+            .maybeSingle();
 
-         if (profile) {
-           const orgId = (subData.subscription_plans as any)?.org_id;
-           if (orgId) {
-             // Get current total and add new amount
-             const { data: bpo } = await supabase
-               .from("billing_profile_organizations")
-               .select("total_paid")
-               .eq("billing_profile_id", profile.id)
-               .eq("org_id", orgId)
-               .single();
+          if (profileData) {
+            const orgId = (subData.subscription_plans as any)?.org_id;
+            if (orgId) {
+              const { data: bpo } = await supabase
+                .from("billing_profile_organizations")
+                .select("total_paid")
+                .eq("billing_profile_id", profileData.id)
+                .eq("org_id", orgId)
+                .maybeSingle();
 
-             const newTotal = (bpo?.total_paid || 0) + amount;
+              const newTotal = (bpo?.total_paid || 0) + amount;
 
-             await supabase
-               .from("billing_profile_organizations")
-               .update({ total_paid: newTotal })
-               .eq("billing_profile_id", profile.id)
-               .eq("org_id", orgId);
-           }
-         }
-       }
+              await supabase
+                .from("billing_profile_organizations")
+                .update({ total_paid: newTotal })
+                .eq("billing_profile_id", profileData.id)
+                .eq("org_id", orgId);
+            }
+          }
+        }
       }
     }
 

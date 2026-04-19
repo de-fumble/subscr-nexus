@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.purchase-license]
 verify_jwt = false
+
+[functions.track-profile-transactions]
+verify_jwt = false
