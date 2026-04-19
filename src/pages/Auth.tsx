@@ -362,7 +362,8 @@ const Auth = () => {
           </div>
 
           {/* Account Type Selector (only for signup) */}
-          {authMode === "signup" && <div className="mb-6">
+          {/* HIDING FOR NOW AS REQUESTED - WE DO NOT NEED USER ACCOUNTS YET */}
+          {false && authMode === "signup" && <div className="mb-6">
             <Label className="text-sm font-medium mb-3 block font-mono">Account Type</Label>
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setAccountType("institution")} className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 ${accountType === "institution" ? "border-accent bg-accent/10 shadow-sm shadow-accent/10" : "border-border hover:border-accent/50"}`}>

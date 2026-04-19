@@ -23,6 +23,7 @@ import { NotificationIcon } from "@/components/NotificationIcon";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { FounderInsight } from "@/components/FounderInsight";
 import { KYCApprovalModal } from "@/components/KYCApprovalModal";
+import logoSvg from "@/assets/logo.svg";
 interface Organization {
   id: string;
   org_name: string;
@@ -77,8 +78,15 @@ const DashboardHeader = ({
         {isCollapsed ? orgName || "Dashboard" : "Dashboard"}
       </h1>
     </div>
-    <div className="flex items-center gap-2 pr-1 sm:pr-0">
+    <div className="flex items-center gap-3 pr-1 sm:pr-0">
       {orgId && <div className="shrink-0 relative z-50 flex items-center"><NotificationIcon orgId={orgId} /></div>}
+      <div className="md:hidden shrink-0 flex items-center justify-center">
+        <img
+          src={logoSvg}
+          alt="Recurra Logo"
+          className="h-7 w-7 sm:h-8 sm:w-8 object-contain rounded-full shadow-sm border border-border/50"
+        />
+      </div>
     </div>
   </header>;
 };
