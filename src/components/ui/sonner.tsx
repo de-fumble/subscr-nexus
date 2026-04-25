@@ -1,60 +1,82 @@
-import { Toaster as Sonner, toast } from "sonner";
+import React from "react";
+import { Toaster as Sonner } from "sonner";
 import { CheckCircle2, AlertCircle, Info, AlertTriangle } from "lucide-react";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-
   return (
     <Sonner
-      theme="light"
+      theme="system"
       position="top-right"
       expand={false}
       richColors={false}
       closeButton
+      gap={8}
       className="toaster group"
       toastOptions={{
-        duration: 4000,
+        duration: 4500,
         classNames: {
-          toast:
-            "group toast group-[.toaster]:glass-card group-[.toaster]:border-white/10 dark:group-[.toaster]:border-white/5 group-[.toaster]:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.3)] group-[.toaster]:rounded-2xl group-[.toaster]:px-5 group-[.toaster]:py-4 group-[.toaster]:min-w-[320px] overflow-hidden relative before:absolute before:inset-0 before:z-[-1] before:bg-gradient-to-br before:from-white/10 before:to-transparent before:opacity-0 group-[.toaster]:hover:before:opacity-100 before:transition-opacity",
-          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-xs sm:group-[.toast]:text-sm group-[.toast]:mt-1",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:font-medium group-[.toast]:rounded-xl group-[.toast]:px-4 group-[.toast]:py-2 hover:group-[.toast]:bg-primary/90 transition-colors shadow-sm",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:font-medium group-[.toast]:rounded-xl hover:group-[.toast]:bg-muted/80 transition-colors",
-          closeButton:
-            "group-[.toast]:bg-background/40 group-[.toast]:backdrop-blur-md group-[.toast]:border-border/50 group-[.toast]:text-foreground/70 group-[.toast]:hover:text-foreground group-[.toast]:hover:bg-background/80 group-[.toast]:rounded-full group-[.toast]:transition-all group-[.toast]:shadow-sm group-[.toast]:-right-2 group-[.toast]:-top-2",
-          success:
-            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-emerald-500",
-          error:
-            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-rose-500",
-          warning:
-            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-amber-500",
-          info:
-            "group-[.toaster]:border-l-4 group-[.toaster]:border-l-blue-500",
-          title: "group-[.toast]:font-semibold group-[.toast]:text-sm sm:group-[.toast]:text-base group-[.toast]:tracking-tight group-[.toast]:text-foreground",
+          toasts: "!gap-2",
+          toast: [
+            // Base structure
+            "group toast",
+            "!bg-background/95 !backdrop-blur-md",
+            "!border !border-border/60",
+            "!shadow-[0_4px_24px_-4px_rgba(0,0,0,0.18),0_1px_4px_-1px_rgba(0,0,0,0.08)]",
+            "!rounded-xl",
+            "!px-4 !py-3.5",
+            "!min-w-[300px] !max-w-[380px]",
+            "transition-all",
+          ].join(" "),
+          title: [
+            "!font-semibold !text-[13px] !tracking-tight !text-foreground",
+            "!leading-snug",
+          ].join(" "),
+          description: [
+            "!text-muted-foreground !text-xs !mt-0.5 !leading-relaxed",
+          ].join(" "),
+          success: "!border-t-[2px] !border-t-emerald-500",
+          error:   "!border-t-[2px] !border-t-rose-500",
+          warning: "!border-t-[2px] !border-t-amber-500",
+          info:    "!border-t-[2px] !border-t-blue-500",
+          actionButton: [
+            "!bg-foreground !text-background !text-xs !font-medium",
+            "!rounded-lg !px-3 !py-1.5",
+            "hover:!opacity-90 !transition-opacity",
+          ].join(" "),
+          cancelButton: [
+            "!bg-muted !text-muted-foreground !text-xs !font-medium",
+            "!rounded-lg !px-3 !py-1.5",
+            "hover:!bg-muted/80 !transition-colors",
+          ].join(" "),
+          closeButton: [
+            "!bg-transparent !border-0",
+            "!text-muted-foreground hover:!text-foreground",
+            "!transition-colors !rounded-md",
+            "!h-5 !w-5 !flex !items-center !justify-center",
+          ].join(" "),
         },
       }}
       icons={{
         success: (
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/15 dark:bg-emerald-400/10 ring-1 ring-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-emerald-500/10 ring-1 ring-emerald-500/20 shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
           </div>
         ),
         error: (
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/15 dark:bg-rose-400/10 ring-1 ring-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.2)]">
-            <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-rose-500/10 ring-1 ring-rose-500/20 shrink-0">
+            <AlertCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" strokeWidth={2.5} />
           </div>
         ),
         warning: (
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/15 dark:bg-amber-400/10 ring-1 ring-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
-            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-amber-500/10 ring-1 ring-amber-500/20 shrink-0">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
           </div>
         ),
         info: (
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/15 dark:bg-blue-400/10 ring-1 ring-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-500/10 ring-1 ring-blue-500/20 shrink-0">
+            <Info className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
           </div>
         ),
       }}
@@ -63,4 +85,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-export { Toaster, toast };
+export { Toaster };

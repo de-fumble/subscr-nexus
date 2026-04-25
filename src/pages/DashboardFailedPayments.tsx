@@ -442,59 +442,81 @@ const DashboardFailedPayments = () => {
             </Card>
           ) : (
             <>
-              <div className="grid gap-4 md:grid-cols-2">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto w-full bg-card rounded-xl border shadow-sm">
+                <table className="w-full text-sm text-left whitespace-nowrap">
+                  <thead className="bg-muted/50 text-muted-foreground border-b text-[11px] uppercase tracking-wider font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Customer</th>
+                      <th className="py-3 px-4">Reference</th>
+                      <th className="py-3 px-4">Plan</th>
+                      <th className="py-3 px-4 text-right">Amount</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Reason</th>
+                      <th className="py-3 px-4 text-right">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {paginatedPayments.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground">{payment.customer_name || "Unknown"}</span>
+                            <span className="text-[11px] text-muted-foreground">{payment.email}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-mono text-xs">{payment.reference}</span>
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">{payment.plan_name}</td>
+                        <td className="py-3 px-4 text-right font-medium">₦{payment.amount.toLocaleString()}</td>
+                        <td className="py-3 px-4">{getStatusBadge(payment.status)}</td>
+                        <td className="py-3 px-4 max-w-[220px] truncate text-muted-foreground" title={payment.failure_reason || "Unknown error"}>
+                          <div className="flex items-center gap-1.5">
+                            {getFailureIcon(payment.failure_reason || "")}
+                            <span className="truncate">{payment.failure_reason || "Unknown error"}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right text-muted-foreground">
+                          {new Date(payment.failed_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile List View */}
+              <div className="grid gap-3 md:hidden">
                 {paginatedPayments.map((payment) => (
-                  <Card
+                  <div
                     key={payment.id}
-                    className="p-4 glass-card border border-destructive/20 space-y-3"
+                    className="p-3 bg-card rounded-lg border shadow-sm space-y-2.5"
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                          <User className="h-5 w-5 text-destructive" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{payment.customer_name || "Unknown"}</p>
-                          <p className="text-sm text-muted-foreground">{payment.email}</p>
-                        </div>
+                      <div className="flex flex-col min-w-0 pr-2">
+                        <p className="font-medium text-sm truncate">{payment.customer_name || "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{payment.email}</p>
                       </div>
-                      {getStatusBadge(payment.status)}
+                      <div className="shrink-0">
+                        {getStatusBadge(payment.status)}
+                      </div>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-                      <div className="flex items-start gap-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-semibold text-foreground">₦{payment.amount.toLocaleString()}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(payment.failed_at).toLocaleDateString()}</span>
+                    </div>
+
+                    <div className="p-2 rounded bg-destructive/5 border border-destructive/10 flex items-start gap-2">
+                      <div className="mt-0.5 shrink-0">
                         {getFailureIcon(payment.failure_reason || "")}
-                        <div>
-                          <p className="text-sm font-medium text-destructive">Failure Reason</p>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            {payment.failure_reason || "Unknown error"}
-                          </p>
-                        </div>
                       </div>
+                      <p className="text-[11px] leading-tight text-muted-foreground line-clamp-2">
+                        {payment.failure_reason || "Unknown error"}
+                      </p>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Plan</p>
-                        <p className="font-medium">{payment.plan_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Amount</p>
-                        <p className="font-medium">₦{payment.amount.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Failed On</p>
-                        <p className="font-medium flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(payment.failed_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Reference</p>
-                        <p className="font-mono text-xs truncate">{payment.reference}</p>
-                      </div>
-                    </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
 

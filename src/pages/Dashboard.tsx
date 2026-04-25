@@ -479,24 +479,26 @@ const Dashboard = () => {
       }
       setCurrentLicense(licenseData);
 
-      // Render local fast state first
+      // Set local fast state — but keep splash visible until Paystack analytics resolves
       setStats(prev => ({
         ...prev,
         totalRevenue: totalRevenueAmount,
         activeSubscribers: totalActiveSubscribers,
         totalSubscribers: totalSubsCount,
       }));
-      setLoading(false); // Stop loading spinner immediately so UI is responsive!
 
-      // FIRE AND FORGET: Paystack Analytics (Slow API calls happening in the background)
-      fetchPaystackAnalyticsQuietly(orgData.id, totalRevenueAmount, totalActiveSubscribers, totalSubsCount);
+      // Await Paystack analytics so the splash stays up until revenue is final
+      await fetchPaystackAnalyticsQuietly(orgData.id, totalRevenueAmount, totalActiveSubscribers, totalSubsCount);
 
-      // Fetch Recent Transactions quietly
+      // Fetch Recent Transactions quietly (non-blocking, does not affect splash)
       fetchRecentTransactions(orgData.id);
 
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load dashboard");
+      setLoading(false);
+    } finally {
+      // Guarantee splash always closes, even if fetchPaystackAnalyticsQuietly throws
       setLoading(false);
     }
   };
@@ -506,7 +508,7 @@ const Dashboard = () => {
       const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke("fetch-paystack-analytics");
 
       if (!analyticsError && analyticsData) {
-        console.log("Paystack analytics background load complete.");
+        console.log("Paystack analytics load complete — updating overview stats.");
         const failedData = analyticsData.failedPaymentsData || [];
         const abandonedCount = failedData.find((d: any) => d.name === 'Abandoned Checkout')?.value || 0;
         const failedCount = failedData.find((d: any) => d.name === 'Failed Payments')?.value || 0;
@@ -531,6 +533,7 @@ const Dashboard = () => {
           })));
         }
 
+        // Stats are now final — splash will close immediately after this
         setStats({
           totalRevenue: analyticsData.totalRevenue || baseRevenue,
           recurringRevenue: analyticsData.recurringRevenue || 0,
@@ -542,7 +545,10 @@ const Dashboard = () => {
         });
       }
     } catch (e) {
-      console.error("Paystack background sync failed:", e);
+      console.error("Paystack analytics fetch failed — showing with local data:", e);
+    } finally {
+      // Always release the splash regardless of success or failure
+      setLoading(false);
     }
   };
 
@@ -867,32 +873,59 @@ const Dashboard = () => {
               </Card>
 
               {/* Failed Payments */}
-              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
-                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <span className="stat-label text-xs sm:text-sm font-medium">Failed</span>
-                      <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-destructive hover:text-destructive/80 text-[10px] sm:text-xs" onClick={() => navigate("/dashboard/failed-payments")}>
-                          Manage
-                        </Button>
+              <Card className="dashboard-stat-card flex flex-col min-h-[100px] sm:min-h-auto overflow-hidden">
+                {/* Risk indicator strip — only shows when there are issues */}
+                {stats.totalFailedPayments > 0 && (
+                  <div className={`h-0.5 w-full ${stats.failedPayments > 0 ? 'bg-destructive' : 'bg-amber-500'}`} />
+                )}
+                <div className="flex flex-col justify-between h-full p-3 sm:p-5 gap-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="stat-label text-xs sm:text-sm font-medium">Payment Issues</span>
+                      {stats.totalFailedPayments > 0 && (
+                        <span className="text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive leading-none">
+                          {hideValues ? "•" : stats.totalFailedPayments}
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">
-                        {hideValues ? "•••" : stats.totalFailedPayments}
-                      </p>
-                      <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
-                        <span className="flex items-center gap-1 shrink-0">
-                          <div className="h-2 w-2 rounded-full bg-amber-500" />
-                          {hideValues ? "••" : stats.abandonedCheckouts}
-                        </span>
-                        <span className="flex items-center gap-1 shrink-0">
-                          <div className="h-2 w-2 rounded-full bg-destructive" />
-                          {hideValues ? "••" : stats.failedPayments}
-                        </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 sm:h-auto px-1.5 sm:px-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs gap-1"
+                      onClick={() => navigate("/dashboard/failed-payments")}
+                    >
+                      Review
+                    </Button>
+                  </div>
+
+                  {/* Breakdown rows */}
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {/* Abandoned Checkouts */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Abandoned</span>
                       </div>
+                      <span className={`text-[11px] sm:text-sm font-semibold tabular-nums ${stats.abandonedCheckouts > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                        {hideValues ? "••" : stats.abandonedCheckouts}
+                      </span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-border/30" />
+
+                    {/* Failed Payments */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
+                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Failed</span>
+                      </div>
+                      <span className={`text-[11px] sm:text-sm font-semibold tabular-nums ${stats.failedPayments > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {hideValues ? "••" : stats.failedPayments}
+                      </span>
                     </div>
                   </div>
-                  <div className="hidden sm:block"><MiniPieChart data={failedPaymentsPieData} /></div>
                 </div>
               </Card>
 

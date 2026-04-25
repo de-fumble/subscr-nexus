@@ -1,6 +1,5 @@
  import { useEffect, useState } from "react";
  import { PremiumLoader } from "@/components/PremiumLoader";
- import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
  import { supabase } from "@/integrations/supabase/client";
@@ -8,14 +7,6 @@
  import { useNavigate } from "react-router-dom";
  import { Users, Search, RefreshCw, Loader2, Eye, Copy, CheckCircle, Download } from "lucide-react";
  import { useOrgRole } from "@/hooks/useOrgRole";
- import {
-   Table,
-   TableBody,
-   TableCell,
-   TableHead,
-   TableHeader,
-   TableRow,
- } from "@/components/ui/table";
  import { Badge } from "@/components/ui/badge";
  import {
    Select,
@@ -344,7 +335,7 @@ interface BillingProfile {
       }
     };
  
-   if (loading) {
+  if (loading) {
     return (
       <SidebarInset>
         <PremiumLoader message="Loading billing profiles..." />
@@ -352,182 +343,179 @@ interface BillingProfile {
       </SidebarInset>
     );
   }
- 
-   return (
-    <SidebarInset className="flex-1">
-           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-             <SidebarTrigger />
-             
-             <div className="flex-1">
-               <h1 className="text-xl font-bold text-foreground">Billing Profiles</h1>
-             </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleSyncFromPaystack}
-                  variant="outline"
-                  disabled={syncing}
-                  size="sm"
-                >
-                  {syncing ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-2" />
-                  )}
-                  {syncing ? "Syncing..." : "Sync from Paystack"}
-                </Button>
-                <Button
-                  onClick={() => fetchBillingProfiles(true)}
-                  variant="outline"
-                  disabled={refreshing}
-                  size="sm"
-                >
-                  {refreshing ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                  )}
-                  Refresh
-                </Button>
+
+  const activeCount = filteredProfiles.filter(p => p.active_plans_count > 0).length;
+  const inactiveCount = filteredProfiles.length - activeCount;
+
+  return (
+    <SidebarInset className="flex-1 flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
+        <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+        <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          Billing Profiles
+        </h1>
+        <div className="ml-auto flex items-center gap-2">
+          <Button onClick={handleSyncFromPaystack} variant="outline" disabled={syncing} size="sm" className="gap-1.5 text-xs h-8">
+            {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            {syncing ? "Syncing..." : "Sync"}
+          </Button>
+          <Button onClick={() => fetchBillingProfiles(true)} variant="outline" disabled={refreshing} size="sm" className="gap-1.5 text-xs h-8">
+            {refreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            Refresh
+          </Button>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-7 space-y-5">
+
+          {/* Summary stat strip */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Total", value: profiles.length, sub: `${filteredProfiles.length} shown` },
+              { label: "Active", value: filteredProfiles.filter(p => p.active_plans_count > 0).length, color: "text-emerald-600 dark:text-emerald-400" },
+              { label: "Inactive", value: filteredProfiles.filter(p => p.active_plans_count === 0).length },
+            ].map((s) => (
+              <div key={s.label} className="bg-card rounded-lg border px-4 py-3">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{s.label}</p>
+                <p className={`text-xl font-bold tabular-nums ${s.color || "text-foreground"}`}>{s.value}</p>
+                {s.sub && <p className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</p>}
               </div>
-           </header>
- 
-           <main className="flex-1 overflow-auto">
-             <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
-               <div>
-                 <p className="text-muted-foreground">
-                   Universal customer identity across all billing and payment history
-                 </p>
-               </div>
- 
-               {/* Filters */}
-               <div className="flex flex-col sm:flex-row gap-4">
-                 <div className="relative flex-1 max-w-md">
-                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input
-                     placeholder="Search by email, name, or profile ID..."
-                     value={searchQuery}
-                     onChange={(e) => setSearchQuery(e.target.value)}
-                     className="pl-10"
-                   />
-                 </div>
-                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                   <SelectTrigger className="w-[180px]">
-                     <SelectValue placeholder="Filter by status" />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="all">All Profiles</SelectItem>
-                     <SelectItem value="active">Has Active Plans</SelectItem>
-                     <SelectItem value="inactive">No Active Plans</SelectItem>
-                   </SelectContent>
-                 </Select>
-               </div>
- 
-               <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                 <CardHeader>
-                   <div className="flex items-center gap-2">
-                     <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                       <Users className="h-5 w-5 text-accent" />
-                     </div>
-                     <div>
-                       <CardTitle>All Billing Profiles</CardTitle>
-                       <CardDescription>
-                         {filteredProfiles.length} of {profiles.length} profile
-                         {profiles.length !== 1 ? "s" : ""}
-                       </CardDescription>
-                     </div>
-                   </div>
-                 </CardHeader>
-                 <CardContent>
-                   {filteredProfiles.length === 0 ? (
-                     <div className="text-center py-12">
-                       <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                       <p className="text-muted-foreground mb-2">No billing profiles found</p>
-                       <p className="text-sm text-muted-foreground">
-                         Billing profiles are created automatically when customers make payments
-                       </p>
-                     </div>
-                   ) : (
-                     <>
-                       {/* Mobile card layout */}
-                       <div className="sm:hidden space-y-3">
-                         {filteredProfiles.map((profile) => (
-                           <div key={profile.id} className="p-4 rounded-lg border border-border/50 bg-card space-y-2" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
-                             <div className="flex items-start justify-between">
-                               <div className="min-w-0 flex-1">
-                                 <p className="font-medium text-sm truncate">{profile.full_name || "—"}</p>
-                                 <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
-                               </div>
-                               <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"} className="ml-2 shrink-0">
-                                 {profile.active_plans_count} plan{profile.active_plans_count !== 1 ? "s" : ""}
-                               </Badge>
-                             </div>
-                             <div className="flex items-center justify-between text-sm">
-                               <code className="text-xs font-bold bg-muted px-2 py-0.5 rounded">#{profile.profile_number || "—"}</code>
-                               <span className="font-medium">{formatCurrency(profile.total_paid)}</span>
-                             </div>
-                           </div>
-                         ))}
-                       </div>
-                       {/* Desktop table layout */}
-                       <div className="hidden sm:block">
-                         <Table>
-                           <TableHeader>
-                             <TableRow>
-                               <TableHead>Name</TableHead>
-                               <TableHead>Email</TableHead>
-                               <TableHead>Profile ID</TableHead>
-                               <TableHead>Active Plans</TableHead>
-                               <TableHead>Total Paid</TableHead>
-                               <TableHead>Latest Payment</TableHead>
-                               <TableHead className="text-right">Actions</TableHead>
-                             </TableRow>
-                           </TableHeader>
-                           <TableBody>
-                             {filteredProfiles.map((profile) => (
-                               <TableRow key={profile.id}>
-                                 <TableCell className="font-medium">{profile.full_name || "—"}</TableCell>
-                                 <TableCell>{profile.email}</TableCell>
-                                 <TableCell>
-                                   <div className="flex items-center gap-2">
-                                     <code className="text-sm font-bold bg-muted px-2 py-1 rounded">#{profile.profile_number || "—"}</code>
-                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(profile.profile_number || profile.id)}>
-                                       {copiedId === (profile.profile_number || profile.id) ? <CheckCircle className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                                     </Button>
-                                   </div>
-                                 </TableCell>
-                                 <TableCell>
-                                   <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"}>{profile.active_plans_count}</Badge>
-                                 </TableCell>
-                                 <TableCell>{formatCurrency(profile.total_paid)}</TableCell>
-                                 <TableCell>
-                                   {profile.latest_payment_date ? (
-                                     <div className="flex flex-col">
-                                       <Badge variant={profile.latest_payment_status === "success" ? "default" : "destructive"} className="w-fit mb-1">
-                                         {profile.latest_payment_status}
-                                       </Badge>
-                                       <span className="text-xs text-muted-foreground">{new Date(profile.latest_payment_date).toLocaleDateString()}</span>
-                                     </div>
-                                   ) : (
-                                     <span className="text-muted-foreground">—</span>
-                                   )}
-                                 </TableCell>
-                                 <TableCell className="text-right">
-                                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
-                                     <Eye className="h-4 w-4 mr-1" /> View
-                                   </Button>
-                                 </TableCell>
-                               </TableRow>
-                             ))}
-                           </TableBody>
-                         </Table>
-                       </div>
-                     </>
-                   )}
-                 </CardContent>
-               </Card>
-             </div>
-             <FloatingSupport />
-           </main>
-         </SidebarInset>
-   );
- }
+            ))}
+          </div>
+
+          {/* Inline filter bar */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search name, email, profile ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-8 text-sm"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px] h-8 text-sm">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Profiles</SelectItem>
+                <SelectItem value="active">Has Active Plans</SelectItem>
+                <SelectItem value="inactive">No Active Plans</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Table card */}
+          <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+            {filteredProfiles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="font-medium text-sm">No billing profiles found</p>
+                <p className="text-xs text-muted-foreground mt-1">Profiles are created automatically when customers make payments</p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile list */}
+                <div className="sm:hidden divide-y divide-border/50">
+                  {filteredProfiles.map((profile) => (
+                    <div key={profile.id} className="p-3 space-y-1.5" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className="font-medium text-sm truncate">{profile.full_name || "—"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                        </div>
+                        <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"} className="shrink-0 text-[10px]">
+                          {profile.active_plans_count} plan{profile.active_plans_count !== 1 ? "s" : ""}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
+                        <span className="text-sm font-semibold">{formatCurrency(profile.total_paid)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-muted/40 border-b text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">
+                      <tr>
+                        <th className="py-3 px-4">Customer</th>
+                        <th className="py-3 px-4">Profile ID</th>
+                        <th className="py-3 px-4">Active Plans</th>
+                        <th className="py-3 px-4 text-right">Total Paid</th>
+                        <th className="py-3 px-4">Latest Payment</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/40">
+                      {filteredProfiles.map((profile) => (
+                        <tr key={profile.id} className="hover:bg-muted/25 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}
+                          onClickCapture={(e) => { if ((e.target as HTMLElement).closest('button')) e.stopPropagation(); }}>
+                          <td className="py-3 px-4">
+                            <p className="font-medium text-foreground">{profile.full_name || "—"}</p>
+                            <p className="text-[11px] text-muted-foreground">{profile.email}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); copyToClipboard(profile.profile_number || profile.id); }}
+                                className="opacity-50 hover:opacity-100 transition-opacity"
+                              >
+                                {copiedId === (profile.profile_number || profile.id)
+                                  ? <CheckCircle className="h-3 w-3 text-emerald-500" />
+                                  : <Copy className="h-3 w-3" />}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"} className="text-xs">
+                              {profile.active_plans_count}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium">{formatCurrency(profile.total_paid)}</td>
+                          <td className="py-3 px-4">
+                            {profile.latest_payment_date ? (
+                              <div className="flex flex-col gap-0.5">
+                                <span className={`text-xs font-medium ${
+                                  profile.latest_payment_status === "success"
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : "text-destructive"
+                                }`}>
+                                  {profile.latest_payment_status === "success" ? "Paid" : profile.latest_payment_status}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground">
+                                  {new Date(profile.latest_payment_date).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs h-7" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/billing-profiles/${profile.id}`); }}>
+                              <Eye className="h-3.5 w-3.5" />View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <FloatingSupport />
+      </main>
+    </SidebarInset>
+  );
+}
