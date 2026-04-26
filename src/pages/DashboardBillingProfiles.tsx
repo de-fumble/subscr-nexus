@@ -17,6 +17,7 @@
  } from "@/components/ui/select";
  import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { SubscriberAvatar } from "@/components/SubscriberAvatar";
  
  
 interface BillingProfile {
@@ -460,8 +461,7 @@ interface BillingProfile {
                     </thead>
                     <tbody className="divide-y divide-border/40">
                       {filteredProfiles.map((profile) => (
-                        <tr key={profile.id} className="hover:bg-muted/25 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}
-                          onClickCapture={(e) => { if ((e.target as HTMLElement).closest('button')) e.stopPropagation(); }}>
+                        <tr key={profile.id} className="hover:bg-muted/25 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
                               <SubscriberAvatar className="h-8 w-8 rounded-lg border border-slate-100 shrink-0" />

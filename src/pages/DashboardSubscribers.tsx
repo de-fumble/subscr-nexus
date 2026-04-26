@@ -9,6 +9,7 @@ import { useOrgRole } from "@/hooks/useOrgRole";
 import { Badge } from "@/components/ui/badge";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { SubscriberAvatar } from "@/components/SubscriberAvatar";
 
 interface Subscriber {
   id: string;
