@@ -39,7 +39,7 @@ serve(async (req) => {
       )
     }
 
-    const { name, price, interval, description, currency = 'NGN', category } = await req.json()
+    const { name, price, interval, description, currency = 'NGN', category, features } = await req.json()
 
     if (!name || !price || !interval) {
       return new Response(
@@ -163,6 +163,7 @@ serve(async (req) => {
         interval,
         currency,
         category,
+        features: Array.isArray(features) ? features : [],
       })
       .select()
       .single()

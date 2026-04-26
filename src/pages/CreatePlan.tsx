@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Plus, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -28,6 +28,7 @@ const planSchema = z.object({
   interval: z.enum(["daily", "weekly", "monthly", "quarterly", "annually"]),
   description: z.string().trim().max(500).optional(),
   category: z.string().trim().max(50).optional(),
+  features: z.array(z.string().trim().min(1)).optional(),
 });
 
 interface Organization {
@@ -56,6 +57,7 @@ const CreatePlan = () => {
     description: "",
     category: "",
   });
+  const [features, setFeatures] = useState<string[]>([""]);
 
   useEffect(() => {
     fetchOrganization();
@@ -121,11 +123,29 @@ const CreatePlan = () => {
     }
   };
 
+  const handleAddFeature = () => {
+    setFeatures([...features, ""]);
+  };
+
+  const handleRemoveFeature = (index: number) => {
+    const newFeatures = [...features];
+    newFeatures.splice(index, 1);
+    setFeatures(newFeatures);
+  };
+
+  const handleFeatureChange = (index: number, value: string) => {
+    const newFeatures = [...features];
+    newFeatures[index] = value;
+    setFeatures(newFeatures);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const validFeatures = features.filter((f) => f.trim().length > 0);
+
       // Validate input
       const validated = planSchema.parse({
         name: formData.name,
@@ -133,6 +153,7 @@ const CreatePlan = () => {
         interval: formData.interval,
         description: formData.description || undefined,
         category: formData.category || undefined,
+        features: validFeatures.length > 0 ? validFeatures : undefined,
       });
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -151,6 +172,7 @@ const CreatePlan = () => {
           interval: validated.interval,
           description: validated.description,
           category: validated.category,
+          features: validated.features,
         },
       });
 
@@ -193,7 +215,7 @@ const CreatePlan = () => {
 
   return (
     <SidebarInset className="flex-1">
-      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 bg-card px-4">
         <SidebarTrigger />
 
         <div className="flex-1">
@@ -232,7 +254,7 @@ const CreatePlan = () => {
             </Alert>
           )}
 
-          <Card className="mx-auto max-w-2xl p-8 glass-card border-0 shadow-[var(--shadow-medium)]">
+          <Card className="mx-auto max-w-2xl p-8 bg-card border border-border shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Plan Name *</Label>
@@ -246,7 +268,6 @@ const CreatePlan = () => {
                   required
                   disabled={loading}
                   maxLength={100}
-                  className="glass-card border-border/50"
                 />
               </div>
 
@@ -265,7 +286,6 @@ const CreatePlan = () => {
                     disabled={loading}
                     min="1"
                     step="1"
-                    className="glass-card border-border/50"
                   />
                 </div>
 
@@ -278,7 +298,7 @@ const CreatePlan = () => {
                     }
                     disabled={loading}
                   >
-                    <SelectTrigger className="glass-card border-border/50">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -303,7 +323,6 @@ const CreatePlan = () => {
                   }
                   disabled={loading}
                   maxLength={50}
-                  className="glass-card border-border/50"
                 />
               </div>
 
@@ -318,16 +337,56 @@ const CreatePlan = () => {
                   }
                   disabled={loading}
                   maxLength={500}
-                  rows={4}
-                  className="glass-card border-border/50"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
                   {formData.description.length}/500 characters
                 </p>
               </div>
 
-              <div className="rounded-lg glass-card p-4 border border-accent/20">
-                <h3 className="mb-2 font-semibold text-foreground">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Custom Features (Optional)</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAddFeature}
+                    className="h-8 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Feature
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        placeholder="e.g., Priority Support"
+                        value={feature}
+                        onChange={(e) => handleFeatureChange(index, e.target.value)}
+                        disabled={loading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleRemoveFeature(index)}
+                        disabled={loading || features.length === 1 && features[0] === ""}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  These features will be displayed on the public Plans Hub card.
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-muted/30 p-4 border border-border">
+                <h3 className="mb-2 font-medium text-sm text-foreground">
                   Plan Preview
                 </h3>
                 <div className="space-y-1 text-sm">
@@ -341,6 +400,11 @@ const CreatePlan = () => {
                   {formData.category && (
                     <p className="text-muted-foreground">
                       Category: {formData.category}
+                    </p>
+                  )}
+                  {features.filter(f => f.trim()).length > 0 && (
+                    <p className="text-muted-foreground">
+                      {features.filter(f => f.trim()).length} custom features included
                     </p>
                   )}
                 </div>
