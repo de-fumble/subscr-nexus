@@ -20,7 +20,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const supabase = createClient(supabaseUrl, supabaseKey); // We use service role to safely update the DB
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Verify requesting user
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
@@ -38,120 +38,141 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACTION: status — build recovery queue from Paystack failed txns + local DB
+    // ─────────────────────────────────────────────────────────────────────────
     if (action === "status") {
       if (!orgId) throw new Error("Missing orgId for status sync");
 
-      const { data: org } = await supabase.from("organizations").select("paystack_secret_key").eq("id", orgId).single();
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("paystack_secret_key")
+        .eq("id", orgId)
+        .single();
       const paystackSecretKey = org?.paystack_secret_key || Deno.env.get("PAYSTACK_SECRET_KEY");
 
       if (!paystackSecretKey) throw new Error("Paystack secret key not found");
 
-      // Step 1: Broad candidates from local DB
-      const { data: candidates, error: subError } = await supabase
+      // Step 1: Fetch failed & abandoned transactions directly from Paystack
+      // This is the same source as the Transaction History tab, so historical
+      // failures are visible even if the local DB was never updated by a webhook.
+      const failedStatuses = ["failed", "abandoned"];
+      const paystackFailed: any[] = [];
+
+      for (const status of failedStatuses) {
+        try {
+          let page = 1;
+          while (true) {
+            const res = await fetch(
+              `https://api.paystack.co/transaction?status=${status}&perPage=100&page=${page}`,
+              { headers: { Authorization: `Bearer ${paystackSecretKey}` } }
+            );
+            const json = await res.json();
+            const txns: any[] = json?.data || [];
+            if (txns.length === 0) break;
+            paystackFailed.push(...txns);
+            if (txns.length < 100) break;
+            page++;
+          }
+        } catch (e) {
+          console.error(`Error fetching ${status} transactions from Paystack:`, e);
+        }
+      }
+
+      console.log(`Paystack returned ${paystackFailed.length} failed/abandoned transactions`);
+
+      // Step 2: Fetch all subscribers for this org from local DB
+      const { data: allSubs, error: subError } = await supabase
         .from("subscribers")
         .select(`
-          id, email, customer_name, amount, retry_count, last_retry_at, 
+          id, email, customer_name, amount, retry_count, last_retry_at,
           payment_failed_at, status, paystack_authorization_code, paystack_subscription_code,
           subscription_plans!inner(name, id, org_id)
         `)
-        .eq("subscription_plans.org_id", orgId)
-        .or("payment_failed_at.not.is.null,retry_count.gt.0,status.eq.payment_failed");
+        .eq("subscription_plans.org_id", orgId);
 
-      if (subError) throw subError;
+      if (subError) {
+        console.error("Error fetching subscribers:", subError);
+        throw subError;
+      }
 
-      const now = new Date();
+      console.log(`Local DB returned ${(allSubs || []).length} subscribers for org ${orgId}`);
+
+      // Build a map of lowercase email -> subscriber for quick lookup
+      const subByEmail = new Map<string, any>();
+      for (const sub of (allSubs || [])) {
+        subByEmail.set(sub.email.toLowerCase().trim(), sub);
+      }
+
+      // Step 3: Match Paystack failures against local subscribers
+      // Sort newest first so we keep the most recent failure per email
+      paystackFailed.sort((a, b) =>
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      );
+
+      const seenEmails = new Set<string>();
       const finalizedQueue: any[] = [];
 
-      // Step 2: Parallel check each candidate against Paystack for true current health
-      const verifyPromises = (candidates || []).map(async (sub: any) => {
-        let isActuallyFailing = true;
-        
-        // If we have a subscription code, ask Paystack for the absolute truth
-        if (sub.paystack_subscription_code) {
-          try {
-            const paystackRes = await fetch(`https://api.paystack.co/subscription/${sub.paystack_subscription_code}`, {
-              headers: { Authorization: `Bearer ${paystackSecretKey}` }
-            });
-            const paystackData = await paystackRes.json();
-            
-            if (paystackData.status && paystackData.data) {
-              const psStatus = paystackData.data.status?.toLowerCase();
-              
-              // Paystack says "active"? Then they are NOT failing right now.
-              if (psStatus === "active") {
-                isActuallyFailing = false;
-                
-                // SELF-HEALING: Clear local DB flags if we know they're healthy now
-                await supabase.from("subscribers").update({
-                  payment_failed_at: null,
-                  retry_count: 0,
-                  status: "active"
-                }).eq("id", sub.id);
-                
-                console.log(`Self-healed subscriber ${sub.email}: Status is ${psStatus} on Paystack.`);
-              }
-            }
-          } catch (e) {
-            console.error(`Error verifying ${sub.email} with Paystack:`, e);
-          }
-        }
+      for (const txn of paystackFailed) {
+        const email = (txn.customer?.email || "").toLowerCase().trim();
+        if (!email || seenEmails.has(email)) continue;
 
-        if (isActuallyFailing) {
-          let isEligibleNow = false;
-          let isExhausted = sub.retry_count >= 3 || sub.status === "payment_failed";
-          
-          const lastRetry = sub.last_retry_at ? new Date(sub.last_retry_at) : (sub.payment_failed_at ? new Date(sub.payment_failed_at) : null);
-          
-          if (!isExhausted && lastRetry) {
-            const cooldownPeriodDays = 6;
-            const nextEligibleTime = new Date(lastRetry.getTime() + cooldownPeriodDays * 24 * 60 * 60 * 1000);
-            isEligibleNow = now >= nextEligibleTime;
-          } else if (!isExhausted && !lastRetry) {
-            isEligibleNow = true;
-          }
+        const sub = subByEmail.get(email);
+        if (!sub) continue; // Not a subscriber for this org
 
-          finalizedQueue.push({
-            id: sub.id,
-            email: sub.email,
-            customer_name: sub.customer_name,
-            amount: sub.amount,
-            retry_count: sub.retry_count || 0,
-            last_retry_at: sub.last_retry_at,
-            payment_failed_at: sub.payment_failed_at,
-            status: sub.status,
-            plan_name: sub.subscription_plans?.name || "Unknown Plan",
-            plan_id: sub.subscription_plans?.id || null,
-            next_retry_eligible: isEligibleNow ? "eligible_now" : "scheduled",
-            has_authorization: !!sub.paystack_authorization_code,
-            is_eligible_now: isEligibleNow,
-            is_exhausted: isExhausted
-          });
-        }
-      });
+        seenEmails.add(email);
 
-      await Promise.all(verifyPromises);
+        const hasAuth = !!sub.paystack_authorization_code;
+        const retryCount = sub.retry_count || 0;
+        const isExhausted = retryCount >= 3 || sub.status === "payment_failed";
 
-      // Final sorting (most recent failure first)
-      finalizedQueue.sort((a, b) => {
-        const da = new Date(a.payment_failed_at || 0).getTime();
-        const db = new Date(b.payment_failed_at || 0).getTime();
-        return db - da;
-      });
+        const customerName = sub.customer_name ||
+          ((txn.customer?.first_name || txn.customer?.last_name)
+            ? `${txn.customer?.first_name || ""} ${txn.customer?.last_name || ""}`.trim()
+            : null);
 
-      return new Response(JSON.stringify({ retryQueue: finalizedQueue }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        finalizedQueue.push({
+          id: sub.id,
+          email: sub.email,
+          customer_name: customerName,
+          amount: txn.amount / 100, // Use actual failed amount from Paystack (in kobo → naira)
+          retry_count: retryCount,
+          last_retry_at: sub.last_retry_at,
+          payment_failed_at: txn.created_at || sub.payment_failed_at,
+          status: txn.status,
+          plan_name: txn.plan?.name || sub.subscription_plans?.name || "Standard Payment",
+          failure_reason: txn.gateway_response || txn.message || "Payment failed",
+          reference: txn.reference,
+          has_authorization: hasAuth,
+          is_exhausted: isExhausted,
+        });
+      }
+
+      console.log(`Recovery queue built: ${finalizedQueue.length} entries`);
+
+      return new Response(
+        JSON.stringify({ retryQueue: finalizedQueue }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACTION: retry_one — manually charge a subscriber's saved auth code
+    // ─────────────────────────────────────────────────────────────────────────
     if (action === "retry_one") {
       if (!subscriberId) throw new Error("Missing subscriberId");
 
       const { data: subscriber } = await supabase
         .from("subscribers")
-        .select(`*, organizations(paystack_secret_key)`)
+        .select(`*, subscription_plans(org_id), organizations(paystack_secret_key)`)
         .eq("id", subscriberId)
         .single();
         
       if (!subscriber || !subscriber.paystack_authorization_code) {
-        return new Response(JSON.stringify({ success: false, message: "No valid authorization code found for this subscriber." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(
+          JSON.stringify({ success: false, message: "No valid authorization code found for this subscriber." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       const paystackSecretKey = subscriber.organizations?.paystack_secret_key || Deno.env.get("PAYSTACK_SECRET_KEY");
@@ -172,14 +193,56 @@ serve(async (req) => {
       const chargeRes = await chargeReq.json();
       
       if (chargeRes.status && chargeRes.data?.status === "success") {
+        const reference = chargeRes.data.reference;
+        const amount = chargeRes.data.amount; // kobo
+        
+        // 1. Reset subscriber to active
         await supabase.from("subscribers").update({
           retry_count: 0,
           last_retry_at: null,
           payment_failed_at: null,
           status: "active"
         }).eq("id", subscriber.id);
+
+        // 2. Record successful transaction
+        const { error: txError } = await supabase.from("transactions").insert({
+          subscriber_id: subscriber.id,
+          paystack_reference: reference,
+          amount: amount,
+          status: "success",
+          paid_at: new Date().toISOString()
+        });
         
-        return new Response(JSON.stringify({ success: true, message: "Payment successful!" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (txError) console.error("Reconciliation Error (Transaction):", txError);
+
+        // 3. Update billing profile total_paid
+        const { data: bp } = await supabase
+          .from("billing_profiles")
+          .select("id")
+          .eq("email", subscriber.email)
+          .maybeSingle();
+
+        if (bp?.id) {
+          const { data: bpo } = await supabase
+            .from("billing_profile_organizations")
+            .select("total_paid, billing_profile_id")
+            .eq("org_id", subscriber.subscription_plans?.org_id)
+            .eq("billing_profile_id", bp.id)
+            .maybeSingle();
+
+          if (bpo) {
+            const newTotal = (bpo.total_paid || 0) + amount;
+            await supabase.from("billing_profile_organizations")
+              .update({ total_paid: newTotal })
+              .eq("billing_profile_id", bpo.billing_profile_id)
+              .eq("org_id", subscriber.subscription_plans?.org_id);
+          }
+        }
+        
+        return new Response(
+          JSON.stringify({ success: true, message: "Payment successful and reconciled!" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       } else {
         const newRetryCount = (subscriber.retry_count || 0) + 1;
         const isExhausted = newRetryCount >= 3;
@@ -190,14 +253,34 @@ serve(async (req) => {
           status: isExhausted ? "payment_failed" : subscriber.status
         }).eq("id", subscriber.id);
         
-        return new Response(JSON.stringify({ success: false, message: chargeRes.data?.gateway_response || chargeRes.message || "Retry failed." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        // Record failed retry in transactions
+        if (chargeRes.data?.reference) {
+          await supabase.from("transactions").insert({
+            subscriber_id: subscriber.id,
+            paystack_reference: chargeRes.data.reference,
+            amount: Math.round(subscriber.amount * 100),
+            status: "failed",
+            paid_at: null
+          });
+        }
+        
+        return new Response(
+          JSON.stringify({ success: false, message: chargeRes.data?.gateway_response || chargeRes.message || "Retry failed." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
 
-    return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({ error: "Invalid action" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
   } catch (error: any) {
     console.error("Process error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });

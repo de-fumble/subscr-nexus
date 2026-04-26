@@ -106,7 +106,7 @@ export function AppSidebar() {
         { title: "Standard Payments", icon: Banknote, url: "/payments" },
         { title: "All Transactions", icon: ArrowLeftRight, url: "/dashboard/transactions" },
         { title: "Failed Payments", icon: AlertTriangle, url: "/dashboard/failed-payments" },
-        { title: "Retry Queue", icon: RotateCcw, url: "/dashboard/retry-queue" },
+        { title: "Auto Retry Queue", icon: RotateCcw, url: "/dashboard/retry-queue", showLock: true, comingSoon: true },
         { title: "Create Invoice", icon: Receipt, url: "/dashboard/invoices" },
         { title: "Verify Transaction", icon: CheckCircle, url: "/dashboard/verify" },
       ]
@@ -218,7 +218,14 @@ export function AppSidebar() {
                         }`}
                     >
                       <item.icon className={`h-4 w-4 ${isActive(item.url) ? 'text-white' : 'text-white/70'}`} />
-                      {isExpanded && <span className={`text-[13px] ${isActive(item.url) ? 'font-medium text-white' : 'text-white/80'}`}>{item.title}</span>}
+                      {isExpanded && (
+                        <span className={`text-[13px] flex items-center gap-1.5 ${isActive(item.url) ? 'font-medium text-white' : 'text-white/80'}`}>
+                          {item.title}
+                          {"showLock" in item && item.showLock && (
+                            <Lock className="h-3 w-3 opacity-60 text-emerald-400" />
+                          )}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

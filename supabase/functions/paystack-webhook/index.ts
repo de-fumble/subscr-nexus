@@ -322,41 +322,55 @@ serve(async (req) => {
 
     // Handle failed charge - mark for retry with failure reason
     if (event.event === "charge.failed" && event.data.customer) {
-      const { reference, amount, customer, gateway_response, message } = event.data;
+      const { reference, amount, customer, gateway_response, message, authorization } = event.data;
       const failureReason = gateway_response || message || "Payment declined by bank";
-      console.log(`Charge failed for customer ${customer.customer_code}: ${failureReason}`);
+      const subscriptionCode = event.data.subscription?.subscription_code || event.data.subscription_code;
+      
+      console.log(`Charge failed for reference ${reference}: ${failureReason}`);
 
-      // Find subscriber by customer code
-      const { data: subscriber } = await supabase
-        .from("subscribers")
-        .select("id, retry_count")
-        .eq("paystack_customer_code", customer.customer_code)
-        .single();
+      // Find subscriber by subscription code or customer code
+      let subscriberId = null;
+      if (subscriptionCode) {
+        const { data } = await supabase.from("subscribers").select("id").eq("paystack_subscription_code", subscriptionCode).maybeSingle();
+        subscriberId = data?.id;
+      }
+      
+      if (!subscriberId) {
+        const { data } = await supabase.from("subscribers").select("id").eq("paystack_customer_code", customer.customer_code).maybeSingle();
+        subscriberId = data?.id;
+      }
 
-      if (subscriber) {
-        // Mark payment as failed for retry mechanism with reason
+      if (subscriberId) {
+        // Mark payment as failed for retry mechanism with reason and update auth code if provided
+        const updateData: any = {
+          payment_failed_at: new Date().toISOString(),
+          failure_reason: failureReason,
+        };
+        
+        if (authorization?.authorization_code) {
+          updateData.paystack_authorization_code = authorization.authorization_code;
+        }
+
         const { error: updateError } = await supabase
           .from("subscribers")
-          .update({
-            payment_failed_at: new Date().toISOString(),
-            failure_reason: failureReason,
-          })
-          .eq("id", subscriber.id);
+          .update(updateData)
+          .eq("id", subscriberId);
 
         if (updateError) {
           console.error("Error marking payment as failed:", updateError);
-        } else {
-          console.log(`Payment marked as failed for subscriber ${subscriber.id}: ${failureReason}`);
         }
 
-        // Record failed transaction
-        await supabase.from("transactions").insert({
-          subscriber_id: subscriber.id,
-          paystack_reference: reference,
-          amount: amount,
-          status: "failed",
-          paid_at: null,
-        });
+        // Record failed transaction if it doesn't exist
+        const { data: existingTx } = await supabase.from("transactions").select("id").eq("paystack_reference", reference).maybeSingle();
+        if (!existingTx) {
+          await supabase.from("transactions").insert({
+            subscriber_id: subscriberId,
+            paystack_reference: reference,
+            amount: amount,
+            status: "failed",
+            paid_at: null,
+          });
+        }
       }
     }
 

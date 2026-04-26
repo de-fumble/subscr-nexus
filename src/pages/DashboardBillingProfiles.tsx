@@ -424,19 +424,22 @@ interface BillingProfile {
                 {/* Mobile list */}
                 <div className="sm:hidden divide-y divide-border/50">
                   {filteredProfiles.map((profile) => (
-                    <div key={profile.id} className="p-3 space-y-1.5" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
-                      <div className="flex items-start justify-between">
-                        <div className="min-w-0 flex-1 pr-2">
-                          <p className="font-medium text-sm truncate">{profile.full_name || "—"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                    <div key={profile.id} className="p-3 space-y-1.5 flex items-center gap-3" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}>
+                      <SubscriberAvatar className="h-10 w-10 rounded-lg border border-slate-100 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1 pr-2">
+                            <p className="font-medium text-sm truncate">{profile.full_name || "—"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                          </div>
+                          <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"} className="shrink-0 text-[10px]">
+                            {profile.active_plans_count} plan{profile.active_plans_count !== 1 ? "s" : ""}
+                          </Badge>
                         </div>
-                        <Badge variant={profile.active_plans_count > 0 ? "default" : "secondary"} className="shrink-0 text-[10px]">
-                          {profile.active_plans_count} plan{profile.active_plans_count !== 1 ? "s" : ""}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
-                        <span className="text-sm font-semibold">{formatCurrency(profile.total_paid)}</span>
+                        <div className="flex items-center justify-between mt-1">
+                          <code className="text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
+                          <span className="text-xs font-semibold">{formatCurrency(profile.total_paid)}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -460,8 +463,13 @@ interface BillingProfile {
                         <tr key={profile.id} className="hover:bg-muted/25 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/billing-profiles/${profile.id}`)}
                           onClickCapture={(e) => { if ((e.target as HTMLElement).closest('button')) e.stopPropagation(); }}>
                           <td className="py-3 px-4">
-                            <p className="font-medium text-foreground">{profile.full_name || "—"}</p>
-                            <p className="text-[11px] text-muted-foreground">{profile.email}</p>
+                            <div className="flex items-center gap-3">
+                              <SubscriberAvatar className="h-8 w-8 rounded-lg border border-slate-100 shrink-0" />
+                              <div>
+                                <p className="font-medium text-foreground">{profile.full_name || "—"}</p>
+                                <p className="text-[11px] text-muted-foreground">{profile.email}</p>
+                              </div>
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1.5">

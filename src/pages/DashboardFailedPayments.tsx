@@ -21,12 +21,37 @@ import {
   X,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck,
+  History,
+  Sparkles,
+  ArrowRight,
+  CheckCircle2
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import logoSvg from "@/assets/logo.svg";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ITEMS_PER_PAGE = 30;
+
+// Helper to get initials
+const getInitials = (name: string | null | undefined) => {
+  if (!name) return "??";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+};
 
 interface FailedPayment {
   id: string;
@@ -63,7 +88,31 @@ const DashboardFailedPayments = () => {
   const [searchReference, setSearchReference] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<"history" | "recovery">("history");
+
+  const uniquePlans = useMemo(() => {
+    const plans = new Set<string>();
+    failedPayments.forEach(p => {
+      if (p.plan_name) plans.add(p.plan_name);
+    });
+    return Array.from(plans).sort();
+  }, [failedPayments]);
+  const [retryQueue, setRetryQueue] = useState<any[]>([]);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [queueLoading, setQueueLoading] = useState(false);
+  const [expandedReasons, setExpandedReasons] = useState<Set<string>>(new Set());
+
+  const toggleReason = (id: string) => {
+    const newExpanded = new Set(expandedReasons);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedReasons(newExpanded);
+  };
 
   useEffect(() => {
     fetchData();
@@ -110,6 +159,7 @@ const DashboardFailedPayments = () => {
 
       setOrganization(orgData);
       await fetchFailedPayments(orgData);
+      await fetchRetryQueue(orgData);
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load data");
@@ -156,6 +206,55 @@ const DashboardFailedPayments = () => {
       toast.error("Failed to load failed payments");
     }
   };
+  
+  const fetchRetryQueue = async (org: Organization) => {
+    setQueueLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("retry-failed-payments", {
+        body: {
+          orgId: org.id,
+          action: "status"
+        },
+      });
+
+      if (error) throw error;
+      setRetryQueue(data?.retryQueue || []);
+    } catch (error) {
+      console.error("Error fetching retry queue:", error);
+    } finally {
+      setQueueLoading(false);
+    }
+  };
+
+  const handleRetry = async (subscriberId: string) => {
+    setRetryingId(subscriberId);
+    try {
+      const { data, error } = await supabase.functions.invoke("retry-failed-payments", {
+        body: {
+          subscriberId,
+          action: "retry_one"
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data.success) {
+        toast.success(data.message);
+        if (organization) {
+          fetchRetryQueue(organization);
+          fetchFailedPayments(organization);
+        }
+      } else {
+        toast.error(data.message || "Retry failed");
+        if (organization) fetchRetryQueue(organization);
+      }
+    } catch (error) {
+      console.error("Retry error:", error);
+      toast.error("An error occurred during retry");
+    } finally {
+      setRetryingId(null);
+    }
+  };
 
   const getDefaultFailureReason = (status: string): string => {
     if (status === "abandoned") return "Customer abandoned checkout";
@@ -168,6 +267,8 @@ const DashboardFailedPayments = () => {
     return failedPayments.filter((payment) => {
       if (statusFilter === "failed" && payment.status !== "failed") return false;
       if (statusFilter === "abandoned" && payment.status !== "abandoned") return false;
+
+      if (planFilter !== "all" && payment.plan_name !== planFilter) return false;
 
       if (searchName) {
         const nameMatch = payment.customer_name?.toLowerCase().includes(searchName.toLowerCase());
@@ -194,12 +295,12 @@ const DashboardFailedPayments = () => {
 
       return true;
     });
-  }, [failedPayments, statusFilter, searchName, searchReference, dateFrom, dateTo]);
+  }, [failedPayments, statusFilter, planFilter, searchName, searchReference, dateFrom, dateTo]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, searchName, searchReference, dateFrom, dateTo]);
+  }, [statusFilter, planFilter, searchName, searchReference, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
   const paginatedPayments = useMemo(() => {
@@ -216,10 +317,11 @@ const DashboardFailedPayments = () => {
     setSearchReference("");
     setDateFrom("");
     setDateTo("");
+    setPlanFilter("all");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = statusFilter !== "all" || searchName || searchReference || dateFrom || dateTo;
+  const hasActiveFilters = statusFilter !== "all" || searchName || searchReference || dateFrom || dateTo || planFilter !== "all";
 
   const handleExportToExcel = () => {
     if (filteredPayments.length === 0) {
@@ -310,250 +412,514 @@ const DashboardFailedPayments = () => {
 
       <main className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-          {/* Quick Status Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={statusFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("all")}
+          {/* Tabs Navigation */}
+          <div className="flex border-b border-border/50">
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                activeTab === "history" 
+                ? "text-primary border-b-2 border-primary" 
+                : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              All ({failedPayments.length})
-            </Button>
-            <Button
-              variant={statusFilter === "failed" ? "destructive" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("failed")}
-              className="gap-1"
+              Transaction History
+            </button>
+            <button
+              onClick={() => setActiveTab("recovery")}
+              className={`px-4 py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${
+                activeTab === "recovery" 
+                ? "text-primary border-b-2 border-primary" 
+                : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Failed ({failedCount})
-            </Button>
-            <Button
-              variant={statusFilter === "abandoned" ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("abandoned")}
-              className="gap-1"
-            >
-              <AlertCircle className="h-3.5 w-3.5" />
-              Abandoned ({abandonedCount})
-            </Button>
-          </div>
-
-          {/* Filters Card */}
-          <Card className="p-4 glass-card">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Name / Email</Label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchName}
-                    onChange={(e) => setSearchName(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Reference</Label>
-                <Input
-                  placeholder="Search by reference..."
-                  value={searchReference}
-                  onChange={(e) => setSearchReference(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">From Date</Label>
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">To Date</Label>
-                <Input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                />
-              </div>
-            </div>
-            {hasActiveFilters && (
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  Showing {filteredPayments.length} of {failedPayments.length} payments
-                </p>
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-                  <X className="h-3 w-3" />
-                  Clear filters
-                </Button>
-              </div>
-            )}
-          </Card>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportToExcel}
-              disabled={exporting || filteredPayments.length === 0}
-              className="gap-2"
-            >
-              <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
-              Export to Excel
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => organization && fetchFailedPayments(organization)}
-              disabled={loading}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-          </div>
-
-          {/* Payments List */}
-          {filteredPayments.length === 0 ? (
-            <Card className="p-12 glass-card text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                {hasActiveFilters ? (
-                  <Search className="h-8 w-8 text-muted-foreground" />
-                ) : (
-                  <CreditCard className="h-8 w-8 text-muted-foreground" />
-                )}
-              </div>
-              <h4 className="text-lg font-semibold mb-2">
-                {hasActiveFilters ? "No Matching Payments" : "No Failed Payments"}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {hasActiveFilters
-                  ? "No failed payments match your filters"
-                  : "All your subscribers' payments are up to date"}
-              </p>
-              {hasActiveFilters && (
-                <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
-                  Clear filters
-                </Button>
+              Recovery Queue
+              {retryQueue.length > 0 && (
+                <Badge variant="destructive" className="h-4 min-w-[16px] px-1 text-[10px]">
+                  {retryQueue.length}
+                </Badge>
               )}
-            </Card>
-          ) : (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto w-full bg-card rounded-xl border shadow-sm">
-                <table className="w-full text-sm text-left whitespace-nowrap">
-                  <thead className="bg-muted/50 text-muted-foreground border-b text-[11px] uppercase tracking-wider font-semibold">
-                    <tr>
-                      <th className="py-3 px-4">Customer</th>
-                      <th className="py-3 px-4">Reference</th>
-                      <th className="py-3 px-4">Plan</th>
-                      <th className="py-3 px-4 text-right">Amount</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Reason</th>
-                      <th className="py-3 px-4 text-right">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/50">
-                    {paginatedPayments.map((payment) => (
-                      <tr key={payment.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-foreground">{payment.customer_name || "Unknown"}</span>
-                            <span className="text-[11px] text-muted-foreground">{payment.email}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="font-mono text-xs">{payment.reference}</span>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">{payment.plan_name}</td>
-                        <td className="py-3 px-4 text-right font-medium">₦{payment.amount.toLocaleString()}</td>
-                        <td className="py-3 px-4">{getStatusBadge(payment.status)}</td>
-                        <td className="py-3 px-4 max-w-[220px] truncate text-muted-foreground" title={payment.failure_reason || "Unknown error"}>
-                          <div className="flex items-center gap-1.5">
-                            {getFailureIcon(payment.failure_reason || "")}
-                            <span className="truncate">{payment.failure_reason || "Unknown error"}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right text-muted-foreground">
-                          {new Date(payment.failed_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            </button>
+          </div>
+
+          {activeTab === "history" ? (
+            <div className="space-y-4 sm:space-y-6">
+              {/* Quick Status Filters */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={statusFilter === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("all")}
+                >
+                  All ({failedPayments.length})
+                </Button>
+                <Button
+                  variant={statusFilter === "failed" ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("failed")}
+                  className="gap-1"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Failed ({failedCount})
+                </Button>
+                <Button
+                  variant={statusFilter === "abandoned" ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("abandoned")}
+                  className="gap-1"
+                >
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Abandoned ({abandonedCount})
+                </Button>
               </div>
 
-              {/* Mobile List View */}
-              <div className="grid gap-3 md:hidden">
-                {paginatedPayments.map((payment) => (
-                  <div
-                    key={payment.id}
-                    className="p-3 bg-card rounded-lg border shadow-sm space-y-2.5"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col min-w-0 pr-2">
-                        <p className="font-medium text-sm truncate">{payment.customer_name || "Unknown"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{payment.email}</p>
+              {/* Filters Card */}
+              <Card className="p-4 glass-card">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Name / Email</Label>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Reference</Label>
+                    <Input
+                      placeholder="Search by reference..."
+                      value={searchReference}
+                      onChange={(e) => setSearchReference(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">From Date</Label>
+                    <Input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">To Date</Label>
+                    <Input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Filter by Plan</Label>
+                    <Select value={planFilter} onValueChange={setPlanFilter}>
+                      <SelectTrigger className="w-full h-10">
+                        <SelectValue placeholder="All Plans" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Plans</SelectItem>
+                        {uniquePlans.map(plan => (
+                          <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {hasActiveFilters && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {filteredPayments.length} of {failedPayments.length} payments
+                    </p>
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                      <X className="h-3 w-3" />
+                      Clear filters
+                    </Button>
+                  </div>
+                )}
+              </Card>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportToExcel}
+                  disabled={exporting || filteredPayments.length === 0}
+                  className="gap-2"
+                >
+                  <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
+                  Export to Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => organization && fetchFailedPayments(organization)}
+                  disabled={loading}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
+
+              {/* Payments List */}
+              {filteredPayments.length === 0 ? (
+                <Card className="p-12 glass-card text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                    {hasActiveFilters ? (
+                      <Search className="h-8 w-8 text-muted-foreground" />
+                    ) : (
+                      <CreditCard className="h-8 w-8 text-muted-foreground" />
+                    )}
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">
+                    {hasActiveFilters ? "No Matching Payments" : "No Failed Payments"}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {hasActiveFilters
+                      ? "No failed payments match your filters"
+                      : "All your subscribers' payments are up to date"}
+                  </p>
+                  {hasActiveFilters && (
+                    <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
+                      Clear filters
+                    </Button>
+                  )}
+                </Card>
+              ) : (
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto w-full bg-card rounded-xl border shadow-sm">
+                    <table className="w-full text-sm text-left whitespace-nowrap">
+                      <thead className="bg-muted/50 text-muted-foreground border-b text-[11px] uppercase tracking-wider font-semibold">
+                        <tr>
+                          <th className="py-3 px-4">Customer</th>
+                          <th className="py-3 px-4">Reference</th>
+                          <th className="py-3 px-4">Plan</th>
+                          <th className="py-3 px-4 text-right">Amount</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4">Reason</th>
+                          <th className="py-3 px-4 text-right">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/50">
+                        {paginatedPayments.map((payment) => (
+                          <tr key={payment.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-medium text-foreground">{payment.customer_name || "Unknown"}</span>
+                                <span className="text-[11px] text-muted-foreground">{payment.email}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="font-mono text-xs">{payment.reference}</span>
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground">{payment.plan_name}</td>
+                            <td className="py-3 px-4 text-right font-medium">₦{payment.amount.toLocaleString()}</td>
+                            <td className="py-3 px-4">{getStatusBadge(payment.status)}</td>
+                            <td className="py-3 px-4 max-w-[220px] truncate text-muted-foreground" title={payment.failure_reason || "Unknown error"}>
+                              <div className="flex items-center gap-1.5">
+                                {getFailureIcon(payment.failure_reason || "")}
+                                <span className="truncate">{payment.failure_reason || "Unknown error"}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right text-muted-foreground">
+                              {new Date(payment.failed_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile List View */}
+                  <div className="grid gap-3 md:hidden">
+                    {paginatedPayments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="p-3 bg-card rounded-lg border shadow-sm space-y-2.5"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col min-w-0 pr-2">
+                            <p className="font-medium text-sm truncate">{payment.customer_name || "Unknown"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{payment.email}</p>
+                          </div>
+                          <div className="shrink-0">
+                            {getStatusBadge(payment.status)}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-semibold text-foreground">₦{payment.amount.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(payment.failed_at).toLocaleDateString()}</span>
+                        </div>
+
+                        <div className="p-2 rounded bg-destructive/5 border border-destructive/10 flex items-start gap-2">
+                          <div className="mt-0.5 shrink-0">
+                            {getFailureIcon(payment.failure_reason || "")}
+                          </div>
+                          <p className="text-[11px] leading-tight text-muted-foreground line-clamp-2">
+                            {payment.failure_reason || "Unknown error"}
+                          </p>
+                        </div>
                       </div>
-                      <div className="shrink-0">
-                        {getStatusBadge(payment.status)}
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} of {filteredPayments.length}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="gap-1"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          <span className="hidden sm:inline">Previous</span>
+                        </Button>
+                        <span className="text-sm font-medium px-2">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="gap-1"
+                        >
+                          <span className="hidden sm:inline">Next</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-semibold text-foreground">₦{payment.amount.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground">{new Date(payment.failed_at).toLocaleDateString()}</span>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6 animate-fade-in">
+              {/* Recovery Banner */}
+              <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/5 via-background to-background p-6 shadow-sm">
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background shadow-premium border-2 border-primary/10 overflow-hidden p-1.5">
+                      <img src={logoSvg} alt="Recurra Logo" className="h-full w-full object-contain rounded-full" />
                     </div>
-
-                    <div className="p-2 rounded bg-destructive/5 border border-destructive/10 flex items-start gap-2">
-                      <div className="mt-0.5 shrink-0">
-                        {getFailureIcon(payment.failure_reason || "")}
-                      </div>
-                      <p className="text-[11px] leading-tight text-muted-foreground line-clamp-2">
-                        {payment.failure_reason || "Unknown error"}
+                    <div>
+                      <h4 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                        Manual Recovery Center
+                      </h4>
+                      <p className="mt-1 text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                        Intelligent recovery engine matched <span className="font-semibold text-foreground">{retryQueue.length}</span> recoverable failures. 
+                        Manually trigger retries for subscribers with saved payment methods.
                       </p>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} of {filteredPayments.length}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="gap-1"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline">Previous</span>
-                    </Button>
-                    <span className="text-sm font-medium px-2">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="gap-1"
-                    >
-                      <span className="hidden sm:inline">Next</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                  
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 shrink-0">
+                    <div className="flex flex-col px-4 py-2.5 rounded-xl bg-background/60 backdrop-blur-sm border border-border/50 shadow-sm">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Potential Recovery</span>
+                      <span className="text-xl font-bold text-foreground leading-none flex items-baseline gap-1">
+                        <span className="text-sm font-medium text-muted-foreground">₦</span>
+                        {retryQueue.reduce((sum, sub) => sum + (sub.amount || 0), 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex flex-col px-4 py-2.5 rounded-xl bg-background/60 backdrop-blur-sm border border-border/50 shadow-sm">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Queue Status</span>
+                      <span className="text-xl font-bold text-foreground leading-none">
+                        {retryQueue.filter(s => s.has_authorization).length} 
+                        <span className="text-xs font-medium text-muted-foreground ml-1">Ready</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
+                {/* Decorative Elements */}
+                <div className="absolute -top-12 -right-12 h-64 w-64 bg-primary/5 rounded-full blur-3xl opacity-50" />
+                <div className="absolute -bottom-12 -left-12 h-48 w-48 bg-secondary/5 rounded-full blur-3xl opacity-30" />
+              </div>
+
+              {queueLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border/50">
+                  <div className="relative h-12 w-12 mb-4">
+                    <RefreshCw className="h-12 w-12 text-primary/40 animate-spin absolute inset-0" />
+                    <RefreshCw className="h-12 w-12 text-primary animate-spin duration-700 absolute inset-0 opacity-40" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">Synchronizing recovery queue...</p>
+                </div>
+              ) : retryQueue.length === 0 ? (
+                <Card className="flex flex-col items-center justify-center py-24 text-center border-dashed border-2 glass-card">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
+                    <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-background border border-border/50 shadow-xl">
+                      <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                    </div>
+                  </div>
+                  <h4 className="text-xl font-bold mb-2">Recovery Queue Clear</h4>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-8">
+                    Excellent! All your subscribers are currently in good standing. No recoverable failures detected at this time.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 px-6 rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                    onClick={() => organization && fetchRetryQueue(organization)}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Check for Updates
+                  </Button>
+                </Card>
+              ) : (
+                <div className="bg-card rounded-2xl border shadow-premium overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left border-collapse">
+                      <thead>
+                        <tr className="bg-muted/30 text-muted-foreground border-b text-[11px] uppercase tracking-widest font-bold">
+                          <th className="py-4 px-6">Subscriber Identity</th>
+                          <th className="py-4 px-6">Current Plan</th>
+                          <th className="py-4 px-6 text-right">Recovery Amount</th>
+                          <th className="py-4 px-6 text-center">Retry Attempts</th>
+                          <th className="py-4 px-6">Reason</th>
+                          <th className="py-4 px-6">Status Details</th>
+                          <th className="py-4 px-6 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        {retryQueue.map((sub) => (
+                          <tr key={sub.id} className="group hover:bg-muted/10 transition-all duration-200 whitespace-nowrap">
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9 border border-border/50 shadow-sm transition-transform group-hover:scale-105">
+                                  <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
+                                    {getInitials(sub.customer_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-semibold text-foreground truncate max-w-[180px]">
+                                    {sub.customer_name || "Anonymous Subscriber"}
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                    {sub.email}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-2">
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
+                                <span className="text-muted-foreground font-medium">{sub.plan_name}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <div className="flex flex-col items-end">
+                                <span className="font-bold text-foreground">₦{sub.amount.toLocaleString()}</span>
+                                <span className="text-[10px] text-muted-foreground leading-tight uppercase tracking-tighter">Full Balance</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 text-center">
+                              <div className="inline-flex flex-col items-center gap-1.5">
+                                <div className="flex gap-1.5">
+                                  {[1, 2, 3].map((i) => (
+                                    <div 
+                                      key={i} 
+                                      className={`h-1 w-5 rounded-full transition-all duration-500 ${
+                                        i <= (sub.retry_count || 0) 
+                                        ? "bg-destructive/70 shadow-[0_0_8px_rgba(239,68,68,0.3)]" 
+                                        : "bg-muted-foreground/10"
+                                      }`} 
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                                  {sub.retry_count || 0} OF 3 USED
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div 
+                                className={`flex items-start gap-2 text-muted-foreground transition-all duration-300 cursor-pointer hover:text-foreground ${
+                                  expandedReasons.has(sub.id) ? "max-w-[300px]" : "max-w-[180px]"
+                                }`}
+                                onClick={() => toggleReason(sub.id)}
+                              >
+                                <div className="mt-0.5 shrink-0">
+                                  {getFailureIcon(sub.failure_reason || "")}
+                                </div>
+                                <span className={`text-[11px] leading-relaxed ${expandedReasons.has(sub.id) ? "whitespace-normal" : "truncate"}`}>
+                                  {sub.failure_reason || "Unknown error"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex flex-col gap-1.5">
+                                {sub.has_authorization ? (
+                                  <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 font-bold text-[10px] py-0.5 w-fit">
+                                    <ShieldCheck className="h-3 w-3" />
+                                    READY TO RECOVER
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-destructive/5 text-destructive/60 border-destructive/20 gap-1 font-bold text-[10px] py-0.5 w-fit">
+                                    <AlertCircle className="h-3 w-3" />
+                                    NO AUTH TOKEN
+                                  </Badge>
+                                )}
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                  <History className="h-3 w-3" />
+                                  {sub.last_retry_at 
+                                    ? `Last tried ${new Date(sub.last_retry_at).toLocaleDateString()}` 
+                                    : sub.payment_failed_at 
+                                      ? `Failed on ${new Date(sub.payment_failed_at).toLocaleDateString()}`
+                                      : 'No attempts yet'
+                                  }
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <Button
+                                size="sm"
+                                variant={sub.has_authorization ? "default" : "secondary"}
+                                onClick={() => handleRetry(sub.id)}
+                                disabled={retryingId === sub.id || !sub.has_authorization || sub.retry_count >= 3}
+                                className={`gap-2 px-4 h-9 font-semibold transition-all duration-300 ${
+                                  sub.has_authorization && retryingId !== sub.id
+                                  ? "hover:shadow-glow hover:scale-[1.02] bg-primary text-primary-foreground" 
+                                  : ""
+                                }`}
+                              >
+                                {retryingId === sub.id ? (
+                                  <>
+                                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                    Retrying...
+                                  </>
+                                ) : sub.retry_count >= 3 ? (
+                                  "Limit Reached"
+                                ) : (
+                                  <>
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                    Retry Now
+                                  </>
+                                )}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                    <div className="bg-muted/30 px-6 py-3 border-t">
+                      <p className="text-[11px] text-muted-foreground text-center italic leading-relaxed">
+                        Manual recovery attempts are processed via the secure gateway. Each attempt is tracked against the recovery limit. After 3 unsuccessful attempts, the subscriber's status will be updated to <span className="font-bold text-destructive">Payment Failed</span>.
+                      </p>
+                    </div>
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
         <FloatingSupport />

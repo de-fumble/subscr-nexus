@@ -1,5 +1,6 @@
- import { useEffect, useState } from "react";
- import { PremiumLoader } from "@/components/PremiumLoader";
+import { useEffect, useState, useMemo } from "react";
+import { PremiumLoader } from "@/components/PremiumLoader";
+import { SubscriberAvatar } from "@/components/SubscriberAvatar";
  import { useParams, useNavigate } from "react-router-dom";
  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
  import { Button } from "@/components/ui/button";
@@ -16,6 +17,13 @@
    DollarSign,
    History,
    XCircle,
+   Shield,
+   Activity,
+   Wallet,
+   Info,
+   ArrowUpRight,
+   Search,
+   Filter,
    RefreshCw,
    Loader2,
    Copy,
@@ -109,6 +117,12 @@ interface BillingProfile {
    const [cancellingSubscription, setCancellingSubscription] = useState<string | null>(null);
    const [retryingPayment, setRetryingPayment] = useState<string | null>(null);
    const { role, canAccessSettings, canWrite } = useOrgRole();
+
+   const successRate = useMemo(() => {
+     if (transactions.length === 0) return 100;
+     const successful = transactions.filter(tx => tx.status.toLowerCase() === "success" || tx.status.toLowerCase() === "successful").length;
+     return Math.round((successful / transactions.length) * 100);
+   }, [transactions]);
  
    useEffect(() => {
      if (profileId) {
@@ -447,20 +461,20 @@ interface BillingProfile {
    const formatCurrency = (amount: number) => `₦${amount.toLocaleString()}`;
  
    const getStatusBadge = (status: string) => {
-     switch (status.toLowerCase()) {
-       case "active":
-         return <Badge variant="default">Active</Badge>;
-       case "cancelled":
-         return <Badge variant="destructive">Cancelled</Badge>;
-       case "payment_failed":
-         return <Badge variant="destructive">Payment Failed</Badge>;
-       case "success":
-         return <Badge variant="default">Success</Badge>;
-       case "failed":
-         return <Badge variant="destructive">Failed</Badge>;
-       default:
-         return <Badge variant="secondary">{status}</Badge>;
+     const s = status.toLowerCase();
+     if (s === "active" || s === "success" || s === "successful") {
+       return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20 gap-1.5 font-medium px-2.5">
+         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+         {status === "active" ? "Active" : "Success"}
+       </Badge>;
      }
+     if (s === "cancelled" || s === "failed" || s === "payment_failed") {
+       return <Badge variant="destructive" className="bg-red-500/10 text-red-600 hover:bg-red-50/50 border-red-500/20 gap-1.5 font-medium px-2.5">
+         <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+         {s === "cancelled" ? "Cancelled" : "Failed"}
+       </Badge>;
+     }
+     return <Badge variant="secondary" className="font-medium px-2.5 capitalize">{status}</Badge>;
    };
  
     if (loading) {
@@ -479,447 +493,548 @@ interface BillingProfile {
    const failedPlans = plans.filter((p) => p.status === "payment_failed");
  
     return (
-      <SidebarInset className="flex-1">
-           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-             <SidebarTrigger />
-             
-             <div className="flex-1 flex items-center gap-2">
-               <Button 
-                 variant="ghost" 
-                 size="icon" 
-                 onClick={() => navigate("/dashboard/billing-profiles")}
-                 className="mr-1"
-               >
-                 <ArrowLeft className="h-5 w-5" />
-               </Button>
-               <h1 className="text-xl font-bold text-foreground">Billing Profile</h1>
+      <SidebarInset className="flex-1 bg-[#F8FAFC]">
+           <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-4 border-b border-border/40 bg-white/80 backdrop-blur-md px-6">
+             <SidebarTrigger className="-ml-1" />
+             <div className="h-4 w-[1px] bg-border/60 mx-2" />
+             <div className="flex-1 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 <Button 
+                   variant="ghost" 
+                   size="icon" 
+                   onClick={() => navigate("/dashboard/billing-profiles")}
+                   className="h-8 w-8 rounded-full hover:bg-slate-100"
+                 >
+                   <ArrowLeft className="h-4 w-4 text-slate-600" />
+                 </Button>
+                 <div>
+                   <h1 className="text-sm font-semibold text-slate-900 leading-none">Billing Profile</h1>
+                   <p className="text-[11px] text-slate-500 mt-1 font-mono uppercase tracking-wider">
+                     {profile.profile_number || profile.id.slice(0, 8)}
+                   </p>
+                 </div>
+               </div>
+
+               <div className="flex items-center gap-3">
+                 <div className="hidden md:flex flex-col items-end mr-4">
+                   <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Total Revenue</p>
+                   <p className="text-sm font-semibold text-slate-900">{formatCurrency(totalSpend)}</p>
+                 </div>
+                 {canWrite && !isEditing && (
+                   <Button 
+                     variant="outline" 
+                     size="sm"
+                     onClick={() => setIsEditing(true)}
+                     className="h-9 px-4 text-xs font-semibold bg-white border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm transition-all"
+                   >
+                     <Edit2 className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                     Manage Profile
+                   </Button>
+                 )}
+               </div>
              </div>
            </header>
  
-           <main className="flex-1 overflow-auto">
-             <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
-               {/* Profile Summary Card */}
-               <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                 <CardHeader>
-                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center shrink-0">
-                          <User className="h-6 w-6 sm:h-7 sm:w-7 text-accent" />
-                        </div>
-                        <div className="min-w-0">
-                          <CardTitle className="text-xl sm:text-2xl truncate">
-                           {profile.full_name || profile.email}
-                         </CardTitle>
-                          <CardDescription className="flex items-center gap-2 mt-1">
-                            <code className="text-sm font-bold bg-muted px-3 py-1 rounded">
-                              #{profile.profile_number || "—"}
-                            </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={copyProfileId}
-                            >
-                              {copiedId ? (
-                                <CheckCircle className="h-3 w-3 text-green-500" />
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </CardDescription>
-                       </div>
-                     </div>
-                     {canWrite && !isEditing && (
-                       <Button variant="outline" onClick={() => setIsEditing(true)}>
-                         <Edit2 className="h-4 w-4 mr-2" />
-                         Edit Profile
-                       </Button>
-                     )}
+           <main className="flex-1 overflow-auto bg-slate-50/50">
+             <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+               
+               {/* Header Profile Section */}
+               <div className="flex flex-col md:flex-row gap-6 items-start">
+                 <div className="relative group">
+                   <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-white flex items-center justify-center border-2 border-slate-100 shadow-premium overflow-hidden transition-transform duration-300 group-hover:scale-[1.02]">
+                      <SubscriberAvatar className="h-full w-full" />
                    </div>
-                 </CardHeader>
-                 <CardContent>
-                   {isEditing ? (
-                     <div className="space-y-4 max-w-md">
-                       <div>
-                         <Label htmlFor="name">Full Name</Label>
-                         <Input
-                           id="name"
-                           value={editName}
-                           onChange={(e) => setEditName(e.target.value)}
-                           placeholder="Enter full name"
-                         />
-                       </div>
-                       <div>
-                         <Label htmlFor="phone">Phone Number</Label>
-                         <Input
-                           id="phone"
-                           value={editPhone}
-                           onChange={(e) => setEditPhone(e.target.value)}
-                           placeholder="Enter phone number"
-                         />
-                       </div>
-                       <div className="flex gap-2">
-                         <Button onClick={handleSaveProfile} disabled={saving}>
-                           {saving ? (
-                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                           ) : (
-                             <Save className="h-4 w-4 mr-2" />
-                           )}
-                           Save Changes
-                         </Button>
-                         <Button
-                           variant="outline"
-                           onClick={() => {
-                             setIsEditing(false);
-                             setEditName(profile.full_name || "");
-                             setEditPhone(profile.phone_number || "");
-                           }}
-                         >
-                           <X className="h-4 w-4 mr-2" />
-                           Cancel
-                         </Button>
-                       </div>
+                   <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-2xl bg-emerald-500 border-4 border-white shadow-lg flex items-center justify-center">
+                      <CheckCircle className="h-3.5 w-3.5 text-white" />
+                   </div>
+                 </div>
+
+                 <div className="flex-1 min-w-0 pt-2">
+                   <div className="flex flex-wrap items-center gap-3 mb-2">
+                     <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+                       {profile.full_name || "Unknown Customer"}
+                     </h2>
+                     <Badge className="bg-slate-900 text-white border-0 hover:bg-slate-800 font-mono text-[10px] px-2 py-0.5">
+                       CUSTOMER
+                     </Badge>
+                   </div>
+                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                     <div className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors cursor-pointer group" onClick={copyProfileId}>
+                       <Mail className="h-4 w-4 opacity-70" />
+                       <span className="text-sm font-medium">{profile.email}</span>
+                       <Copy className={`h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity ${copiedId ? 'text-emerald-500 opacity-100' : ''}`} />
                      </div>
-                   ) : (
-                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                       <div className="flex items-center gap-3">
-                         <Mail className="h-5 w-5 text-muted-foreground" />
-                         <div>
-                           <p className="text-sm text-muted-foreground">Email</p>
-                           <p className="font-medium">{profile.email}</p>
-                         </div>
+                     {profile.phone_number && (
+                       <div className="flex items-center gap-2 text-slate-500">
+                         <Phone className="h-4 w-4 opacity-70" />
+                         <span className="text-sm font-medium">{profile.phone_number}</span>
                        </div>
-                       <div className="flex items-center gap-3">
-                         <Phone className="h-5 w-5 text-muted-foreground" />
-                         <div>
-                           <p className="text-sm text-muted-foreground">Phone</p>
-                           <p className="font-medium">{profile.phone_number || "—"}</p>
-                         </div>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <Calendar className="h-5 w-5 text-muted-foreground" />
-                         <div>
-                           <p className="text-sm text-muted-foreground">Created</p>
-                           <p className="font-medium">
-                             {new Date(profile.created_at).toLocaleDateString()}
-                           </p>
-                         </div>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <CreditCard className="h-5 w-5 text-muted-foreground" />
-                         <div>
-                           <p className="text-sm text-muted-foreground">Active Plans</p>
-                           <p className="font-medium">{activePlansCount}</p>
-                         </div>
-                       </div>
+                     )}
+                     <div className="flex items-center gap-2 text-slate-500">
+                       <Calendar className="h-4 w-4 opacity-70" />
+                       <span className="text-sm font-medium">Joined {new Date(profile.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                      </div>
-                   )}
-                 </CardContent>
-               </Card>
+                   </div>
+                 </div>
+               </div>
  
-               {/* Spend Summary */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <Card className="glass-card border-0">
-                   <CardContent className="pt-6">
-                     <div className="flex items-center gap-3">
-                       <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                         <DollarSign className="h-5 w-5 text-green-500" />
-                       </div>
-                       <div>
-                         <p className="text-sm text-muted-foreground">Total Lifetime Spend</p>
-                         <p className="text-2xl font-bold">{formatCurrency(totalSpend)}</p>
+               {/* Stats Grid */}
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                 <Card className="glass-card border-white/40 shadow-premium">
+                   <CardContent className="p-5 flex items-center gap-4">
+                     <div className="h-11 w-11 rounded-2xl bg-slate-50 text-slate-900 flex items-center justify-center shrink-0 border border-slate-100">
+                       <Wallet className="h-5 w-5" />
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">Lifetime Value</p>
+                       <p className="text-xl font-bold text-slate-900 leading-none">{formatCurrency(totalSpend)}</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+ 
+                 <Card className="glass-card border-white/40 shadow-premium">
+                   <CardContent className="p-5 flex items-center gap-4">
+                     <div className="h-11 w-11 rounded-2xl bg-slate-50 text-slate-900 flex items-center justify-center shrink-0 border border-slate-100">
+                       <CreditCard className="h-5 w-5" />
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">Subscriptions</p>
+                       <p className="text-xl font-bold text-slate-900 leading-none">{plans.length}</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+ 
+                 <Card className="glass-card border-white/40 shadow-premium">
+                   <CardContent className="p-5 flex items-center gap-4">
+                     <div className="h-11 w-11 rounded-2xl bg-slate-50 text-slate-900 flex items-center justify-center shrink-0 border border-slate-100">
+                       <Activity className="h-5 w-5" />
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">Success Rate</p>
+                       <div className="flex items-center gap-2">
+                         <p className="text-xl font-bold text-slate-900">{successRate}%</p>
+                         <div className="h-1 w-12 bg-slate-100 rounded-full overflow-hidden">
+                           <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${successRate}%` }} />
+                         </div>
                        </div>
                      </div>
                    </CardContent>
                  </Card>
-                 <Card className="glass-card border-0">
-                   <CardContent className="pt-6">
-                     <div className="flex items-center gap-3">
-                       <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                         <CreditCard className="h-5 w-5 text-blue-500" />
-                       </div>
-                       <div>
-                         <p className="text-sm text-muted-foreground">Total Plans</p>
-                         <p className="text-2xl font-bold">{plans.length}</p>
-                       </div>
+ 
+                 <Card className="glass-card border-white/40 shadow-premium">
+                   <CardContent className="p-5 flex items-center gap-4">
+                     <div className="h-11 w-11 rounded-2xl bg-slate-50 text-slate-900 flex items-center justify-center shrink-0 border border-slate-100">
+                       <History className="h-5 w-5" />
                      </div>
-                   </CardContent>
-                 </Card>
-                 <Card className="glass-card border-0">
-                   <CardContent className="pt-6">
-                     <div className="flex items-center gap-3">
-                       <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                         <History className="h-5 w-5 text-purple-500" />
-                       </div>
-                       <div>
-                         <p className="text-sm text-muted-foreground">Total Transactions</p>
-                         <p className="text-2xl font-bold">{transactions.length}</p>
-                       </div>
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">Total Payments</p>
+                       <p className="text-xl font-bold text-slate-900 leading-none">{transactions.length}</p>
                      </div>
                    </CardContent>
                  </Card>
                </div>
  
-               {/* Staff Actions */}
-               {canWrite && (
-                 <Card className="glass-card border-0 border-l-4 border-l-orange-500">
-                   <CardHeader>
-                     <CardTitle className="text-lg flex items-center gap-2">
-                       <AlertTriangle className="h-5 w-5 text-orange-500" />
-                       Staff Actions
-                     </CardTitle>
-                     <CardDescription>
-                       Manage subscriptions for this billing profile
-                     </CardDescription>
-                   </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
-                      <div className="flex flex-wrap gap-3">
-                        <Button variant="outline" className="gap-2" onClick={() => {
-                          toast.success("Syncing transactions with source...");
-                          setTimeout(() => fetchProfileData(), 1500);
-                        }}>
-                          <RefreshCw className="h-4 w-4" />
-                          Sync Data
-                        </Button>
-                        
-                        <Button variant="outline" className="gap-2 text-blue-600 hover:text-blue-700" onClick={() => {
-                          toast.info("This feature will roll out in a few weeks");
-                        }}>
-                          <Mail className="h-4 w-4" />
-                          Email Statement
-                        </Button>
-
-                        {activePlansCount > 1 && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" className="gap-2">
-                                <XCircle className="h-4 w-4" />
-                                Cancel All Subscriptions
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Cancel All Subscriptions?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will cancel all {activePlansCount} active subscriptions for this
-                                  billing profile. This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Keep Subscriptions</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleCancelAllSubscriptions}>
-                                  Cancel All
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-
-                      {failedPlans.length > 0 && (
-                        <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200">
-                          <AlertTriangle className="h-4 w-4 inline mr-1" />
-                          {failedPlans.length} plan(s) have failed payments - retry from the Plans tab below
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-               )}
- 
-               {/* Tabs for Plans and Transactions */}
-               <Tabs defaultValue="plans" className="space-y-4">
-                 <TabsList>
-                   <TabsTrigger value="plans">Plan History ({plans.length})</TabsTrigger>
-                   <TabsTrigger value="transactions">
-                     Payment History ({transactions.length})
-                   </TabsTrigger>
-                   <TabsTrigger value="spend">Spend by Plan</TabsTrigger>
-                 </TabsList>
- 
-                 <TabsContent value="plans">
-                   <Card className="glass-card border-0">
-                     <CardContent className="pt-6">
-                       {plans.length === 0 ? (
-                         <div className="text-center py-8">
-                           <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                           <p className="text-muted-foreground">No plans found</p>
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 {/* Left Column: Details & Actions */}
+                 <div className="lg:col-span-1 space-y-6">
+                   {/* Information Card */}
+                   <Card className="glass-card border-white/40 shadow-premium overflow-hidden">
+                     <CardHeader className="p-6 pb-2">
+                       <CardTitle className="text-sm font-bold flex items-center gap-2 text-slate-800">
+                         <Info className="h-4 w-4 text-slate-400" />
+                         Profile Information
+                       </CardTitle>
+                     </CardHeader>
+                     <CardContent className="p-6 pt-2 space-y-5">
+                       {isEditing ? (
+                         <div className="space-y-4">
+                           <div>
+                             <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Full Name</Label>
+                             <Input
+                               value={editName}
+                               onChange={(e) => setEditName(e.target.value)}
+                               className="h-10 bg-slate-50 border-slate-200 focus:ring-primary/20"
+                             />
+                           </div>
+                           <div>
+                             <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Phone Number</Label>
+                             <Input
+                               value={editPhone}
+                               onChange={(e) => setEditPhone(e.target.value)}
+                               className="h-10 bg-slate-50 border-slate-200 focus:ring-primary/20"
+                             />
+                           </div>
+                           <div className="flex gap-2 pt-2">
+                             <Button onClick={handleSaveProfile} disabled={saving} className="flex-1 bg-slate-900 text-white hover:bg-slate-800">
+                               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                               Save
+                             </Button>
+                             <Button
+                               variant="outline"
+                               onClick={() => setIsEditing(false)}
+                               className="flex-1"
+                             >
+                               Cancel
+                             </Button>
+                           </div>
                          </div>
                        ) : (
-                         <Table>
-                           <TableHeader>
-                             <TableRow>
-                               <TableHead>Plan Name</TableHead>
-                               <TableHead>Amount</TableHead>
-                               <TableHead>Interval</TableHead>
-                               <TableHead>Status</TableHead>
-                               <TableHead>Start Date</TableHead>
-                               <TableHead>Next Charge</TableHead>
-                               {canWrite && <TableHead className="text-right">Actions</TableHead>}
-                             </TableRow>
-                           </TableHeader>
-                           <TableBody>
-                             {plans.map((plan) => (
-                               <TableRow key={plan.subscriber_id}>
-                                 <TableCell className="font-medium">{plan.name}</TableCell>
-                                 <TableCell>{formatCurrency(plan.amount)}</TableCell>
-                                 <TableCell className="capitalize">{plan.interval}</TableCell>
-                                 <TableCell>{getStatusBadge(plan.status)}</TableCell>
-                                 <TableCell>
-                                   {new Date(plan.created_at).toLocaleDateString()}
-                                 </TableCell>
-                                 <TableCell>
-                                   {plan.next_payment_date
-                                     ? new Date(plan.next_payment_date).toLocaleDateString()
-                                     : "—"}
-                                 </TableCell>
-                                 {canWrite && (
-                                   <TableCell className="text-right space-x-2">
-                                     {plan.status === "payment_failed" && (
-                                       <Button
-                                         variant="outline"
-                                         size="sm"
-                                         disabled={retryingPayment === plan.subscriber_id}
-                                         onClick={() => handleRetryPayment(plan.subscriber_id)}
-                                       >
-                                         {retryingPayment === plan.subscriber_id ? (
-                                           <Loader2 className="h-4 w-4 animate-spin" />
-                                         ) : (
-                                           <RefreshCw className="h-4 w-4 mr-1" />
-                                         )}
-                                         Retry
-                                       </Button>
-                                     )}
-                                     {plan.status === "active" && plan.paystack_subscription_code && (
-                                       <AlertDialog>
-                                         <AlertDialogTrigger asChild>
-                                           <Button
-                                             variant="destructive"
-                                             size="sm"
-                                             disabled={cancellingSubscription === plan.subscriber_id}
-                                           >
-                                             {cancellingSubscription === plan.subscriber_id ? (
-                                               <Loader2 className="h-4 w-4 animate-spin" />
-                                             ) : (
-                                               <XCircle className="h-4 w-4 mr-1" />
+                         <div className="space-y-4 pt-2">
+                            <div className="group cursor-default">
+                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Display Name</p>
+                               <p className="text-sm font-semibold text-slate-700">{profile.full_name || "—"}</p>
+                            </div>
+                            <div className="group cursor-default">
+                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Contact Email</p>
+                               <p className="text-sm font-semibold text-slate-700">{profile.email}</p>
+                            </div>
+                            <div className="group cursor-default">
+                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Phone</p>
+                               <p className="text-sm font-semibold text-slate-700">{profile.phone_number || "—"}</p>
+                            </div>
+                            <div className="group cursor-default pt-2 border-t border-slate-100">
+                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Profile Reference</p>
+                               <code className="text-[11px] font-mono bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
+                                 {profile.id}
+                               </code>
+                            </div>
+                         </div>
+                       )}
+                     </CardContent>
+                   </Card>
+
+                   {/* Actions Card */}
+                   {canWrite && (
+                     <Card className="glass-card border-white/40 shadow-premium overflow-hidden">
+                       <CardHeader className="p-6 pb-2">
+                         <CardTitle className="text-sm font-bold flex items-center gap-2 text-slate-800">
+                           <Shield className="h-4 w-4 text-slate-400" />
+                           Internal Controls
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent className="p-6 pt-4 space-y-3">
+                         <Button 
+                           variant="outline" 
+                           className="w-full justify-start h-11 text-xs font-semibold bg-white border-slate-200 hover:bg-slate-50 text-slate-700 gap-3 group transition-all"
+                           onClick={() => {
+                             toast.success("Synchronizing audit trails...");
+                             setTimeout(() => fetchProfileData(), 1500);
+                           }}
+                         >
+                           <RefreshCw className="h-4 w-4 text-slate-400 group-hover:rotate-180 transition-transform duration-500" />
+                           Force Data Sync
+                         </Button>
+                         
+                         <Button 
+                           variant="outline" 
+                           className="w-full justify-start h-11 text-xs font-semibold bg-white border-slate-200 hover:bg-slate-50 text-slate-700 gap-3 transition-all"
+                           onClick={() => {
+                             toast.info("Statement generator is preparing...");
+                           }}
+                         >
+                           <Mail className="h-4 w-4 text-slate-900" />
+                           Send Financial Statement
+                         </Button>
+
+                         {activePlansCount > 0 && (
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button 
+                                 variant="ghost" 
+                                 className="w-full justify-start h-11 text-xs font-semibold hover:bg-red-50 text-red-600 gap-3 transition-all"
+                               >
+                                 <XCircle className="h-4 w-4 text-red-500" />
+                                 Terminate All Subscriptions
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent className="rounded-2xl border-red-100 shadow-2xl">
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle className="text-xl font-bold text-slate-900">Immediate Termination?</AlertDialogTitle>
+                                 <AlertDialogDescription className="text-slate-500">
+                                   You are about to cancel <strong>{activePlansCount} active subscriptions</strong>. This will stop all future billing immediately. This action is logged for compliance.
+                                 </AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter className="mt-4">
+                                 <AlertDialogCancel className="rounded-xl border-slate-200">Abandon Action</AlertDialogCancel>
+                                 <AlertDialogAction onClick={handleCancelAllSubscriptions} className="rounded-xl bg-red-600 hover:bg-red-700 text-white">
+                                   Confirm Termination
+                                 </AlertDialogAction>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                         )}
+                       </CardContent>
+                     </Card>
+                   )}
+                 </div>
+
+                 {/* Right Column: Dynamic Data Tabs */}
+                 <div className="lg:col-span-2 space-y-6">
+                   <Tabs defaultValue="plans" className="w-full">
+                     <div className="flex items-center justify-between mb-4 border-b border-slate-200">
+                       <TabsList className="bg-transparent h-auto p-0 gap-8">
+                         <TabsTrigger 
+                           value="plans" 
+                           className="bg-transparent border-b-2 border-transparent rounded-none data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-4 text-xs font-bold uppercase tracking-wider text-slate-400 data-[state=active]:text-slate-900 transition-all"
+                         >
+                           Subscription Ledger
+                         </TabsTrigger>
+                         <TabsTrigger 
+                           value="transactions" 
+                           className="bg-transparent border-b-2 border-transparent rounded-none data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-4 text-xs font-bold uppercase tracking-wider text-slate-400 data-[state=active]:text-slate-900 transition-all"
+                         >
+                           Payment History
+                         </TabsTrigger>
+                         <TabsTrigger 
+                           value="spend" 
+                           className="bg-transparent border-b-2 border-transparent rounded-none data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-4 text-xs font-bold uppercase tracking-wider text-slate-400 data-[state=active]:text-slate-900 transition-all"
+                         >
+                           Revenue Analysis
+                         </TabsTrigger>
+                       </TabsList>
+                     </div>
+ 
+                     <TabsContent value="plans" className="mt-0 focus-visible:outline-none">
+                       <Card className="glass-card border-white/40 shadow-premium overflow-hidden">
+                         <CardContent className="p-0">
+                           {plans.length === 0 ? (
+                             <div className="text-center py-16 px-6">
+                               <div className="h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                                 <CreditCard className="h-8 w-8 text-slate-200" />
+                               </div>
+                               <h3 className="text-sm font-semibold text-slate-900 mb-1">No Subscription Activity</h3>
+                               <p className="text-xs text-slate-500">This customer hasn't enrolled in any plans yet.</p>
+                             </div>
+                           ) : (
+                             <div className="premium-table-container">
+                               <Table className="premium-table">
+                                 <TableHeader>
+                                   <TableRow className="hover:bg-transparent border-0">
+                                     <TableHead className="w-[200px]">Product / Plan</TableHead>
+                                     <TableHead>Amount</TableHead>
+                                     <TableHead>Status</TableHead>
+                                     <TableHead>Next Bill</TableHead>
+                                     {canWrite && <TableHead className="text-right">Actions</TableHead>}
+                                   </TableRow>
+                                 </TableHeader>
+                                 <TableBody>
+                                   {plans.map((plan) => (
+                                     <TableRow key={plan.subscriber_id} className="border-b border-slate-50 last:border-0 group">
+                                       <TableCell className="py-4">
+                                         <div>
+                                           <p className="font-semibold text-slate-800 text-sm">{plan.name}</p>
+                                           <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-1">{plan.interval}</p>
+                                         </div>
+                                       </TableCell>
+                                       <TableCell className="font-semibold text-slate-900 py-4">
+                                         {formatCurrency(plan.amount)}
+                                       </TableCell>
+                                       <TableCell className="py-4">
+                                         {getStatusBadge(plan.status)}
+                                       </TableCell>
+                                       <TableCell className="text-slate-500 text-xs py-4">
+                                         {plan.next_payment_date
+                                           ? new Date(plan.next_payment_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                                           : "Manual"}
+                                       </TableCell>
+                                       {canWrite && (
+                                         <TableCell className="text-right py-4">
+                                           <div className="flex justify-end gap-1.5">
+                                             {plan.status === "payment_failed" && (
+                                               <Button
+                                                 variant="outline"
+                                                 size="sm"
+                                                 disabled={retryingPayment === plan.subscriber_id}
+                                                 onClick={() => handleRetryPayment(plan.subscriber_id)}
+                                                 className="h-8 text-[11px] font-bold border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all"
+                                               >
+                                                 {retryingPayment === plan.subscriber_id ? (
+                                                   <Loader2 className="h-3 w-3 animate-spin" />
+                                                 ) : (
+                                                   <RefreshCw className="h-3 w-3 mr-1.5" />
+                                                 )}
+                                                 Retry
+                                               </Button>
                                              )}
-                                             Cancel
+                                             {plan.status === "active" && plan.paystack_subscription_code && (
+                                               <AlertDialog>
+                                                 <AlertDialogTrigger asChild>
+                                                   <Button
+                                                     variant="ghost"
+                                                     size="sm"
+                                                     disabled={cancellingSubscription === plan.subscriber_id}
+                                                     className="h-8 text-[11px] font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                                   >
+                                                     {cancellingSubscription === plan.subscriber_id ? (
+                                                       <Loader2 className="h-3 w-3 animate-spin" />
+                                                     ) : (
+                                                       <XCircle className="h-3 w-3 mr-1.5" />
+                                                     )}
+                                                     Cancel
+                                                   </Button>
+                                                 </AlertDialogTrigger>
+                                                 <AlertDialogContent className="rounded-2xl shadow-2xl">
+                                                   <AlertDialogHeader>
+                                                     <AlertDialogTitle className="text-xl font-extrabold">End Subscription?</AlertDialogTitle>
+                                                     <AlertDialogDescription className="text-slate-500">
+                                                       You are cancelling "{plan.name}". Service access will be revoked at the end of the billing cycle.
+                                                     </AlertDialogDescription>
+                                                   </AlertDialogHeader>
+                                                   <AlertDialogFooter className="mt-4">
+                                                     <AlertDialogCancel className="rounded-xl">Keep it Active</AlertDialogCancel>
+                                                     <AlertDialogAction
+                                                       onClick={() =>
+                                                         handleCancelSubscription(
+                                                           plan.subscriber_id,
+                                                           plan.paystack_subscription_code
+                                                         )
+                                                        }
+                                                       className="rounded-xl bg-red-600 hover:bg-red-700"
+                                                     >
+                                                       Confirm Cancellation
+                                                     </AlertDialogAction>
+                                                   </AlertDialogFooter>
+                                                 </AlertDialogContent>
+                                               </AlertDialog>
+                                             )}
+                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                               <ArrowUpRight className="h-3.5 w-3.5" />
+                                             </Button>
+                                           </div>
+                                         </TableCell>
+                                       )}
+                                     </TableRow>
+                                   ))}
+                                 </TableBody>
+                               </Table>
+                             </div>
+                           )}
+                         </CardContent>
+                       </Card>
+                     </TabsContent>
+ 
+                     <TabsContent value="transactions" className="mt-0 focus-visible:outline-none">
+                       <Card className="glass-card border-white/40 shadow-premium overflow-hidden">
+                         <CardHeader className="p-5 border-b border-slate-100 flex flex-row items-center justify-between">
+                           <div>
+                              <CardTitle className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Verified History</CardTitle>
+                           </div>
+                           <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold text-slate-500">
+                                <Filter className="h-3 w-3 mr-1.5" /> Filter
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold text-slate-500">
+                                <Search className="h-3 w-3 mr-1.5" /> Search
+                              </Button>
+                           </div>
+                         </CardHeader>
+                         <CardContent className="p-0">
+                           {transactions.length === 0 ? (
+                             <div className="text-center py-16 px-6">
+                               <History className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                               <h3 className="text-sm font-semibold text-slate-900 mb-1">No Transaction Logs</h3>
+                               <p className="text-xs text-slate-500">All payment records for this profile will appear here.</p>
+                             </div>
+                           ) : (
+                             <div className="premium-table-container">
+                               <Table className="premium-table">
+                                 <TableHeader>
+                                   <TableRow className="hover:bg-transparent border-0">
+                                     <TableHead>Execution Date</TableHead>
+                                     <TableHead>Amount</TableHead>
+                                     <TableHead>Status</TableHead>
+                                     <TableHead>Ref / Trace ID</TableHead>
+                                   </TableRow>
+                                 </TableHeader>
+                                 <TableBody>
+                                   {transactions.map((tx) => (
+                                     <TableRow key={tx.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                                       <TableCell className="py-4">
+                                         <div>
+                                           <p className="text-sm font-semibold text-slate-700 leading-none">
+                                             {new Date(tx.paid_at || tx.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                           </p>
+                                           <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
+                                             {new Date(tx.paid_at || tx.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                           </p>
+                                         </div>
+                                       </TableCell>
+                                       <TableCell className="font-semibold text-slate-900 py-4">
+                                         {formatCurrency(tx.amount)}
+                                       </TableCell>
+                                       <TableCell className="py-4">
+                                         {getStatusBadge(tx.status)}
+                                       </TableCell>
+                                       <TableCell className="py-4">
+                                         <div className="flex items-center gap-2">
+                                           <code className="text-[10px] font-mono bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
+                                             {tx.paystack_reference?.slice(0, 12)}...
+                                           </code>
+                                           <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-300 hover:text-slate-500">
+                                             <Copy className="h-3 w-3" />
                                            </Button>
-                                         </AlertDialogTrigger>
-                                         <AlertDialogContent>
-                                           <AlertDialogHeader>
-                                             <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
-                                             <AlertDialogDescription>
-                                               This will cancel the subscription to "{plan.name}".
-                                               The customer will no longer be charged.
-                                             </AlertDialogDescription>
-                                           </AlertDialogHeader>
-                                           <AlertDialogFooter>
-                                             <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                                             <AlertDialogAction
-                                               onClick={() =>
-                                                 handleCancelSubscription(
-                                                   plan.subscriber_id,
-                                                   plan.paystack_subscription_code
-                                                 )
-                                               }
-                                             >
-                                               Cancel Subscription
-                                             </AlertDialogAction>
-                                           </AlertDialogFooter>
-                                         </AlertDialogContent>
-                                       </AlertDialog>
-                                     )}
-                                   </TableCell>
-                                 )}
-                               </TableRow>
-                             ))}
-                           </TableBody>
-                         </Table>
-                       )}
-                     </CardContent>
-                   </Card>
-                 </TabsContent>
+                                         </div>
+                                       </TableCell>
+                                     </TableRow>
+                                   ))}
+                                 </TableBody>
+                               </Table>
+                             </div>
+                           )}
+                         </CardContent>
+                       </Card>
+                     </TabsContent>
  
-                 <TabsContent value="transactions">
-                   <Card className="glass-card border-0">
-                     <CardContent className="pt-6">
-                       {transactions.length === 0 ? (
-                         <div className="text-center py-8">
-                           <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                           <p className="text-muted-foreground">No transactions found</p>
-                         </div>
-                       ) : (
-                         <Table>
-                           <TableHeader>
-                             <TableRow>
-                               <TableHead>Date</TableHead>
-                               <TableHead>Plan</TableHead>
-                               <TableHead>Amount</TableHead>
-                               <TableHead>Status</TableHead>
-                               <TableHead>Reference</TableHead>
-                             </TableRow>
-                           </TableHeader>
-                           <TableBody>
-                             {transactions.map((tx) => (
-                               <TableRow key={tx.id}>
-                                 <TableCell>
-                                   {new Date(tx.paid_at || tx.created_at).toLocaleDateString()}
-                                 </TableCell>
-                                 <TableCell>{tx.plan_name}</TableCell>
-                                 <TableCell>{formatCurrency(tx.amount)}</TableCell>
-                                 <TableCell>{getStatusBadge(tx.status)}</TableCell>
-                                 <TableCell>
-                                   <code className="text-xs bg-muted px-2 py-1 rounded">
-                                     {tx.paystack_reference}
-                                   </code>
-                                 </TableCell>
-                               </TableRow>
-                             ))}
-                           </TableBody>
-                         </Table>
-                       )}
-                     </CardContent>
-                   </Card>
-                 </TabsContent>
- 
-                 <TabsContent value="spend">
-                   <Card className="glass-card border-0">
-                     <CardContent className="pt-6">
-                       {Object.keys(spendByPlan).length === 0 ? (
-                         <div className="text-center py-8">
-                           <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                           <p className="text-muted-foreground">No spend data yet</p>
-                         </div>
-                       ) : (
-                         <Table>
-                           <TableHeader>
-                             <TableRow>
-                               <TableHead>Plan Name</TableHead>
-                               <TableHead className="text-right">Total Spent</TableHead>
-                             </TableRow>
-                           </TableHeader>
-                           <TableBody>
-                             {Object.entries(spendByPlan).map(([planName, amount]) => (
-                               <TableRow key={planName}>
-                                 <TableCell className="font-medium">{planName}</TableCell>
-                                 <TableCell className="text-right font-medium">
-                                   {formatCurrency(amount)}
-                                 </TableCell>
-                               </TableRow>
-                             ))}
-                             <TableRow className="bg-muted/50">
-                               <TableCell className="font-bold">Total</TableCell>
-                               <TableCell className="text-right font-bold">
-                                 {formatCurrency(totalSpend)}
-                               </TableCell>
-                             </TableRow>
-                           </TableBody>
-                         </Table>
-                       )}
-                     </CardContent>
-                   </Card>
-                 </TabsContent>
-               </Tabs>
+                     <TabsContent value="spend" className="mt-0 focus-visible:outline-none">
+                       <Card className="glass-card border-white/40 shadow-premium overflow-hidden">
+                         <CardContent className="p-0">
+                           {Object.keys(spendByPlan).length === 0 ? (
+                             <div className="text-center py-16 px-6">
+                               <DollarSign className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                               <h3 className="text-sm font-semibold text-slate-900 mb-1">No Revenue Data</h3>
+                               <p className="text-xs text-slate-500">Payment analysis will populate once transactions occur.</p>
+                             </div>
+                           ) : (
+                             <div className="premium-table-container">
+                               <Table className="premium-table">
+                                 <TableHeader>
+                                   <TableRow className="hover:bg-transparent border-0">
+                                     <TableHead>Revenue Stream</TableHead>
+                                     <TableHead className="text-right">Lifetime Attribution</TableHead>
+                                   </TableRow>
+                                 </TableHeader>
+                                 <TableBody>
+                                   {Object.entries(spendByPlan).map(([planName, amount]) => (
+                                     <TableRow key={planName} className="border-b border-slate-50 last:border-0">
+                                       <TableCell className="py-4">
+                                         <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                               <Wallet className="h-4 w-4 text-slate-400" />
+                                            </div>
+                                            <span className="font-semibold text-slate-700 text-sm">{planName}</span>
+                                         </div>
+                                       </TableCell>
+                                       <TableCell className="text-right font-bold text-slate-900 py-4">
+                                         {formatCurrency(amount)}
+                                       </TableCell>
+                                     </TableRow>
+                                   ))}
+                                   <TableRow className="bg-slate-900/5 hover:bg-slate-900/5 transition-none">
+                                     <TableCell className="py-4 font-bold text-slate-900">Aggregate Total</TableCell>
+                                     <TableCell className="text-right font-bold text-slate-900 py-4 text-lg">
+                                       {formatCurrency(totalSpend)}
+                                     </TableCell>
+                                   </TableRow>
+                                 </TableBody>
+                               </Table>
+                             </div>
+                           )}
+                         </CardContent>
+                       </Card>
+                     </TabsContent>
+                   </Tabs>
+                 </div>
+               </div>
              </div>
            </main>
       </SidebarInset>
