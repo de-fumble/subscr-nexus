@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -71,6 +72,7 @@ export default function DashboardAnalytics() {
   const [revenueData, setRevenueData] = useState<Array<{ month: string; revenue: number; }>>([]);
   const [planDistribution, setPlanDistribution] = useState<Array<{ name: string; value: number; }>>([]);
   const [subscriberTrend, setSubscriberTrend] = useState<Array<{ month: string; subscribers: number; }>>([]);
+  const [visualizeTab, setVisualizeTab] = useState<'revenue' | 'acquisitions' | 'distribution'>('revenue');
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -326,392 +328,405 @@ export default function DashboardAnalytics() {
             <div className="container py-6 sm:py-8 px-4 sm:px-6 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
               {/* Premium AI Banner */}
-              <div className="relative overflow-hidden rounded-2xl glass-card border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-secondary/5 p-6 shadow-soft group hover:shadow-glow transition-all duration-500">
-                <div className="absolute top-0 right-0 p-8 pointer-events-none opacity-20">
-                  <Sparkles className="w-48 h-48 animate-pulse text-primary" />
-                </div>
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div>
-                    <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent mb-2">
-                      Intelligent Insights
-                    </h2>
-                    <p className="text-muted-foreground text-sm max-w-xl leading-relaxed">
-                      Leverage our AI-driven analysis engine to uncover hidden trends in your subscriber base, predict churn before it happens, and discover precise pathways to accelerate MRR.
-                    </p>
-                  </div>
-                  <EphemeralAIDialog analyticsData={{
-                    totalRevenue: stats.totalRevenue,
-                    revenueGrowth: stats.revenueGrowth,
-                    activeSubscribers: stats.activeSubscribers,
-                    subscriberGrowth: stats.subscriberGrowth,
-                    averageRevenue: stats.averageRevenue,
-                    churnRate: stats.churnRate,
-                    revenueData,
-                    planDistribution
-                  }}>
-                    <Button className="gap-2 bg-primary/90 hover:bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all rounded-full px-6 hover:scale-105 active:scale-95">
-                      <Sparkles className="h-4 w-4" />
-                      Generate Report
-                    </Button>
-                  </EphemeralAIDialog>
-                </div>
-              </div>
+              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/15 via-background/80 to-accent/10 shadow-lg group transition-all duration-500 hover:border-primary/40 hover:shadow-primary/10 hover:shadow-xl">
+                {/* Animated background orbs */}
+                <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-primary/20 blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-700 pointer-events-none" />
+                <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-accent/15 blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-700 pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-24 bg-primary/5 blur-2xl pointer-events-none" />
 
-              {/* Top Row: Financials */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <Card className="glass-card hover-lift overflow-hidden border-border/50 group relative">
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-50"></div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between space-y-0 pb-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-muted-foreground">Lifetime Revenue</p>
-                        <ExplainPopover
-                          title="Lifetime Revenue"
-                          description="The total cumulative revenue collected from all subscription payments and one-time payments since the organization was created. This includes all successfully captured transactions drawn directly from your local database for maximum accuracy."
-                          formula="Σ(Subscription Txns) + Σ(One-Time Payments)"
-                        />
-                      </div>
-                      <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <DollarSign className="h-5 w-5 text-emerald-600" />
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-3xl font-bold tracking-tight">₦{stats.totalRevenue.toLocaleString()}</div>
-                      <p className={`text-xs font-medium mt-2 flex items-center ${stats.revenueGrowth >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                        {stats.revenueGrowth >= 0 ? <TrendingUp className="h-3.5 w-3.5 mr-1" /> : <TrendingDown className="h-3.5 w-3.5 mr-1" />}
-                        {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}% all time track
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Subtle grid mesh overlay */}
+                <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-                <Card className="glass-card hover-lift overflow-hidden border-border/50 group relative">
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 opacity-50"></div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between space-y-0 pb-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-muted-foreground">Monthly Recurring (MRR)</p>
-                        <ExplainPopover
-                          title="Monthly Recurring Revenue (MRR)"
-                          description="The predictable revenue your business generates from all currently active subscriptions each month. It represents your baseline financial health and is calculated from the live subscription price of every active plan."
-                          formula="Σ(Price of each Active Subscription)"
-                        />
+                <div className="relative z-10 p-5 sm:p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    {/* Left: identity + description */}
+                    <div className="flex items-start gap-4">
+                      {/* Icon badge */}
+                      <div className="shrink-0 h-11 w-11 rounded-xl bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20 flex items-center justify-center shadow-inner shadow-primary/10">
+                        <Sparkles className="h-5 w-5 text-primary animate-pulse" />
                       </div>
-                      <div className="h-10 w-10 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Activity className="h-5 w-5 text-blue-600" />
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-3xl font-bold tracking-tight">₦{stats.mrr.toLocaleString()}</div>
-                      <p className="text-xs font-medium mt-2 flex items-center text-blue-500">
-                        <ArrowUpRight className="h-3.5 w-3.5 mr-1" />
-                        From {stats.activeSubscribers} active subs
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass-card hover-lift overflow-hidden border-border/50 group relative">
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-400 to-indigo-500 opacity-50"></div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between space-y-0 pb-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-muted-foreground">Current Month</p>
-                        <ExplainPopover
-                          title="Current Month Revenue"
-                          description="The total revenue captured specifically within the current calendar month, covering both subscription renewals and one-time payments. The growth indicator compares this month's total against the previous month's."
-                          formula="Σ(All transactions paid in current calendar month)"
-                        />
-                      </div>
-                      <div className="h-10 w-10 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <CalendarDays className="h-5 w-5 text-purple-600" />
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-3xl font-bold tracking-tight">₦{stats.currentMonthRevenue.toLocaleString()}</div>
-                      <p className={`text-xs font-medium mt-2 flex items-center ${stats.revenueGrowth >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                        {stats.revenueGrowth >= 0 ? <TrendingUp className="h-3.5 w-3.5 mr-1" /> : <TrendingDown className="h-3.5 w-3.5 mr-1" />}
-                        {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}% vs last month
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Second Row: Subscriber Metrics */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <Card className="glass-card hover-lift border-border/50 group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between pb-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-muted-foreground">Active Subscriptions</p>
-                        <ExplainPopover
-                          title="Active Subscriptions"
-                          description="The total count of subscriber records currently in an 'active' status. This is a live count from your database and represents paying customers with valid, non-expired subscription plans."
-                        />
-                      </div>
-                      <div className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Users className="h-4 w-4 text-primary" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
-                    <p className="text-xs text-muted-foreground mt-1 text-primary/80">+{stats.subscriberGrowth}% relative growth</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass-card hover-lift border-border/50 group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between pb-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-muted-foreground">Average Revenue (ARPU)</p>
-                        <ExplainPopover
-                          title="Average Revenue Per User (ARPU)"
-                          description="The average amount of monthly recurring revenue generated per active subscriber. A higher ARPU indicates that customers are subscribing to more valuable, higher-tier plans."
-                          formula="MRR ÷ Active Subscribers"
-                        />
-                      </div>
-                      <div className="h-9 w-9 bg-accent/10 rounded-lg flex items-center justify-center">
-                        <BarChart3 className="h-4 w-4 text-accent" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold">₦{Math.round(stats.averageRevenue).toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground mt-1">Per active user</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass-card hover-lift border-border/50 group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between pb-2">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-muted-foreground">Platform Churn Rate</p>
-                        <ExplainPopover
-                          title="Platform Churn Rate"
-                          description="The percentage of all-time subscribers who have cancelled or not renewed their subscription. A lower churn rate indicates better subscriber retention. This is a historical churn measure, not period-specific."
-                          formula="(Cancelled Subs ÷ Total All-Time Subs) × 100"
-                        />
-                      </div>
-                      <div className="h-9 w-9 bg-rose-500/10 rounded-lg flex items-center justify-center">
-                        <TrendingDown className="h-4 w-4 text-rose-500" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold">{stats.churnRate}%</div>
-                    <p className="text-xs text-muted-foreground mt-1">Historically cancelled plans</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Charts Section */}
-              <div className="grid gap-6 grid-cols-1 xl:grid-cols-3">
-                {/* Main Area Chart */}
-                <Card className="xl:col-span-2 glass-card border-border/50 shadow-[var(--shadow-soft)] overflow-hidden">
-                  <CardHeader className="border-b border-border/30 bg-muted/20 pb-4">
-                    <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg font-bold flex items-center gap-2">
-                          <Activity className="h-5 w-5 text-primary" />
-                          Revenue Velocity
-                        </CardTitle>
-                        <CardDescription>Trailing 12-month aggregated capture</CardDescription>
-                      </div>
-                      <ExplainPopover
-                        title="Revenue Velocity"
-                        description="A 12-month rolling view of all revenue captured each calendar month. Each data point represents the sum of all successful subscription charges and one-time payments made within that month. Use this to spot seasonal trends, acceleration, or slowdown in revenue growth."
-                        formula="Monthly Total = Σ(Subscription Txns in month) + Σ(OTP Txns in month)"
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <ResponsiveContainer width="100%" height={320}>
-                      <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                        <XAxis
-                          dataKey="month"
-                          stroke="hsl(var(--muted-foreground))"
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                          dy={10}
-                        />
-                        <YAxis
-                          stroke="hsl(var(--muted-foreground))"
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
-                          dx={-10}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={3}
-                          fillOpacity={1}
-                          fill="url(#colorRevenue)"
-                          activeDot={{ r: 6, strokeWidth: 0, fill: "hsl(var(--primary))" }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                {/* Plan Distribution and Trend */}
-                <div className="space-y-6 flex flex-col">
-                  <Card className="glass-card border-border/50 shadow-[var(--shadow-soft)] flex-1">
-                    <CardHeader className="pb-2 relative">
-                      <div>
-                        <CardTitle className="text-base">Acquisition Kinetics</CardTitle>
-                        <CardDescription className="text-xs">New plans per month</CardDescription>
-                        <div className="mt-1">
-                          <ExplainPopover
-                            title="Acquisition Kinetics"
-                            description="Shows how many new subscribers signed up to any plan each calendar month over the past 12 months. This is a leading indicator of business growth — a rising bar trend means you are accelerating customer acquisition."
-                          />
+                        <div className="flex items-center gap-2 mb-1">
+                          <h2 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-accent">
+                            Intelligent Insights
+                          </h2>
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full border border-primary/30 text-primary/80 bg-primary/10">
+                            AI
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground text-xs max-w-lg leading-relaxed">
+                          Leverage our AI-driven analysis engine to uncover hidden trends in your subscriber base, predict churn, and discover exact pathways to accelerate MRR.
+                        </p>
+                        {/* Feature pills */}
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {['Churn Prediction', 'Revenue Trends', 'Growth Signals', 'Plan Insights'].map((label) => (
+                            <span key={label} className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-muted/60 border border-border/50 text-muted-foreground">
+                              {label}
+                            </span>
+                          ))}
                         </div>
                       </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="h-6 w-6 absolute right-4 top-4 hover:bg-muted">
-                              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] glass-card">
-                          <DialogHeader>
-                            <DialogTitle>Acquisition Breakdown</DialogTitle>
-                            <DialogDescription>
-                              Detailed month-by-month historical acquisition records.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-3 pt-4 max-h-[60vh] overflow-y-auto premium-scrollbar pr-2">
-                             {[...subscriberTrend].reverse().map((record, idx) => (
-                               <div key={idx} className="flex justify-between items-center p-3.5 rounded-xl border border-border/50 bg-background/50 hover:bg-muted/30 transition-colors">
-                                  <div className="flex items-center gap-3">
-                                      <CalendarDays className="h-4 w-4 text-accent" />
-                                      <span className="font-medium text-sm">{record.month}</span>
-                                  </div>
-                                  <div className="flex flex-col items-end">
-                                      <span className="font-bold text-accent">{record.subscribers} new</span>
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={180}>
-                        <BarChart data={subscriberTrend} margin={{ top: 20, right: 10, left: -25, bottom: 0 }}>
+                    </div>
+
+                    {/* Right: CTA */}
+                    <div className="shrink-0 flex flex-col items-start md:items-end gap-2">
+                      <EphemeralAIDialog analyticsData={{
+                        totalRevenue: stats.totalRevenue,
+                        revenueGrowth: stats.revenueGrowth,
+                        activeSubscribers: stats.activeSubscribers,
+                        subscriberGrowth: stats.subscriberGrowth,
+                        averageRevenue: stats.averageRevenue,
+                        churnRate: stats.churnRate,
+                        revenueData,
+                        planDistribution
+                      }}>
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 rounded-full px-5 hover:scale-105 active:scale-95 whitespace-nowrap font-semibold"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Generate AI Report
+                        </Button>
+                      </EphemeralAIDialog>
+                      <p className="text-[10px] text-muted-foreground/60">Powered by Recurra AI · Updated live</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom shimmer line */}
+                <div className="absolute bottom-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+              </div>
+
+              {/* Core Metrics */}
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+                <Card className="glass-card hover-lift overflow-hidden border-border/50 group relative">
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-50"></div>
+                  <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between space-y-0 mb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          Lifetime Revenue
+                          <ExplainPopover
+                            title="Lifetime Revenue"
+                            description="The total cumulative revenue collected from all subscription payments and one-time payments since the organization was created."
+                            formula="Σ(Subscription Txns) + Σ(One-Time Payments)"
+                          />
+                        </p>
+                      </div>
+                      <DollarSign className="h-4 w-4 text-emerald-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold tracking-tight">₦{(stats.totalRevenue / 1000).toLocaleString()}k</div>
+                      <p className={`text-[10px] font-medium mt-1 flex items-center ${stats.revenueGrowth >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                        {stats.revenueGrowth >= 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                        {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}% all time
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card hover-lift overflow-hidden border-border/50 group relative">
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-blue-400 to-cyan-500 opacity-50"></div>
+                  <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between space-y-0 mb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          MRR
+                          <ExplainPopover
+                            title="Monthly Recurring Revenue (MRR)"
+                            description="The predictable revenue your business generates from all currently active subscriptions each month."
+                            formula="Σ(Price of each Active Subscription)"
+                          />
+                        </p>
+                      </div>
+                      <Activity className="h-4 w-4 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold tracking-tight">₦{stats.mrr.toLocaleString()}</div>
+                      <p className="text-[10px] font-medium mt-1 flex items-center text-blue-500">
+                        <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                        From {stats.activeSubscribers} subs
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card hover-lift overflow-hidden border-border/50 group relative">
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-purple-400 to-indigo-500 opacity-50"></div>
+                  <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between space-y-0 mb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          Current Month
+                          <ExplainPopover
+                            title="Current Month Revenue"
+                            description="The total revenue captured specifically within the current calendar month."
+                            formula="Σ(All transactions paid in current calendar month)"
+                          />
+                        </p>
+                      </div>
+                      <CalendarDays className="h-4 w-4 text-purple-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold tracking-tight">₦{stats.currentMonthRevenue.toLocaleString()}</div>
+                      <p className={`text-[10px] font-medium mt-1 flex items-center ${stats.revenueGrowth >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                        {stats.revenueGrowth >= 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                        {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}% vs last mo
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card hover-lift border-border/50 group">
+                  <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between pb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          Active Subs
+                          <ExplainPopover
+                            title="Active Subscriptions"
+                            description="The total count of subscriber records currently in an 'active' status."
+                          />
+                        </p>
+                      </div>
+                      <Users className="h-4 w-4 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold">{stats.activeSubscribers}</div>
+                      <p className="text-[10px] text-muted-foreground mt-1 text-primary/80">+{stats.subscriberGrowth}% growth</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card hover-lift border-border/50 group">
+                  <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between pb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          ARPU
+                          <ExplainPopover
+                            title="Average Revenue Per User (ARPU)"
+                            description="The average amount of monthly recurring revenue generated per active subscriber."
+                            formula="MRR ÷ Active Subscribers"
+                          />
+                        </p>
+                      </div>
+                      <BarChart3 className="h-4 w-4 text-accent opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold">₦{Math.round(stats.averageRevenue).toLocaleString()}</div>
+                      <p className="text-[10px] text-muted-foreground mt-1">Per active user</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card hover-lift border-border/50 group">
+                  <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-center justify-between pb-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                          Churn Rate
+                          <ExplainPopover
+                            title="Platform Churn Rate"
+                            description="The percentage of all-time subscribers who have cancelled or not renewed their subscription."
+                            formula="(Cancelled Subs ÷ Total All-Time Subs) × 100"
+                          />
+                        </p>
+                      </div>
+                      <TrendingDown className="h-4 w-4 text-rose-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold">{stats.churnRate}%</div>
+                      <p className="text-[10px] text-muted-foreground mt-1">Cancelled plans</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Revenue Velocity — compact inline card */}
+              <Card className="glass-card border-border/50 shadow-[var(--shadow-soft)] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border/30 bg-muted/20 py-2.5 px-4">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-semibold">Revenue Velocity</span>
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">· Trailing 12-month</span>
+                  </div>
+                  <ExplainPopover
+                    title="Revenue Velocity"
+                    description="A 12-month rolling view of all revenue captured each calendar month. Each data point represents the sum of all successful subscription charges and one-time payments made within that month."
+                    formula="Monthly Total = Σ(Subscription Txns) + Σ(OTP Txns)"
+                  />
+                </div>
+                <CardContent className="p-0">
+                  <ResponsiveContainer width="100%" height={160}>
+                    <AreaChart data={revenueData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.25} />
+                      <XAxis
+                        dataKey="month"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        dy={6}
+                        tickFormatter={(v) => v.split(' ')[0]}
+                      />
+                      <YAxis
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`}
+                        dx={-4}
+                        width={45}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2.5}
+                        fillOpacity={1}
+                        fill="url(#colorRevenue)"
+                        activeDot={{ r: 5, strokeWidth: 0, fill: "hsl(var(--primary))" }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Visualize Section */}
+              <Card className="glass-card border-border/50 shadow-[var(--shadow-soft)] overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/30 bg-muted/20 py-2.5 px-4">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-semibold">Visualize</span>
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">· Choose a dataset to explore</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-muted/40 rounded-lg p-1">
+                    {(['revenue', 'acquisitions', 'distribution'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setVisualizeTab(tab)}
+                        className={cn(
+                          "px-3 py-1 text-xs font-medium rounded-md transition-all duration-200",
+                          visualizeTab === tab
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {tab === 'revenue' ? 'Revenue' : tab === 'acquisitions' ? 'Acquisitions' : 'Plan Split'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <CardContent className="p-0">
+                  {visualizeTab === 'revenue' && (
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-muted-foreground">Monthly revenue over the last 12 months</p>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <div className="w-2.5 h-2.5 rounded-full bg-primary/70" />
+                          <span className="text-muted-foreground">Revenue (₦)</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="vizRevenue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                          <XAxis 
-                            dataKey="month" 
-                            stroke="hsl(var(--muted-foreground))" 
-                            fontSize={10} 
-                            tickLine={false} 
-                            axisLine={false} 
-                            dy={5}
-                            tickFormatter={(value) => value.split(' ')[0]} 
-                          />
-                          <YAxis 
-                            stroke="hsl(var(--muted-foreground))" 
-                            fontSize={10} 
-                            tickLine={false} 
-                            axisLine={false} 
-                            dx={5}
-                            allowDecimals={false}
-                          />
-                          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--primary)/0.1)' }} />
-                          <Bar dataKey="subscribers" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                             <LabelList dataKey="subscribers" position="top" style={{ fill: "hsl(var(--foreground))", fontSize: 10 }} formatter={(v: number) => v > 0 ? v : ''} />
+                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={8} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₦${(v/1000).toFixed(0)}k`} dx={-4} width={48} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2.5} fillOpacity={1} fill="url(#vizRevenue)" activeDot={{ r: 6, strokeWidth: 0, fill: "hsl(var(--primary))" }} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                  {visualizeTab === 'acquisitions' && (
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-muted-foreground">New subscribers signed up per month</p>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <div className="w-2.5 h-2.5 rounded-full bg-accent/70" />
+                          <span className="text-muted-foreground">Subscribers</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <BarChart data={subscriberTrend} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={6} tickFormatter={(v) => v.split(' ')[0]} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dx={4} allowDecimals={false} />
+                          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--primary)/0.08)' }} />
+                          <Bar dataKey="subscribers" fill="hsl(var(--accent))" radius={[5, 5, 0, 0]} maxBarSize={48}>
+                            <LabelList dataKey="subscribers" position="top" style={{ fill: "hsl(var(--foreground))", fontSize: 10 }} formatter={(v: number) => v > 0 ? v : ''} />
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="glass-card border-border/50 shadow-[var(--shadow-soft)] flex-1 pt-2">
-                    <CardHeader className="pb-0 pt-4 relative">
-                      <div className="flex flex-col items-center justify-center gap-1">
-                         <CardTitle className="text-base text-center">Plan Distribution</CardTitle>
-                         <ExplainPopover
-                           title="Plan Distribution"
-                           description="A breakdown of your currently active subscribers across each plan. The donut chart segments are proportional to the subscriber count per plan. This shows which plans are most popular and helps inform pricing and packaging decisions."
-                         />
+                    </div>
+                  )}
+                  {visualizeTab === 'distribution' && (
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-muted-foreground">Active subscribers across each plan</p>
+                        <ExplainPopover
+                          title="Plan Distribution"
+                          description="A breakdown of your currently active subscribers across each plan. This shows which plans are most popular."
+                        />
                       </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="h-6 w-6 absolute right-4 top-4 hover:bg-muted">
-                              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] glass-card">
-                          <DialogHeader>
-                            <DialogTitle>Active Plans Breakdown</DialogTitle>
-                            <DialogDescription>
-                              Detailed breakdown of your current active subscriptions.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-3 pt-4 max-h-[60vh] overflow-y-auto premium-scrollbar pr-2">
-                             {planDistribution.map((plan, idx) => (
-                               <div key={idx} className="flex justify-between items-center p-3.5 rounded-xl border border-border/50 bg-background/50 hover:bg-muted/30 transition-colors">
-                                  <div className="flex items-center gap-3 w-[60%]">
-                                      <div className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm" style={{backgroundColor: COLORS[idx % COLORS.length]}}/>
-                                      <span className="font-medium text-sm truncate" title={plan.name}>{plan.name}</span>
-                                  </div>
-                                  <div className="flex flex-col items-end shrink-0">
-                                      <span className="font-bold">{plan.value} subs</span>
-                                      <span className="text-xs text-muted-foreground mt-0.5">
-                                          {((plan.value / (stats.activeSubscribers || 1)) * 100).toFixed(1)}% of total
-                                      </span>
-                                  </div>
-                               </div>
-                             ))}
-                             {planDistribution.length === 0 && (
-                                <p className="text-center text-sm text-muted-foreground py-4">No active plans found.</p>
-                             )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </CardHeader>
-                    <CardContent className="pb-4">
-                      <ResponsiveContainer width="100%" height={160}>
-                        <PieChart>
-                          <Pie
-                            data={planDistribution}
-                            cx="50%" cy="50%"
-                            innerRadius={45}
-                            outerRadius={65}
-                            paddingAngle={2}
-                            dataKey="value"
-                            stroke="none"
-                            labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, opacity: 0.5 }}
-                            label={({ name, value }) => `${name} (${value})`}
-                            style={{ fontSize: '10px', fill: 'hsl(var(--foreground))' }}
-                          >
-                            {planDistribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="hover:opacity-80 transition-opacity outline-none" />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<CustomTooltip />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="flex flex-wrap justify-center gap-3 mt-2">
-                        {planDistribution.map((entry, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                            {entry.name}
-                          </div>
-                        ))}
+                      <div className="flex flex-col lg:flex-row items-center gap-4">
+                        <ResponsiveContainer width="100%" height={240}>
+                          <PieChart>
+                            <Pie
+                              data={planDistribution}
+                              cx="50%" cy="50%"
+                              innerRadius={65}
+                              outerRadius={100}
+                              paddingAngle={3}
+                              dataKey="value"
+                              stroke="none"
+                            >
+                              {planDistribution.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="hover:opacity-80 transition-opacity outline-none" />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend
+                              iconType="circle"
+                              iconSize={8}
+                              formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="w-full lg:w-64 shrink-0 space-y-2">
+                          {planDistribution.length === 0 && <p className="text-center text-sm text-muted-foreground py-4">No active plans found.</p>}
+                          {planDistribution.map((plan, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                                <span className="text-xs font-medium truncate max-w-[120px]" title={plan.name}>{plan.name}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-xs font-bold">{plan.value}</span>
+                                <span className="text-[10px] text-muted-foreground ml-1">({((plan.value / (stats.activeSubscribers || 1)) * 100).toFixed(1)}%)</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
             </div>
             <FloatingSupport />

@@ -229,28 +229,46 @@ Powered by Recurra
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-accent" />
-            AI Analytics
-          </DialogTitle>
-          <DialogDescription>
-            Run AI-powered analysis on your business data
-          </DialogDescription>
+      <DialogContent className="
+        sm:max-w-2xl
+        max-h-[92vh] sm:max-h-[85vh]
+        flex flex-col
+        max-sm:fixed max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full max-sm:max-w-none
+        max-sm:rounded-t-2xl sm:rounded-2xl
+        max-sm:border-t max-sm:border-x sm:border border-border/60
+        bg-background/95 backdrop-blur-xl
+        shadow-2xl
+        p-0 gap-0
+        overflow-hidden
+      ">
+        {/* Header */}
+        <DialogHeader className="shrink-0 border-b border-border/40 bg-gradient-to-r from-primary/10 via-background to-accent/5 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20 flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                AI Analytics
+                <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full border border-primary/30 text-primary/80 bg-primary/10">Beta</span>
+              </DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
+                Run AI-powered analysis on your business data
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        {showWarning && !result && (
-          <Alert className="bg-amber-500/10 border-amber-500/30">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <AlertDescription className="text-amber-700 dark:text-amber-300 text-sm">
-              <strong>Important:</strong> This analysis is ephemeral. Your data and results are NOT saved or stored anywhere. 
-              Download the result if you want to keep it.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-4 flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
+          {showWarning && !result && (
+            <Alert className="bg-amber-500/10 border-amber-500/30">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertDescription className="text-amber-700 dark:text-amber-300 text-sm">
+                <strong>Important:</strong> This analysis is ephemeral. Your data and results are NOT saved or stored anywhere.
+                Download the result if you want to keep it.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Analysis Type</label>
             <Select value={selectedAction} onValueChange={setSelectedAction}>
@@ -348,12 +366,12 @@ Powered by Recurra
 
           {result && (
             <div className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline" className="flex-1 gap-2" onClick={handleDownload}>
                   <Download className="h-4 w-4" />
                   Download Result
                 </Button>
-                <Button variant="outline" className="gap-2" onClick={handleClear}>
+                <Button variant="outline" className="gap-2 sm:w-auto" onClick={handleClear}>
                   <Trash2 className="h-4 w-4" />
                   Clear
                 </Button>
@@ -365,6 +383,11 @@ Powered by Recurra
               />
             </div>
           )}
+        </div>
+
+        {/* Bottom drag handle on mobile */}
+        <div className="sm:hidden shrink-0 flex justify-center pb-3 pt-1">
+          <div className="w-10 h-1 rounded-full bg-border/60" />
         </div>
       </DialogContent>
     </Dialog>
