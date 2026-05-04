@@ -40,14 +40,12 @@ export function SuperAdminLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-background flex w-full">
+      <div className="h-screen overflow-hidden bg-background flex w-full">
         <SuperAdminSidebar />
-        
-        <SidebarInset className="flex-1 overflow-auto bg-grid-white/[0.02]">
+
+        <SidebarInset className="flex-1 overflow-y-auto overflow-x-hidden bg-grid-white/[0.02]">
           <SuperAdminHeader />
-          <div className="min-h-full">
-            <Outlet />
-          </div>
+          <Outlet />
         </SidebarInset>
       </div>
     </SidebarProvider>

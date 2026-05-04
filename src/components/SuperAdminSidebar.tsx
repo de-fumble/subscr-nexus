@@ -13,6 +13,7 @@ import {
   LayoutGrid,
   Webhook,
   Mail,
+  Megaphone,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -43,6 +44,7 @@ const navigation = [
   { name: 'Logs', href: '/superadmin/logs', icon: FileText },
   { name: 'API Management', href: '/superadmin/api-keys', icon: Webhook },
   { name: 'Email History', href: '/superadmin/email-history', icon: Mail },
+  { name: 'Onboarding', href: '/superadmin/onboarding', icon: Megaphone },
   { name: 'Licenses', href: '/superadmin/licenses', icon: Key },
   { name: 'KYC', href: '/superadmin/kyc', icon: FileCheck },
   { name: 'Profile', href: '/superadmin/profile', icon: UserIcon },

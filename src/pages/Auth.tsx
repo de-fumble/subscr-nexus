@@ -5,10 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Shield, Zap, BarChart3, Building2, User, Mail } from "lucide-react";
 import logoImage from "@/assets/logo.svg";
 import { logAuditEvent } from "@/utils/auditLogger";
+
+const REFERRAL_OPTIONS = [
+  { value: "instagram", label: "Instagram" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "snapchat", label: "Snapchat" },
+  { value: "google", label: "Google" },
+  { value: "from_a_friend", label: "From a friend" },
+  { value: "at_an_event", label: "At an event" },
+];
 type AccountType = "institution" | "user";
 type AuthMode = "login" | "signup" | "forgot-password";
 const Auth = () => {
@@ -19,6 +29,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [orgName, setOrgName] = useState("");
   const [fullName, setFullName] = useState("");
+  const [referralSource, setReferralSource] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const navigate = useNavigate();
@@ -171,6 +182,49 @@ const Auth = () => {
                 body: JSON.stringify({ email, user_id: newUserId }),
               }
             );
+            // Save referral source
+            if (referralSource) {
+              if (sessionToken) {
+                // Attempt to save immediately with the session token
+                fetch(
+                  `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/referral_sources`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                      Authorization: `Bearer ${sessionToken}`,
+                      Prefer: "return=minimal",
+                    },
+                    body: JSON.stringify({
+                      user_id: newUserId,
+                      email,
+                      org_name: orgName,
+                      source: referralSource,
+                    }),
+                  }
+                ).then(async (res) => {
+                  if (!res.ok) {
+                    const body = await res.text();
+                    console.error("[referral_sources] insert failed:", res.status, body);
+                    // Fallback: store in localStorage for retry
+                    localStorage.setItem("pending_referral", JSON.stringify({
+                      user_id: newUserId, email, org_name: orgName, source: referralSource,
+                    }));
+                  }
+                }).catch((err) => {
+                  console.error("[referral_sources] network error:", err);
+                  localStorage.setItem("pending_referral", JSON.stringify({
+                    user_id: newUserId, email, org_name: orgName, source: referralSource,
+                  }));
+                });
+              } else {
+                // No session token available — store for retry after OTP verification
+                localStorage.setItem("pending_referral", JSON.stringify({
+                  user_id: newUserId, email, org_name: orgName, source: referralSource,
+                }));
+              }
+            }
             // Send signup notification email using the session token before signing out
             if (sessionToken) {
               fetch(
@@ -385,6 +439,24 @@ const Auth = () => {
                 Organization Name
               </Label>
               <Input id="orgName" type="text" placeholder="Acme Inc." value={orgName} onChange={e => setOrgName(e.target.value)} required disabled={isLoading} className="h-12" />
+            </div>}
+
+            {authMode === "signup" && accountType === "institution" && <div className="space-y-2">
+              <Label htmlFor="referral-source" className="text-sm font-medium">
+                How did you hear about Recurra?
+              </Label>
+              <Select value={referralSource} onValueChange={setReferralSource} disabled={isLoading}>
+                <SelectTrigger id="referral-source" className="h-12 font-mono text-sm">
+                  <SelectValue placeholder="Select an option..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {REFERRAL_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="font-mono text-sm">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>}
 
             {authMode === "signup" && accountType === "user" && <div className="space-y-2">

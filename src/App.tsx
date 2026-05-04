@@ -47,6 +47,7 @@ import SuperAdminNameChanges from "./pages/SuperAdminNameChanges";
 import SuperAdminLicenses from "./pages/SuperAdminLicenses";
 import SuperAdminKYC from "./pages/SuperAdminKYC";
 import SuperAdminEmailHistory from "./pages/SuperAdminEmailHistory";
+import SuperAdminOnboarding from "./pages/SuperAdminOnboarding";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
 import { DashboardLayout } from "./components/DashboardLayout";
 // Footer Pages
@@ -148,6 +149,7 @@ const App = () => (
                 <Route path="/superadmin/licenses" element={<ProtectedRoute><SuperAdminLicenses /></ProtectedRoute>} />
                 <Route path="/superadmin/kyc" element={<ProtectedRoute><SuperAdminKYC /></ProtectedRoute>} />
                 <Route path="/superadmin/email-history" element={<ProtectedRoute><SuperAdminEmailHistory /></ProtectedRoute>} />
+                <Route path="/superadmin/onboarding" element={<ProtectedRoute><SuperAdminOnboarding /></ProtectedRoute>} />
               </Route>
               {/* Footer Pages */}
               <Route path="/about" element={<About />} />

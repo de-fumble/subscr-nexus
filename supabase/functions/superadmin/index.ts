@@ -111,7 +111,7 @@ serve(async (req) => {
         break;
       
       case 'get_platform_stats':
-        result = await getPlatformStats(supabase);
+        result = await getPlatformStats(supabase, params.data_source);
         break;
       
       case 'get_defaulted_subscribers':
@@ -887,8 +887,8 @@ async function getAuditLogs(supabase: any, entityType?: string, entityId?: strin
   return { audit_logs: data };
 }
 
-async function getPlatformStats(supabase: any) {
-  console.log('Fetching platform stats with live Paystack data...');
+async function getPlatformStats(supabase: any, dataSource: string = 'local') {
+  console.log(`Fetching platform stats with ${dataSource} data source...`);
   
   // Organization counts
   const { count: totalOrgs } = await supabase
@@ -905,12 +905,6 @@ async function getPlatformStats(supabase: any) {
     .select('*', { count: 'exact', head: true })
     .eq('is_suspended', true);
 
-  // Get all organizations with Paystack keys
-  const { data: orgsWithKeys } = await supabase
-    .from('organizations')
-    .select('id, org_name, paystack_secret_key')
-    .not('paystack_secret_key', 'is', null);
-
   let totalSubscribers = 0;
   let activeSubscribers = 0;
   let defaultedSubscribers = 0;
@@ -919,8 +913,105 @@ async function getPlatformStats(supabase: any) {
   let totalMRR = 0;
   let failedPayments = 0;
 
-  // Fetch live data from Paystack for each organization
-  for (const org of orgsWithKeys || []) {
+  // Setup trend data for last 6 months
+  const trendData: { [key: string]: { orgs: number, subs: number, rev: number } } = {};
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.toISOString().slice(0, 7); // YYYY-MM
+    trendData[key] = { orgs: 0, subs: 0, rev: 0 };
+  }
+
+  // Calculate org growth over last 6 months
+  const { data: allOrgs } = await supabase.from('organizations').select('created_at');
+  allOrgs?.forEach((o: any) => {
+    const orgDate = new Date(o.created_at);
+    Object.keys(trendData).forEach(monthKey => {
+      const monthDate = new Date(monthKey + '-01T23:59:59Z');
+      // Shift monthDate to the end of that month
+      monthDate.setMonth(monthDate.getMonth() + 1);
+      monthDate.setDate(0);
+      if (orgDate <= monthDate) {
+        trendData[monthKey].orgs++;
+      }
+    });
+  });
+
+  if (dataSource === 'local') {
+    // ----------------------------------------
+    // LOCAL DB DATA SOURCE
+    // ----------------------------------------
+    
+    // Subscribers
+    const { data: allSubscribers } = await supabase
+      .from('subscribers')
+      .select('*, subscription_plans(price, interval)');
+    
+    const subscribers = allSubscribers || [];
+    totalSubscribers = subscribers.length;
+    activeSubscribers = subscribers.filter((s: any) => ['active'].includes(s.status)).length;
+    defaultedSubscribers = subscribers.filter((s: any) => ['attention', 'paused', 'non-renewing'].includes(s.status)).length;
+
+    // Calculate MRR from active local subscribers
+    const activeSubs = subscribers.filter((s: any) => ['active'].includes(s.status));
+    totalMRR = activeSubs.reduce((sum: number, s: any) => {
+      const price = s.subscription_plans?.price || 0;
+      const interval = s.subscription_plans?.interval || 'monthly';
+      
+      switch (interval) {
+        case 'daily': return sum + (price * 30);
+        case 'weekly': return sum + (price * 4);
+        case 'monthly': return sum + price;
+        case 'quarterly': return sum + (price / 3);
+        case 'biannually': return sum + (price / 6);
+        case 'annually': return sum + (price / 12);
+        default: return sum + price;
+      }
+    }, 0);
+
+    // Transactions
+    const { data: allTransactions } = await supabase
+      .from('transactions')
+      .select('amount, status, created_at');
+    
+    const transactions = allTransactions || [];
+    const successfulTransactions = transactions.filter((t: any) => t.status === 'success');
+    totalTransactions = successfulTransactions.length;
+    totalRevenue = successfulTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+    failedPayments = transactions.filter((t: any) => t.status === 'failed').length;
+
+    // Populate trend data for subs and rev
+    subscribers.forEach((s: any) => {
+      const subDate = new Date(s.created_at);
+      Object.keys(trendData).forEach(monthKey => {
+        const monthDate = new Date(monthKey + '-01T23:59:59Z');
+        monthDate.setMonth(monthDate.getMonth() + 1);
+        monthDate.setDate(0);
+        if (subDate <= monthDate) {
+          trendData[monthKey].subs++;
+        }
+      });
+    });
+
+    successfulTransactions.forEach((t: any) => {
+      const tDate = new Date(t.created_at);
+      const monthKey = tDate.toISOString().slice(0, 7);
+      if (trendData[monthKey]) {
+        trendData[monthKey].rev += (t.amount || 0);
+      }
+    });
+
+  } else {
+    // ----------------------------------------
+    // PAYSTACK API DATA SOURCE
+    // ----------------------------------------
+    const { data: orgsWithKeys } = await supabase
+      .from('organizations')
+      .select('id, org_name, paystack_secret_key')
+      .not('paystack_secret_key', 'is', null);
+
+    // Fetch live data from Paystack for each organization
+    for (const org of orgsWithKeys || []) {
     if (!org.paystack_secret_key) continue;
 
     try {
@@ -948,11 +1039,41 @@ async function getPlatformStats(supabase: any) {
         failedPayments += (failedData.data || []).length;
       }
 
-      console.log(`Org ${org.org_name}: ${subscriptions.length} subs, ₦${transactions.reduce((s: number, t: any) => s + (t.amount || 0), 0) / 100} revenue`);
-    } catch (error) {
-      console.error(`Error fetching Paystack data for org ${org.org_name}:`, error);
+      // Add to trend data
+      subscriptions.forEach((s: any) => {
+        const subDate = new Date(s.createdAt || s.created_at);
+        Object.keys(trendData).forEach(monthKey => {
+          const monthDate = new Date(monthKey + '-01T23:59:59Z');
+          monthDate.setMonth(monthDate.getMonth() + 1);
+          monthDate.setDate(0);
+          if (subDate <= monthDate) {
+            trendData[monthKey].subs++;
+          }
+        });
+      });
+
+      transactions.forEach((t: any) => {
+        const tDate = new Date(t.paid_at || t.created_at);
+        const monthKey = tDate.toISOString().slice(0, 7);
+        if (trendData[monthKey]) {
+          trendData[monthKey].rev += (t.amount || 0) / 100;
+        }
+      });
+
+        console.log(`Org ${org.org_name}: ${subscriptions.length} subs, ₦${transactions.reduce((s: number, t: any) => s + (t.amount || 0), 0) / 100} revenue`);
+      } catch (error) {
+        console.error(`Error fetching Paystack data for org ${org.org_name}:`, error);
+      }
     }
   }
+
+  // Format trend data for frontend
+  const formattedTrendData = Object.entries(trendData).map(([month, data]) => ({
+    m: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short' }),
+    orgs: data.orgs,
+    subs: data.subs,
+    rev: data.rev
+  }));
 
   const platformEarnings = totalTransactions * PLATFORM_FEE_PER_TRANSACTION;
   const roundedMRR = Math.round(totalMRR);
@@ -992,6 +1113,7 @@ async function getPlatformStats(supabase: any) {
     pending_payouts: pendingPayouts || 0,
     pending_deletions: pendingDeletions || 0,
     pending_appeals: pendingAppeals || 0,
+    trend_data: formattedTrendData,
   };
 }
 

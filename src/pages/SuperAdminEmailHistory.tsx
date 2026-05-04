@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,8 @@ import {
   TrendingUp,
   AlertCircle,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { PremiumLoader } from "@/components/PremiumLoader";
 import {
@@ -65,16 +67,23 @@ const EMAIL_TYPE_COLORS: Record<string, string> = {
   superadmin_message: "bg-rose-500/10 text-rose-600 border-rose-500/30",
 };
 
+const PAGE_SIZE = 50;
+
 export default function SuperAdminEmailHistory() {
   const navigate = useNavigate();
   const { isSuperadmin, loading: authLoading } = useSuperadmin();
 
   const [logs, setLogs] = useState<EmailLog[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // debounce buffer
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
@@ -86,39 +95,70 @@ export default function SuperAdminEmailHistory() {
     }
   }, [authLoading, isSuperadmin, navigate]);
 
-  const fetchLogs = async (showRefresh = false) => {
+  // Debounce search input → searchQuery (resets to page 1)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const fetchLogs = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       let query = supabase
         .from("email_logs")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("sent_at", { ascending: false })
-        .limit(500);
+        .range(from, to);
 
-      // Apply date filter server-side
+      // Date filter
       if (dateFilter !== "all") {
         const now = new Date();
-        let from: Date;
+        let cutoff: Date;
         switch (dateFilter) {
           case "today":
-            from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             break;
           case "7days":
-            from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             break;
           case "30days":
-            from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
             break;
           default:
-            from = new Date(0);
+            cutoff = new Date(0);
         }
-        query = query.gte("sent_at", from.toISOString());
+        query = query.gte("sent_at", cutoff.toISOString());
       }
 
-      const { data, error } = await query;
+      // Type filter
+      if (typeFilter !== "all") {
+        query = query.eq("email_type", typeFilter);
+      }
+
+      // Status filter
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      // Search filter (partial match on email or subject)
+      if (searchQuery.trim()) {
+        query = query.or(
+          `recipient_email.ilike.%${searchQuery.trim()}%,recipient_name.ilike.%${searchQuery.trim()}%,subject.ilike.%${searchQuery.trim()}%`
+        );
+      }
+
+      const { data, error, count } = await query;
       if (error) throw error;
 
       setLogs((data as EmailLog[]) || []);
+      setTotalCount(count ?? 0);
       if (showRefresh) toast.success("Email history refreshed");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to fetch email history";
@@ -127,41 +167,27 @@ export default function SuperAdminEmailHistory() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [page, dateFilter, typeFilter, statusFilter, searchQuery]);
 
   useEffect(() => {
     if (isSuperadmin) fetchLogs();
-  }, [isSuperadmin, dateFilter]);
+  }, [isSuperadmin, fetchLogs]);
 
-  // Client-side filters
-  const filtered = logs.filter((log) => {
-    const matchSearch =
-      !searchQuery ||
-      log.recipient_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (log.recipient_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.subject.toLowerCase().includes(searchQuery.toLowerCase());
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-    const matchType = typeFilter === "all" || log.email_type === typeFilter;
-    const matchStatus = statusFilter === "all" || log.status === statusFilter;
-
-    return matchSearch && matchType && matchStatus;
-  });
-
-  const stats = {
-    total: logs.length,
-    sent: logs.filter((l) => l.status === "sent").length,
-    failed: logs.filter((l) => l.status === "failed").length,
-    types: [...new Set(logs.map((l) => l.email_type))].length,
-  };
-
-  const hasFilters = searchQuery || typeFilter !== "all" || statusFilter !== "all" || dateFilter !== "all";
+  const hasFilters = searchInput || typeFilter !== "all" || statusFilter !== "all" || dateFilter !== "all";
 
   const clearFilters = () => {
+    setSearchInput("");
     setSearchQuery("");
     setTypeFilter("all");
     setStatusFilter("all");
     setDateFilter("all");
+    setPage(1);
   };
+
+  // Reset page when filters change (except search — handled by debounce)
+  useEffect(() => { setPage(1); }, [typeFilter, statusFilter, dateFilter]);
 
   if (authLoading || loading) {
     return <PremiumLoader fullScreen message="Loading email history..." />;
@@ -199,27 +225,29 @@ export default function SuperAdminEmailHistory() {
         {[
           {
             label: "Total Emails",
-            value: stats.total,
+            value: totalCount,
             icon: MailOpen,
             color: "indigo",
           },
           {
-            label: "Delivered",
-            value: stats.sent,
+            label: "Page",
+            value: `${page} / ${totalPages}`,
+            icon: TrendingUp,
+            color: "violet",
+          },
+          {
+            label: "Per Page",
+            value: logs.length,
             icon: CheckCircle2,
             color: "emerald",
           },
           {
-            label: "Failed",
-            value: stats.failed,
+            label: "Showing",
+            value: totalCount > 0
+              ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, totalCount)}`
+              : "—",
             icon: XCircle,
             color: "rose",
-          },
-          {
-            label: "Email Types",
-            value: stats.types,
-            icon: TrendingUp,
-            color: "violet",
           },
         ].map(({ label, value, icon: Icon, color }) => (
           <Card key={label} className="border-black/5 dark:border-white/5 shadow-sm relative overflow-hidden group">
@@ -231,7 +259,7 @@ export default function SuperAdminEmailHistory() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${color === "rose" && value > 0 ? "text-rose-600 dark:text-rose-400" : ""}`}>
+              <div className="text-2xl font-bold">
                 {value}
               </div>
             </CardContent>
@@ -247,8 +275,9 @@ export default function SuperAdminEmailHistory() {
               <div>
                 <CardTitle>Email Log</CardTitle>
                 <CardDescription>
-                  {filtered.length} of {logs.length} emails
+                  {totalCount} email{totalCount !== 1 ? "s" : ""} total
                   {hasFilters && " (filtered)"}
+                  {" · "}{logs.length} on this page
                 </CardDescription>
               </div>
 
@@ -268,8 +297,8 @@ export default function SuperAdminEmailHistory() {
                 <Input
                   id="email-history-search"
                   placeholder="Search by recipient, subject..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-9 bg-background"
                 />
               </div>
@@ -329,7 +358,7 @@ export default function SuperAdminEmailHistory() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((log) => (
+                {logs.map((log) => (
                   <TableRow
                     key={log.id}
                     className="hover:bg-muted/30 transition-colors group"
@@ -386,7 +415,7 @@ export default function SuperAdminEmailHistory() {
                   </TableRow>
                 ))}
 
-                {filtered.length === 0 && (
+                {logs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-16 text-muted-foreground">
                       <Mail className="h-10 w-10 mx-auto mb-3 opacity-20" />
@@ -402,6 +431,62 @@ export default function SuperAdminEmailHistory() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Footer */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/20">
+              <p className="text-xs text-muted-foreground tabular-nums">
+                Showing <span className="font-semibold text-foreground">{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, totalCount)}</span> of <span className="font-semibold text-foreground">{totalCount}</span> emails
+              </p>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1 || refreshing}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Page number chips — show up to 7 around current page */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                  .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === "..." ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <Button
+                        key={item}
+                        variant={page === item ? "default" : "ghost"}
+                        size="icon"
+                        className="h-8 w-8 text-xs font-mono"
+                        onClick={() => setPage(item as number)}
+                        disabled={refreshing}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || refreshing}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

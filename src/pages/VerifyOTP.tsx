@@ -115,6 +115,29 @@ const VerifyOTP = () => {
       if (data.success) {
         setVerified(true);
         toast.success("Email verified successfully!");
+
+        // Flush any pending referral source that couldn't be saved during signup
+        try {
+          const pending = localStorage.getItem("pending_referral");
+          if (pending) {
+            const payload = JSON.parse(pending);
+            fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/referral_sources`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                  Prefer: "return=minimal",
+                },
+                body: JSON.stringify(payload),
+              }
+            ).then(() => localStorage.removeItem("pending_referral"))
+              .catch(() => {});
+          }
+        } catch { /* ignore */ }
+
         setTimeout(() => navigate("/auth"), 2500);
       } else if (data.expired) {
         toast.error("OTP has expired. Please request a new one.");
