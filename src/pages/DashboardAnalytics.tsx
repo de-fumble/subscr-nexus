@@ -18,6 +18,7 @@ import { Sparkles } from "lucide-react";
 import { AnalyticsPageSkeleton } from "@/components/DashboardSkeleton";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { format, subMonths, isSameMonth } from "date-fns";
+import { getDashboardDataSource } from "@/lib/dataSource";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 
@@ -102,173 +103,32 @@ export default function DashboardAnalytics() {
       }
       if (!orgId) return;
 
-      // 1. Fetch Plans
-      const { data: plans } = await supabase.from("subscription_plans").select("*").eq("org_id", orgId);
-
-      // 2. Fetch Subscribers
-      const { data: subscribers } = await supabase
-        .from("subscribers")
-        .select("id, status, email, amount, plan_id, created_at, subscription_plans!inner(org_id)")
-        .eq("subscription_plans.org_id", orgId);
-
-      const subscriberIds = subscribers?.map(s => s.id) || [];
-
-      // 3. Fetch Transactions
-      const { data: subTxns } = subscriberIds.length > 0
-        ? await supabase.from("transactions").select("*").in("subscriber_id", subscriberIds)
-        : { data: [] };
-
-      // 4. Fetch OTPs
-      const { data: directOtp } = await supabase
-        .from("one_time_payments")
-        .select("*")
-        .eq("org_id", orgId)
-        .eq("is_paid", true);
-
-      // 5. Fetch OTP txns
-      const { data: otpTxns } = await supabase
-        .from("one_time_payment_transactions")
-        .select("*, one_time_payments!inner(org_id)")
-        .eq("one_time_payments.org_id", orgId);
-
-      let totalRev = 0;
-      let mrrTotal = 0;
-      const allTransactions: { date: Date, amount: number }[] = [];
-
-      // --- Subscription transactions (amounts in Kobo → divide by 100) ---
-      subscribers?.forEach(sub => {
-        const plan = plans?.find(p => p.id === sub.plan_id);
-        const subAmountFallback = plan ? Number(plan.price) : 0;
-        // sub.amount is in Kobo from Paystack webhook
-        const subAmount = sub.amount ? (Number(sub.amount) / 100) : subAmountFallback;
-
-        if (sub.status === 'active') {
-          mrrTotal += subAmount;
-        }
-
-        const txns = subTxns?.filter(tx => tx.subscriber_id === sub.id) || [];
-
-        // Process all real recorded transactions for this subscriber
-        txns.forEach(tx => {
-          if (tx.status === "success" || tx.status === "Successful") {
-            const amount = Number(tx.amount) / 100; // Kobo → Naira
-            const txDate = new Date(tx.paid_at || tx.created_at);
-            totalRev += amount;
-            allTransactions.push({ date: txDate, amount });
-          }
-        });
-
-        // Synthetic initial payment ONLY when subscriber has ZERO recorded transactions.
-        // This handles webhook race conditions exclusively — never inflates existing data.
-        if (txns.length === 0 && subAmount > 0) {
-          const planCreatedAtDate = new Date(sub.created_at);
-          totalRev += subAmount;
-          allTransactions.push({ date: planCreatedAtDate, amount: subAmount });
-        }
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: { orgId, dataSource: getDashboardDataSource() }
       });
+      
+      if (analyticsError || !analyticsData) {
+         throw analyticsError || new Error("No data returned");
+      }
 
-      // --- OTP transaction records (amounts already in Naira — no conversion needed) ---
-      // NOTE: one_time_payment_transactions has no status field — every row = confirmed payment
-      const countedOtpPaymentIds = new Set<string>();
-      otpTxns?.forEach(tx => {
-        const amount = Number(tx.amount); // already Naira
-        totalRev += amount;
-        allTransactions.push({ date: new Date(tx.paid_at || tx.created_at), amount });
-        if (tx.payment_id) countedOtpPaymentIds.add(tx.payment_id);
-      });
+      setRevenueData(analyticsData.revenueTrend || []);
+      setSubscriberTrend(analyticsData.subscriberTrend || []);
+      setPlanDistribution(analyticsData.planDistribution ? analyticsData.planDistribution.map((p: any) => ({ name: p.name, value: p.count })) : []);
 
-      // --- Direct OTP records — only count ones with no corresponding transaction record ---
-      directOtp?.forEach(otp => {
-        if (!countedOtpPaymentIds.has(otp.id)) {
-          const amount = Number(otp.amount); // already Naira
-          totalRev += amount;
-          allTransactions.push({ date: new Date(otp.paid_at || otp.created_at), amount });
-        }
-      });
-
-      // Buckets
-      const now = new Date();
-      const nowYear = now.getFullYear();
-      const nowMonth = now.getMonth(); // 0-indexed
-
-      let currentMonthRev = 0;
-      let lastMonthRev = 0;
-
-      const last12Months = Array.from({ length: 12 }).map((_, i) => format(subMonths(now, 11 - i), 'MMM yyyy'));
-      const monthlyRevenueMap: Record<string, number> = {};
-      last12Months.forEach(m => monthlyRevenueMap[m] = 0);
-
-      allTransactions.forEach(tx => {
-        const monthKey = format(tx.date, 'MMM yyyy');
-        if (monthlyRevenueMap[monthKey] !== undefined) {
-          monthlyRevenueMap[monthKey] += tx.amount;
-        }
-
-        const txYear = tx.date.getFullYear();
-        const txMonth = tx.date.getMonth(); // 0-indexed
-
-        if (txYear === nowYear && txMonth === nowMonth) {
-          currentMonthRev += tx.amount;
-        } else if (
-          (nowMonth === 0 && txYear === nowYear - 1 && txMonth === 11) ||
-          (nowMonth > 0 && txYear === nowYear && txMonth === nowMonth - 1)
-        ) {
-          lastMonthRev += tx.amount;
-        }
-      });
-
-      const processedRevenueTrend = last12Months.map(month => ({ month, revenue: monthlyRevenueMap[month] }));
-      const growthRev = lastMonthRev > 0 ? ((currentMonthRev - lastMonthRev) / lastMonthRev) * 100 : 0;
-
-      // Subs Logic
-      const totalAllTime = subscribers?.length || 0;
-      const activeSubsCount = subscribers?.filter(s => s.status === 'active').length || 0;
-      const cancelledCount = subscribers?.filter(s => ['cancelled', 'canceled', 'non-renewing'].includes(s.status?.toLowerCase() || '')).length || 0;
-      const churnRaw = totalAllTime > 0 ? (cancelledCount / totalAllTime) * 100 : 0;
-
-      const arpuTotal = activeSubsCount > 0 ? (mrrTotal / activeSubsCount) : 0;
-
-      let thisMonthSubs = 0;
-      let lastMonthSubs = 0;
-      const monthlySubMap: Record<string, number> = {};
-      last12Months.forEach(m => monthlySubMap[m] = 0);
-
-      subscribers?.forEach(sub => {
-        const d = new Date(sub.created_at);
-        if (isSameMonth(d, now)) thisMonthSubs++;
-        else if (isSameMonth(d, subMonths(now, 1))) lastMonthSubs++;
-
-        const monthKey = format(d, 'MMM yyyy');
-        if (monthlySubMap[monthKey] !== undefined) monthlySubMap[monthKey]++;
-      });
-      const growthSub = lastMonthSubs > 0 ? ((thisMonthSubs - lastMonthSubs) / lastMonthSubs) * 100 : 0;
-      const processedSubTrend = last12Months.map(month => ({ month, subscribers: monthlySubMap[month] }));
-
-      // Plan Dist
-      const planDistributionMap: Record<string, number> = {};
-      subscribers?.filter(s => s.status === 'active').forEach(sub => {
-        const plan = plans?.find(p => p.id === sub.plan_id);
-        const planName = plan?.name || 'Unknown Plan';
-        planDistributionMap[planName] = (planDistributionMap[planName] || 0) + 1;
-      });
-      const processedPlanDist = Object.keys(planDistributionMap).map(name => ({
-        name,
-        value: planDistributionMap[name]
-      })).filter(p => p.value > 0);
-
-      setRevenueData(processedRevenueTrend);
-      setSubscriberTrend(processedSubTrend);
-      setPlanDistribution(processedPlanDist);
+      const trend = analyticsData.revenueTrend || [];
+      const currentMonthRev = trend.length > 0 ? trend[trend.length - 1].revenue : 0;
+      const prevMonthRev = trend.length > 1 ? trend[trend.length - 2].revenue : 0;
+      const revGrowth = prevMonthRev > 0 ? ((currentMonthRev - prevMonthRev) / prevMonthRev) * 100 : 0;
 
       setStats({
-        totalRevenue: Math.round(totalRev),
-        currentMonthRevenue: Math.round(currentMonthRev),
-        mrr: Math.round(mrrTotal),
-        revenueGrowth: Math.round(growthRev * 10) / 10,
-        activeSubscribers: activeSubsCount,
-        subscriberGrowth: Math.round(growthSub * 10) / 10,
-        averageRevenue: arpuTotal,
-        churnRate: Math.round(churnRaw * 10) / 10
+        totalRevenue: analyticsData.totalRevenue || 0,
+        currentMonthRevenue: currentMonthRev,
+        mrr: analyticsData.recurringRevenue || 0,
+        revenueGrowth: Math.round(revGrowth * 10) / 10,
+        activeSubscribers: analyticsData.activeSubscribers || 0,
+        subscriberGrowth: analyticsData.subscriberGrowthRate || 0,
+        averageRevenue: analyticsData.arpu || 0,
+        churnRate: analyticsData.churnRate || 0
       });
 
     } catch (error) {

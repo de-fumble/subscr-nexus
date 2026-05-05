@@ -22,6 +22,7 @@ import {
   ChevronLeft, ChevronRight, ArrowUpRight, TrendingUp,
   Loader2, RefreshCw, ListFilter,
 } from "lucide-react";
+import { getDashboardDataSource } from "@/lib/dataSource";
 
 
 const PAGE_SIZE = 25;
@@ -128,109 +129,31 @@ export default function DashboardAllTransactions() {
   };
 
   const fetchAll = async (orgId: string) => {
-    const unified: UnifiedTransaction[] = [];
-
-    // ── 1. Subscription Transactions ──────────────────────────────────────
-    const { data: plans } = await supabase
-      .from("subscription_plans")
-      .select("id, name, price")
-      .eq("org_id", orgId);
-
-    const planIds = plans?.map(p => p.id) || [];
-    const planMap: Record<string, { name: string; price: number }> = {};
-    plans?.forEach(p => { planMap[p.id] = { name: p.name, price: Number(p.price) }; });
-
-    if (planIds.length > 0) {
-      const { data: subscribers } = await supabase
-        .from("subscribers")
-        .select("id, email, customer_name, plan_id, amount")
-        .in("plan_id", planIds);
-
-      const subIds = subscribers?.map(s => s.id) || [];
-      const subMap: Record<string, typeof subscribers[0]> = {};
-      subscribers?.forEach(s => { subMap[s.id] = s; });
-
-      if (subIds.length > 0) {
-        const { data: txns } = await supabase
-          .from("transactions")
-          .select("id, subscriber_id, amount, status, paystack_reference, paid_at, created_at")
-          .in("subscriber_id", subIds)
-          .order("paid_at", { ascending: false });
-
-        txns?.forEach(tx => {
-          const sub = subMap[tx.subscriber_id];
-          if (!sub) return;
-          const plan = planMap[sub.plan_id];
-          unified.push({
-            id: tx.id,
-            date: tx.paid_at || tx.created_at,
-            amount: Number(tx.amount) / 100,   // Kobo → Naira
-            label: plan?.name || "Subscription",
-            payer_name: sub.customer_name || null,
-            payer_email: sub.email,
-            reference: tx.paystack_reference || tx.id,
-            type: "subscription",
-            status: tx.status,
-          });
-        });
-
-        // Inject synthetic initial txn for subs with zero recorded txns
-        const subWithTxn = new Set(txns?.map(t => t.subscriber_id) || []);
-        subscribers?.filter(s => !subWithTxn.has(s.id)).forEach(sub => {
-          const plan = planMap[sub.plan_id];
-          const amt = sub.amount ? Number(sub.amount) / 100 : plan?.price || 0;
-          if (amt > 0) {
-            unified.push({
-              id: `init-${sub.id}`,
-              date: new Date().toISOString(),
-              amount: amt,
-              label: plan?.name || "Subscription",
-              payer_name: sub.customer_name || null,
-              payer_email: sub.email,
-              reference: `sub-${sub.id}`,
-              type: "subscription",
-              status: "success",
-            });
-          }
-        });
-      }
-    }
-
-    // ── 2. One-Time Payment Transactions (Standard + Quick Checkout) ────────
-    const { data: otpPayments } = await supabase
-      .from("one_time_payments")
-      .select("id, name, is_quick_payment")
-      .eq("org_id", orgId);
-
-    const otpIds = otpPayments?.map(p => p.id) || [];
-    // Map payment_id → { name, isQuick }
-    const otpMetaMap: Record<string, { name: string; isQuick: boolean }> = {};
-    otpPayments?.forEach(p => {
-      otpMetaMap[p.id] = { name: p.name, isQuick: !!p.is_quick_payment };
+    const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+      body: {
+        action: "export_transactions",
+        orgId,
+        dataSource: getDashboardDataSource(),
+      },
     });
+    if (error) throw error;
 
-    if (otpIds.length > 0) {
-      const { data: otpTxns } = await supabase
-        .from("one_time_payment_transactions")
-        .select("id, payment_id, amount, payer_email, payer_name, paystack_reference, paid_at, created_at")
-        .in("payment_id", otpIds)
-        .order("paid_at", { ascending: false });
-
-      otpTxns?.forEach(tx => {
-        const meta = otpMetaMap[tx.payment_id];
-        unified.push({
-          id: tx.id,
-          date: tx.paid_at || tx.created_at,
-          amount: Number(tx.amount),             // already Naira
-          label: meta?.name || (meta?.isQuick ? "Quick Checkout" : "Standard Payment"),
-          payer_name: tx.payer_name || null,
-          payer_email: tx.payer_email,
-          reference: tx.paystack_reference || tx.id,
-          type: meta?.isQuick ? "quick_checkout" : "one_time",
-          status: "success",
-        });
-      });
-    }
+    const rows = Array.isArray((data as any)?.transactions) ? (data as any).transactions : [];
+    const unified: UnifiedTransaction[] = rows.map((tx: any, index: number) => {
+      const rawType = String(tx.type || "").toLowerCase();
+      const isOneTime = rawType.includes("one-time") || rawType.includes("one_time") || rawType.includes("standard");
+      return {
+        id: String(tx.reference || tx.id || index),
+        date: tx.paid_at || tx.created_at || new Date().toISOString(),
+        amount: Number(tx.amount) || 0,
+        label: tx.plan_name || "Unknown",
+        payer_name: tx.customer_name || null,
+        payer_email: tx.email || "Unknown",
+        reference: tx.reference || "N/A",
+        type: isOneTime ? "one_time" : "subscription",
+        status: tx.status || "success",
+      };
+    });
 
     // Sort newest first
     unified.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

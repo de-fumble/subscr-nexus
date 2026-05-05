@@ -28,7 +28,7 @@ serve(async (req) => {
     );
 
     // Parse request body
-    let requestBody: { orgId?: string; action?: string } = {};
+    let requestBody: { orgId?: string; action?: string; dataSource?: string } = {};
     try {
       requestBody = await req.json();
     } catch {
@@ -36,6 +36,7 @@ serve(async (req) => {
     }
 
     const { action, orgId: requestedOrgId } = requestBody;
+    const dataSource = requestBody.dataSource === "local" ? "local" : "paystack";
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -155,6 +156,82 @@ serve(async (req) => {
     const orgOtpTxnReferences = new Set(
       orgOtpTransactions?.map(t => t.paystack_reference) || []
     );
+
+    const loadLocalAnalyticsData = async () => {
+      const planIds = orgPlans?.map((p: any) => p.id) || [];
+      const planMap = new Map((orgPlans || []).map((p: any) => [p.id, p]));
+
+      const { data: localSubscribers } = planIds.length > 0
+        ? await supabase
+            .from("subscribers")
+            .select("id, plan_id, status, created_at, payment_failed_at, amount")
+            .in("plan_id", planIds)
+        : { data: [] as any[] };
+
+      const subscribers = localSubscribers || [];
+      const subscriberIds = subscribers.map((s: any) => s.id);
+      const subscriberMap = new Map(subscribers.map((s: any) => [s.id, s]));
+
+      const { data: subscriptionTxns } = subscriberIds.length > 0
+        ? await supabase
+            .from("transactions")
+            .select("id, subscriber_id, amount, status, paid_at, created_at, paystack_reference")
+            .in("subscriber_id", subscriberIds)
+            .eq("status", "success")
+        : { data: [] as any[] };
+
+      const { data: otpPayments } = await supabase
+        .from("one_time_payments")
+        .select("id, name")
+        .eq("org_id", org.id);
+
+      const otpPaymentIds = otpPayments?.map((p: any) => p.id) || [];
+      const otpNameById = new Map((otpPayments || []).map((p: any) => [p.id, p.name]));
+
+      const { data: otpTxns } = otpPaymentIds.length > 0
+        ? await supabase
+            .from("one_time_payment_transactions")
+            .select("id, payment_id, amount, payer_email, payer_name, paystack_reference, paid_at, created_at")
+            .in("payment_id", otpPaymentIds)
+        : { data: [] as any[] };
+
+      const localExportTransactions = [
+        ...((subscriptionTxns || []).map((txn: any) => {
+          const sub = subscriberMap.get(txn.subscriber_id);
+          const plan = sub ? planMap.get(sub.plan_id) : null;
+          return {
+            paid_at: txn.paid_at || txn.created_at,
+            created_at: txn.created_at,
+            customer_name: "Unknown",
+            email: "Unknown",
+            type: "Subscription",
+            plan_name: plan?.name || "Unknown Plan",
+            amount: Number(txn.amount) / 100,
+            reference: txn.paystack_reference || txn.id,
+            status: txn.status,
+            source: "local",
+          };
+        })),
+        ...((otpTxns || []).map((txn: any) => ({
+          paid_at: txn.paid_at || txn.created_at,
+          created_at: txn.created_at,
+          customer_name: txn.payer_name || "Unknown",
+          email: txn.payer_email || "Unknown",
+          type: "One-Time Payment",
+          plan_name: otpNameById.get(txn.payment_id) || "One-Time Payment",
+          amount: Number(txn.amount),
+          reference: txn.paystack_reference || txn.id,
+          status: "success",
+          source: "local",
+        }))),
+      ].sort(
+        (a, b) =>
+          new Date(b.paid_at || b.created_at).getTime() -
+          new Date(a.paid_at || a.created_at).getTime()
+      );
+
+      return { subscribers, subscriptionTxns: subscriptionTxns || [], localExportTransactions };
+    };
 
     console.log("Fetching Paystack data for organization:", org.id);
     console.log("Organization plan codes:", Array.from(orgPlanCodes));
@@ -457,6 +534,17 @@ serve(async (req) => {
     // Handle export_transactions action - return all successful transactions for export
     if (action === "export_transactions") {
       console.log("Processing export_transactions action for org:", org.id);
+
+      if (dataSource === "local") {
+        const { localExportTransactions } = await loadLocalAnalyticsData();
+        return new Response(
+          JSON.stringify({
+            transactions: localExportTransactions,
+            totalTransactions: localExportTransactions.length,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       
       // Get successful Paystack transactions
       const successfulPaystackTransactions = orgTransactions.filter(
@@ -497,7 +585,7 @@ serve(async (req) => {
               email: subscriber?.email || "Unknown",
               type: "Subscription",
               plan_name: plan?.name || "Unknown Plan",
-              amount: Number(txn.amount),
+            amount: Number(txn.amount) / 100,
               reference: txn.paystack_reference || "N/A",
               status: txn.status,
               source: "local",
@@ -646,6 +734,92 @@ serve(async (req) => {
     }
 
     console.log("Organization transactions:", orgTransactions.length);
+
+    if (dataSource === "local") {
+      const { subscribers, localExportTransactions } = await loadLocalAnalyticsData();
+
+      const totalRevenue = localExportTransactions.reduce((sum, txn) => sum + Number(txn.amount || 0), 0);
+      const transactionCount = localExportTransactions.length;
+      const failedSubscribers = subscribers.filter((s: any) => s.status === "attention").length;
+      const activeSubscribersCount = subscribers.filter((s: any) => s.status === "active").length;
+      const recurringRevenue = subscribers
+        .filter((s: any) => s.status === "active")
+        .reduce((sum: number, s: any) => {
+          const plan = orgPlans?.find((p: any) => p.id === s.plan_id);
+          return sum + Number(plan?.price || 0);
+        }, 0);
+
+      const monthlyRevenue: { [key: string]: number } = {};
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = date.toLocaleString("default", { month: "short" });
+        monthlyRevenue[key] = 0;
+      }
+
+      localExportTransactions.forEach((txn: any) => {
+        const d = new Date(txn.paid_at || txn.created_at);
+        const key = d.toLocaleString("default", { month: "short" });
+        if (monthlyRevenue.hasOwnProperty(key)) {
+          monthlyRevenue[key] += Number(txn.amount || 0);
+        }
+      });
+
+      const revenueTrend = Object.entries(monthlyRevenue).map(([month, revenue]) => ({ month, revenue }));
+      const subscriberTrend = Object.keys(monthlyRevenue).map((month) => ({
+        month,
+        subscribers: subscribers.filter((s: any) => {
+          const d = new Date(s.created_at);
+          return d.toLocaleString("default", { month: "short" }) === month;
+        }).length,
+      }));
+
+      const planCounts: { [key: string]: number } = {};
+      subscribers
+        .filter((s: any) => s.status === "active")
+        .forEach((s: any) => {
+          const plan = orgPlans?.find((p: any) => p.id === s.plan_id);
+          const key = plan?.name || "Unknown";
+          planCounts[key] = (planCounts[key] || 0) + 1;
+        });
+
+      const planDistribution = Object.entries(planCounts).map(([name, count]) => ({
+        name,
+        count,
+        percentage: activeSubscribersCount > 0 ? Math.round((count / activeSubscribersCount) * 1000) / 10 : 0,
+      }));
+
+      const chartData = Object.entries(
+        localExportTransactions.reduce((acc: Record<string, number>, txn: any) => {
+          const key = txn.plan_name || "Other";
+          acc[key] = (acc[key] || 0) + Number(txn.amount || 0);
+          return acc;
+        }, {})
+      ).map(([plan, revenue]) => ({ plan, revenue }));
+
+      return new Response(
+        JSON.stringify({
+          totalRevenue,
+          grossRevenue: totalRevenue,
+          totalRefunds: 0,
+          recurringRevenue,
+          activeSubscribers: activeSubscribersCount,
+          chartData,
+          failedPaymentsData: [
+            { name: "Abandoned Checkout", value: 0 },
+            { name: "Failed Payments", value: failedSubscribers },
+          ],
+          revenueTrend,
+          subscriberTrend,
+          churnRate: 0,
+          arpu: activeSubscribersCount > 0 ? Math.round(totalRevenue / activeSubscribersCount) : 0,
+          subscriberGrowthRate: 0,
+          planDistribution,
+          totalTransactions: transactionCount,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Calculate revenue from successful payments only
     const successfulTransactions = orgTransactions.filter(

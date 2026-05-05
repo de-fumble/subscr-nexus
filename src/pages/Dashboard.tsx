@@ -24,6 +24,7 @@ import { FloatingSupport } from "@/components/FloatingSupport";
 import { FounderInsight } from "@/components/FounderInsight";
 import { KYCApprovalModal } from "@/components/KYCApprovalModal";
 import logoSvg from "@/assets/logo.svg";
+import { getDashboardDataSource } from "@/lib/dataSource";
 interface Organization {
   id: string;
   org_name: string;
@@ -245,43 +246,18 @@ const Dashboard = () => {
       startDate.setDate(now.getDate() - 90);
     }
 
-    // Parallel Fetch Phase 1: Get plan and OTP IDs
-    const [
-      { data: planIdsData },
-      { data: otpIdsData }
-    ] = await Promise.all([
-      supabase.from("subscription_plans").select("id").eq("org_id", organization.id),
-      supabase.from("one_time_payments").select("id").eq("org_id", organization.id)
-    ]);
+    const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+      body: {
+        action: "export_transactions",
+        orgId: organization.id,
+        dataSource: getDashboardDataSource(),
+      },
+    });
+    if (error) return;
 
-    const planIdList = planIdsData?.map(p => p.id) || [];
-    const otpIdList = otpIdsData?.map(p => p.id) || [];
-
-    // Phase 2: Fetch Subscribers (only if we have plans)
-    let subscriberIds: string[] = [];
-    if (planIdList.length > 0) {
-      const { data: subscribers } = await supabase.from("subscribers").select("id").in("plan_id", planIdList);
-      subscriberIds = subscribers?.map(s => s.id) || [];
-    }
-
-    // Phase 3: Parallel Fetch Transactions
-    const [
-      { data: subscriptionTxns },
-      { data: otpTxns }
-    ] = await Promise.all([
-      subscriberIds.length > 0
-        ? supabase.from("transactions").select("amount, paid_at").in("subscriber_id", subscriberIds).eq("status", "success").gte("paid_at", startDate.toISOString())
-        : Promise.resolve({ data: [] }),
-      otpIdList.length > 0
-        ? supabase.from("one_time_payment_transactions").select("amount, paid_at").in("payment_id", otpIdList).gte("paid_at", startDate.toISOString())
-        : Promise.resolve({ data: [] })
-    ]);
-
-    // Combine and group by date locally (fast)
-    const allTransactions = [
-      ...(subscriptionTxns || []).map(t => ({ amount: Number(t.amount), paid_at: t.paid_at })),
-      ...(otpTxns || []).map(t => ({ amount: Number(t.amount), paid_at: t.paid_at }))
-    ];
+    const allTransactions = (Array.isArray((data as any)?.transactions) ? (data as any).transactions : [])
+      .map((t: any) => ({ amount: Number(t.amount) || 0, paid_at: t.paid_at || t.created_at }))
+      .filter((t: any) => t.paid_at && new Date(t.paid_at) >= startDate);
 
     const grouped: Record<string, number> = {};
     allTransactions.forEach(txn => {
@@ -445,7 +421,7 @@ const Dashboard = () => {
         let planRevenue = 0;
         if (subscriptionTxns && subscriptionTxns.length > 0) {
           const planTxns = subscriptionTxns.filter(t => planSubIds.includes(t.subscriber_id));
-          planRevenue = planTxns.reduce((sum, t) => sum + Number(t.amount), 0);
+          planRevenue = planTxns.reduce((sum, t) => sum + Number(t.amount) / 100, 0);
         }
 
         if (planRevenue > 0) {
@@ -487,11 +463,13 @@ const Dashboard = () => {
         totalSubscribers: totalSubsCount,
       }));
 
-      // Await Paystack analytics so the splash stays up until revenue is final
-      await fetchPaystackAnalyticsQuietly(orgData.id, totalRevenueAmount, totalActiveSubscribers, totalSubsCount);
+      const dataSource = getDashboardDataSource();
+
+      // Await analytics so the splash stays up until revenue is final
+      await fetchPaystackAnalyticsQuietly(orgData.id, totalRevenueAmount, totalActiveSubscribers, totalSubsCount, dataSource);
 
       // Fetch Recent Transactions quietly (non-blocking, does not affect splash)
-      fetchRecentTransactions(orgData.id);
+      fetchRecentTransactions(orgData.id, dataSource);
 
     } catch (error) {
       console.error("Error:", error);
@@ -503,9 +481,41 @@ const Dashboard = () => {
     }
   };
 
-  const fetchPaystackAnalyticsQuietly = async (orgId: string, baseRevenue: number, baseActiveSubs: number, baseTotalSubs: number) => {
+  const fetchPaystackAnalyticsQuietly = async (
+    orgId: string,
+    baseRevenue: number,
+    baseActiveSubs: number,
+    baseTotalSubs: number,
+    dataSource: "local" | "paystack"
+  ) => {
     try {
-      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke("fetch-paystack-analytics");
+      // Keep revenue card aligned with the same merged transaction feed used elsewhere.
+      const { data: exportData, error: exportError } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: {
+          action: "export_transactions",
+          orgId,
+          dataSource,
+        },
+      });
+
+      const exportRows = !exportError && Array.isArray((exportData as any)?.transactions)
+        ? (exportData as any).transactions
+        : [];
+      const exportTotalRevenue = exportRows.reduce((sum: number, txn: any) => sum + (Number(txn.amount) || 0), 0);
+      const exportRevenueByPlanMap = exportRows.reduce((acc: Record<string, number>, txn: any) => {
+        const name = String(txn.plan_name || "Other");
+        acc[name] = (acc[name] || 0) + (Number(txn.amount) || 0);
+        return acc;
+      }, {});
+      const exportRevenueByPlan = Object.entries(exportRevenueByPlanMap).map(([name, value], index) => ({
+        name,
+        value,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      }));
+
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: { orgId, dataSource },
+      });
 
       if (!analyticsError && analyticsData) {
         console.log("Paystack analytics load complete — updating overview stats.");
@@ -515,14 +525,18 @@ const Dashboard = () => {
 
         setFailedPaymentsData(failedData);
 
-        const paystackChartData = analyticsData.chartData || [];
-        if (paystackChartData.length > 0) {
-          const revenueData: RevenueByPlan[] = paystackChartData.map((item: any, index: number) => ({
-            name: item.plan,
-            value: item.revenue,
-            color: CHART_COLORS[index % CHART_COLORS.length]
-          }));
-          setRevenueByPlan(revenueData);
+        if (exportRevenueByPlan.length > 0) {
+          setRevenueByPlan(exportRevenueByPlan);
+        } else {
+          const paystackChartData = analyticsData.chartData || [];
+          if (paystackChartData.length > 0) {
+            const revenueData: RevenueByPlan[] = paystackChartData.map((item: any, index: number) => ({
+              name: item.plan,
+              value: item.revenue,
+              color: CHART_COLORS[index % CHART_COLORS.length]
+            }));
+            setRevenueByPlan(revenueData);
+          }
         }
 
         const revenueTrend = analyticsData.revenueTrend || [];
@@ -535,7 +549,7 @@ const Dashboard = () => {
 
         // Stats are now final — splash will close immediately after this
         setStats({
-          totalRevenue: analyticsData.totalRevenue || baseRevenue,
+          totalRevenue: exportTotalRevenue || analyticsData.totalRevenue || baseRevenue,
           recurringRevenue: analyticsData.recurringRevenue || 0,
           activeSubscribers: analyticsData.activeSubscribers || baseActiveSubs,
           totalSubscribers: baseTotalSubs,
@@ -552,7 +566,7 @@ const Dashboard = () => {
     }
   };
 
-  const fetchRecentTransactions = async (orgId: string) => {
+  const fetchRecentTransactions = async (orgId: string, dataSource: "local" | "paystack") => {
     try {
       // Calculate 48 hours ago
       const fortyEightHoursAgo = new Date();
@@ -563,6 +577,7 @@ const Dashboard = () => {
         body: {
           action: "export_transactions",
           orgId,
+          dataSource,
         },
       });
 

@@ -63,11 +63,11 @@ serve(async (req) => {
         break;
       
       case 'get_organization_details':
-        result = await getOrganizationDetails(supabase, params.org_id);
+        result = await getOrganizationDetails(supabase, params.org_id, params.data_source);
         break;
       
       case 'get_organization_analytics':
-        result = await getOrganizationAnalytics(supabase, params.org_id);
+        result = await getOrganizationAnalytics(supabase, params.org_id, params.data_source);
         break;
       
       case 'suspend_organization':
@@ -290,7 +290,7 @@ async function getAllOrganizations(supabase: any) {
   return { organizations: orgsWithStats };
 }
 
-async function getOrganizationDetails(supabase: any, orgId: string) {
+async function getOrganizationDetails(supabase: any, orgId: string, dataSource: string = 'paystack') {
   const { data: org, error } = await supabase
     .from('organizations')
     .select('*')
@@ -321,7 +321,7 @@ async function getOrganizationDetails(supabase: any, orgId: string) {
   let liveSubscribers: any[] = [];
   let liveTransactions: any[] = [];
   
-  if (org.paystack_secret_key) {
+  if (org.paystack_secret_key && dataSource !== 'local') {
     const { subscriptions, transactions } = await fetchPaystackData(org.paystack_secret_key);
     liveSubscribers = subscriptions;
     liveTransactions = transactions;
@@ -352,7 +352,7 @@ async function getOrganizationDetails(supabase: any, orgId: string) {
   };
 }
 
-async function getOrganizationAnalytics(supabase: any, orgId: string) {
+async function getOrganizationAnalytics(supabase: any, orgId: string, dataSource: string = 'paystack') {
   const { data: org } = await supabase
     .from('organizations')
     .select('paystack_secret_key')
@@ -364,7 +364,7 @@ async function getOrganizationAnalytics(supabase: any, orgId: string) {
     .select('*')
     .eq('org_id', orgId);
 
-  if (!org?.paystack_secret_key) {
+  if (!org?.paystack_secret_key || dataSource === 'local') {
     // Fallback to local data
     return getLocalOrganizationAnalytics(supabase, orgId, plans || []);
   }
@@ -887,7 +887,7 @@ async function getAuditLogs(supabase: any, entityType?: string, entityId?: strin
   return { audit_logs: data };
 }
 
-async function getPlatformStats(supabase: any, dataSource: string = 'local') {
+async function getPlatformStats(supabase: any, dataSource: string = 'paystack') {
   console.log(`Fetching platform stats with ${dataSource} data source...`);
   
   // Organization counts

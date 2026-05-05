@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle, RefreshCw, CreditCard, Key } from "lucide-react";
+import { Loader2, ArrowLeft, Ban, CheckCircle, DollarSign, Users, TrendingUp, AlertTriangle, RefreshCw, CreditCard, Key, Database, Cloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PremiumLoader, PremiumSpinner } from "@/components/PremiumLoader";
@@ -45,6 +45,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { getDashboardDataSource, setDashboardDataSource, type DashboardDataSource } from "@/lib/dataSource";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--primary))", "hsl(var(--secondary))"];
 
@@ -93,6 +94,11 @@ export default function SuperAdminOrganization() {
   const [apiKeysDialogOpen, setApiKeysDialogOpen] = useState(false);
   const [publicKey, setPublicKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
+  const [dataSource, setDataSource] = useState<DashboardDataSource>(getDashboardDataSource());
+
+  useEffect(() => {
+    setDashboardDataSource(dataSource);
+  }, [dataSource]);
 
   useEffect(() => {
     if (!authLoading && !isSuperadmin) {
@@ -105,8 +111,8 @@ export default function SuperAdminOrganization() {
     if (showRefresh) setRefreshing(true);
     try {
       const [detailsData, analyticsData] = await Promise.all([
-        invokeSuperadmin('get_organization_details', { org_id: orgId }),
-        invokeSuperadmin('get_organization_analytics', { org_id: orgId }),
+        invokeSuperadmin('get_organization_details', { org_id: orgId, data_source: dataSource }),
+        invokeSuperadmin('get_organization_analytics', { org_id: orgId, data_source: dataSource }),
       ]);
       setDetails(detailsData);
       setAnalytics(analyticsData);
@@ -118,13 +124,13 @@ export default function SuperAdminOrganization() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [invokeSuperadmin, orgId]);
+  }, [invokeSuperadmin, orgId, dataSource]);
 
   useEffect(() => {
     if (isSuperadmin && orgId) {
       fetchData();
     }
-  }, [isSuperadmin, orgId, fetchData]);
+  }, [isSuperadmin, orgId, fetchData, dataSource]);
 
   useEffect(() => {
     if (details?.organization && apiKeysDialogOpen) {
@@ -203,6 +209,49 @@ export default function SuperAdminOrganization() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {/* Data Source Toggle Banner */}
+      <div className="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-muted/40">
+        <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+          <Database className="h-4 w-4" />
+          <span>Data Source:</span>
+        </div>
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <button
+            onClick={() => setDataSource('paystack')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium transition-all ${
+              dataSource === 'paystack'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            <Cloud className="h-3.5 w-3.5" />
+            Paystack (Live)
+          </button>
+          <button
+            onClick={() => setDataSource('local')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium border-l border-border transition-all ${
+              dataSource === 'local'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            <Database className="h-3.5 w-3.5" />
+            Recurra DB
+          </button>
+        </div>
+        {dataSource === 'local' && (
+          <span className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-full px-2.5 py-0.5">
+            ⚠ Showing internal database records
+          </span>
+        )}
+        {dataSource === 'paystack' && (
+          <span className="text-xs text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-0.5">
+            ✓ Showing live Paystack data
+          </span>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin')}>

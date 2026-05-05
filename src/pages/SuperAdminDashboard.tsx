@@ -21,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, Cloud } from "lucide-react";
 import { SendNotificationDialog } from "@/components/SendNotificationDialog";
 import { SuperAdminMessageDialog } from "@/components/SuperAdminMessageDialog";
+import { getDashboardDataSource, setDashboardDataSource, type DashboardDataSource } from "@/lib/dataSource";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar,
@@ -181,7 +182,11 @@ export default function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
-  const [dataSource, setDataSource] = useState<'local' | 'paystack'>('local');
+  const [dataSource, setDataSource] = useState<DashboardDataSource>(getDashboardDataSource());
+
+  useEffect(() => {
+    setDashboardDataSource(dataSource);
+  }, [dataSource]);
 
   useEffect(() => {
     if (!authLoading && !isSuperadmin) {
@@ -260,7 +265,7 @@ export default function SuperAdminDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Tabs value={dataSource} onValueChange={(val) => setDataSource(val as 'local' | 'paystack')} className="w-auto">
+          <Tabs value={dataSource} onValueChange={(val) => setDataSource(val as DashboardDataSource)} className="w-auto">
             <TabsList className="h-8">
               <TabsTrigger value="local" className="text-xs px-3 gap-1.5 h-6">
                 <Database className="h-3 w-3" />
