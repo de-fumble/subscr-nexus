@@ -67,6 +67,23 @@ interface FailedPayment {
   reference: string;
 }
 
+interface RetryQueueItem {
+  id: string;
+  subscriber_id?: string;
+  email: string;
+  customer_name: string | null;
+  amount: number;
+  retry_count: number;
+  last_retry_at: string | null;
+  payment_failed_at: string | null;
+  status: string;
+  plan_name: string;
+  failure_reason: string | null;
+  reference: string;
+  has_authorization: boolean;
+  is_exhausted: boolean;
+}
+
 interface Organization {
   id: string;
   org_name: string;
@@ -99,7 +116,7 @@ const DashboardFailedPayments = () => {
     });
     return Array.from(plans).sort();
   }, [failedPayments]);
-  const [retryQueue, setRetryQueue] = useState<any[]>([]);
+  const [retryQueue, setRetryQueue] = useState<RetryQueueItem[]>([]);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [queueLoading, setQueueLoading] = useState(false);
   const [expandedReasons, setExpandedReasons] = useState<Set<string>>(new Set());
@@ -226,8 +243,8 @@ const DashboardFailedPayments = () => {
     }
   };
 
-  const handleRetry = async (subscriberId: string) => {
-    setRetryingId(subscriberId);
+  const handleRetry = async (subscriberId: string, queueItemId: string) => {
+    setRetryingId(queueItemId);
     try {
       const { data, error } = await supabase.functions.invoke("retry-failed-payments", {
         body: {
@@ -785,14 +802,18 @@ const DashboardFailedPayments = () => {
                           <th className="py-4 px-6">Current Plan</th>
                           <th className="py-4 px-6 text-right">Recovery Amount</th>
                           <th className="py-4 px-6 text-center">Retry Attempts</th>
+                          <th className="py-4 px-6">Failed Transaction</th>
                           <th className="py-4 px-6">Reason</th>
                           <th className="py-4 px-6">Status Details</th>
                           <th className="py-4 px-6 text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/30">
-                        {retryQueue.map((sub) => (
-                          <tr key={sub.id} className="group hover:bg-muted/10 transition-all duration-200 whitespace-nowrap">
+                        {retryQueue.map((sub) => {
+                          const queueItemId = sub.id;
+                          const subscriberId = sub.subscriber_id || sub.id;
+                          return (
+                          <tr key={queueItemId} className="group hover:bg-muted/10 transition-all duration-200 whitespace-nowrap">
                             <td className="py-4 px-6">
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9 border border-border/50 shadow-sm transition-transform group-hover:scale-105">
@@ -842,16 +863,28 @@ const DashboardFailedPayments = () => {
                               </div>
                             </td>
                             <td className="py-4 px-6">
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-mono text-[11px] text-foreground truncate max-w-[180px]">
+                                  {sub.reference || "No reference"}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {sub.payment_failed_at
+                                    ? new Date(sub.payment_failed_at).toLocaleString()
+                                    : "Unknown time"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
                               <div 
                                 className={`flex items-start gap-2 text-muted-foreground transition-all duration-300 cursor-pointer hover:text-foreground ${
-                                  expandedReasons.has(sub.id) ? "max-w-[300px]" : "max-w-[180px]"
+                                  expandedReasons.has(queueItemId) ? "max-w-[300px]" : "max-w-[180px]"
                                 }`}
-                                onClick={() => toggleReason(sub.id)}
+                                onClick={() => toggleReason(queueItemId)}
                               >
                                 <div className="mt-0.5 shrink-0">
                                   {getFailureIcon(sub.failure_reason || "")}
                                 </div>
-                                <span className={`text-[11px] leading-relaxed ${expandedReasons.has(sub.id) ? "whitespace-normal" : "truncate"}`}>
+                                <span className={`text-[11px] leading-relaxed ${expandedReasons.has(queueItemId) ? "whitespace-normal" : "truncate"}`}>
                                   {sub.failure_reason || "Unknown error"}
                                 </span>
                               </div>
@@ -884,15 +917,15 @@ const DashboardFailedPayments = () => {
                               <Button
                                 size="sm"
                                 variant={sub.has_authorization ? "default" : "secondary"}
-                                onClick={() => handleRetry(sub.id)}
-                                disabled={retryingId === sub.id || !sub.has_authorization || sub.retry_count >= 3}
+                                onClick={() => handleRetry(subscriberId, queueItemId)}
+                                disabled={retryingId === queueItemId || !sub.has_authorization || sub.retry_count >= 3}
                                 className={`gap-2 px-4 h-9 font-semibold transition-all duration-300 ${
-                                  sub.has_authorization && retryingId !== sub.id
+                                  sub.has_authorization && retryingId !== queueItemId
                                   ? "hover:shadow-glow hover:scale-[1.02] bg-primary text-primary-foreground" 
                                   : ""
                                 }`}
                               >
-                                {retryingId === sub.id ? (
+                                {retryingId === queueItemId ? (
                                   <>
                                     <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                                     Retrying...
@@ -908,7 +941,7 @@ const DashboardFailedPayments = () => {
                               </Button>
                             </td>
                           </tr>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
                   </div>

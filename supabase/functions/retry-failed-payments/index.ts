@@ -105,22 +105,19 @@ serve(async (req) => {
       }
 
       // Step 3: Match Paystack failures against local subscribers
-      // Sort newest first so we keep the most recent failure per email
+      // Sort newest first so the queue shows most recent failures first.
       paystackFailed.sort((a, b) =>
         new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       );
 
-      const seenEmails = new Set<string>();
       const finalizedQueue: any[] = [];
 
       for (const txn of paystackFailed) {
         const email = (txn.customer?.email || "").toLowerCase().trim();
-        if (!email || seenEmails.has(email)) continue;
+        if (!email) continue;
 
         const sub = subByEmail.get(email);
         if (!sub) continue; // Not a subscriber for this org
-
-        seenEmails.add(email);
 
         const hasAuth = !!sub.paystack_authorization_code;
         const retryCount = sub.retry_count || 0;
@@ -132,7 +129,8 @@ serve(async (req) => {
             : null);
 
         finalizedQueue.push({
-          id: sub.id,
+          id: `${sub.id}:${txn.reference || txn.id || txn.created_at || crypto.randomUUID()}`,
+          subscriber_id: sub.id,
           email: sub.email,
           customer_name: customerName,
           amount: txn.amount / 100, // Use actual failed amount from Paystack (in kobo → naira)
