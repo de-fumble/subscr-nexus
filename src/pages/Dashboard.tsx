@@ -144,6 +144,8 @@ const Dashboard = () => {
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  // true only on first-ever login per user account
+  const [showSplash, setShowSplash] = useState(false);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     recurringRevenue: 0,
@@ -290,6 +292,14 @@ const Dashboard = () => {
         return;
       }
       setUserEmail(user.email);
+
+      // Determine whether to show the premium splash (first-ever login per account)
+      const splashKey = `recurra_splash_shown_${user.id}`;
+      if (!localStorage.getItem(splashKey)) {
+        setShowSplash(true);
+        localStorage.setItem(splashKey, "1");
+      }
+
       let orgData = null;
       const {
         data: ownedOrg,
@@ -767,7 +777,7 @@ const Dashboard = () => {
     return (
       <SidebarInset>
         <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
-        <DashboardSplash />
+        {showSplash ? <DashboardSplash /> : <DashboardSkeleton />}
       </SidebarInset>
     );
   }
