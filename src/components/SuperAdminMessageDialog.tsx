@@ -102,7 +102,7 @@ export function SuperAdminMessageDialog({ organization, trigger }: SuperAdminMes
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const { invokeSuperadmin } = useSuperadmin();
+  const { invokeSuperadmin, canSendEmail } = useSuperadmin();
 
   useEffect(() => {
     if (organization) {
@@ -110,6 +110,8 @@ export function SuperAdminMessageDialog({ organization, trigger }: SuperAdminMes
       setIsBroadcast(false);
     }
   }, [organization]);
+
+  if (!canSendEmail) return null;
 
   const handleTemplateSelect = (templateId: string) => {
     const template = EMAIL_TEMPLATES.find(t => t.id === templateId);

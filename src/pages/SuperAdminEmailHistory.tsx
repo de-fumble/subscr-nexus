@@ -71,7 +71,7 @@ const PAGE_SIZE = 50;
 
 export default function SuperAdminEmailHistory() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading } = useSuperadmin();
 
   const [logs, setLogs] = useState<EmailLog[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -87,13 +87,6 @@ export default function SuperAdminEmailHistory() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   // Debounce search input → searchQuery (resets to page 1)
   useEffect(() => {
@@ -170,8 +163,8 @@ export default function SuperAdminEmailHistory() {
   }, [page, dateFilter, typeFilter, statusFilter, searchQuery]);
 
   useEffect(() => {
-    if (isSuperadmin) fetchLogs();
-  }, [isSuperadmin, fetchLogs]);
+    if (hasPanelAccess) fetchLogs();
+  }, [hasPanelAccess, fetchLogs]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -193,7 +186,7 @@ export default function SuperAdminEmailHistory() {
     return <PremiumLoader fullScreen message="Loading email history..." />;
   }
 
-  if (!isSuperadmin) return null;
+  if (!hasPanelAccess) return null;
 
   return (
     <div className="container py-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

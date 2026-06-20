@@ -177,7 +177,7 @@ function AlertRow({ icon: Icon, label, count, color, onClick }: {
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin, canSendEmail } = useSuperadmin();
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -187,13 +187,6 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     setDashboardDataSource(dataSource);
   }, [dataSource]);
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   const fetchData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -211,12 +204,12 @@ export default function SuperAdminDashboard() {
   };
 
   useEffect(() => {
-    if (isSuperadmin) fetchData(true);
+    if (hasPanelAccess) fetchData(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuperadmin, dataSource]);
+  }, [hasPanelAccess, dataSource]);
 
   if (authLoading || loading) return <PremiumLoader fullScreen message="Loading core panel..." />;
-  if (!isSuperadmin) return null;
+  if (!hasPanelAccess) return null;
 
   const s = stats!;
 

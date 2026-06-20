@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SuperAdminPayouts() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -38,17 +38,10 @@ export default function SuperAdminPayouts() {
   const [activeTab, setActiveTab] = useState("pending");
 
   useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
-
-  useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchPayouts();
     }
-  }, [isSuperadmin, activeTab]);
+  }, [hasPanelAccess, activeTab]);
 
   const fetchPayouts = async () => {
     setLoading(true);
@@ -115,7 +108,7 @@ export default function SuperAdminPayouts() {
     return <PremiumLoader fullScreen message="Authenticating..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

@@ -146,7 +146,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { open, isMobile, openMobile } = useSidebar();
   const isExpanded = isMobile ? openMobile : open;
-  const { isSuperadmin } = useSuperadmin();
+  const { hasPanelAccess } = useSuperadmin();
   const { role, canAccessSettings } = useOrgRole();
   const { signOut } = useAuth();
 
@@ -424,7 +424,7 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {isSuperadmin && (
+        {hasPanelAccess && (
           <>
             {isExpanded && <Separator className="mx-2 my-2 bg-border/30" />}
             <SidebarGroup>

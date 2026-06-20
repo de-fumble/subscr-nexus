@@ -48,7 +48,9 @@ import SuperAdminLicenses from "./pages/SuperAdminLicenses";
 import SuperAdminKYC from "./pages/SuperAdminKYC";
 import SuperAdminEmailHistory from "./pages/SuperAdminEmailHistory";
 import SuperAdminOnboarding from "./pages/SuperAdminOnboarding";
+import SuperAdminTeam from "./pages/SuperAdminTeam";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
+import { SuperAdminRouteGuard } from "./components/SuperAdminRouteGuard";
 import { DashboardLayout } from "./components/DashboardLayout";
 // Footer Pages
 import About from "./pages/About";
@@ -135,21 +137,22 @@ const App = () => (
                 <Route path="/dashboard/transactions" element={<DashboardAllTransactions />} />
               </Route>
               <Route element={<SuperAdminLayout />}>
-                <Route path="/superadmin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
-                <Route path="/superadmin/profile" element={<ProtectedRoute><SuperAdminProfile /></ProtectedRoute>} />
-                <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminOrganization /></ProtectedRoute>} />
-                <Route path="/superadmin/organizations" element={<ProtectedRoute><SuperAdminOrganizations /></ProtectedRoute>} />
-                <Route path="/superadmin/api-keys" element={<ProtectedRoute><SuperAdminApiKeys /></ProtectedRoute>} />
-                <Route path="/superadmin/payouts" element={<ProtectedRoute><SuperAdminPayouts /></ProtectedRoute>} />
-                <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminDeletions /></ProtectedRoute>} />
-                <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminDefaulters /></ProtectedRoute>} />
-                <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminAppeals /></ProtectedRoute>} />
-                <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminLogs /></ProtectedRoute>} />
-                <Route path="/superadmin/name-changes" element={<ProtectedRoute><SuperAdminNameChanges /></ProtectedRoute>} />
-                <Route path="/superadmin/licenses" element={<ProtectedRoute><SuperAdminLicenses /></ProtectedRoute>} />
-                <Route path="/superadmin/kyc" element={<ProtectedRoute><SuperAdminKYC /></ProtectedRoute>} />
-                <Route path="/superadmin/email-history" element={<ProtectedRoute><SuperAdminEmailHistory /></ProtectedRoute>} />
-                <Route path="/superadmin/onboarding" element={<ProtectedRoute><SuperAdminOnboarding /></ProtectedRoute>} />
+                <Route path="/superadmin" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminDashboard /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/profile" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminProfile /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/team" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminTeam /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/organization/:orgId" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminOrganization /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/organizations" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminOrganizations /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/api-keys" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminApiKeys /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/payouts" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminPayouts /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/deletions" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminDeletions /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/defaulters" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminDefaulters /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/appeals" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminAppeals /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/logs" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminLogs /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/name-changes" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminNameChanges /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/licenses" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminLicenses /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/kyc" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminKYC /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/email-history" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminEmailHistory /></SuperAdminRouteGuard></ProtectedRoute>} />
+                <Route path="/superadmin/onboarding" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminOnboarding /></SuperAdminRouteGuard></ProtectedRoute>} />
               </Route>
               {/* Footer Pages */}
               <Route path="/about" element={<About />} />

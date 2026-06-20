@@ -42,7 +42,7 @@ interface Appeal {
 
 export default function SuperAdminAppeals() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [appeals, setAppeals] = useState<Appeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -51,17 +51,10 @@ export default function SuperAdminAppeals() {
   const [adminNotes, setAdminNotes] = useState("");
 
   useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
-
-  useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchAppeals();
     }
-  }, [isSuperadmin]);
+  }, [hasPanelAccess]);
 
   const fetchAppeals = async () => {
     try {
@@ -121,7 +114,7 @@ export default function SuperAdminAppeals() {
     return <PremiumLoader fullScreen message="Loading appeals..." />;
   }
 
-  if (!isSuperadmin) return null;
+  if (!hasPanelAccess) return null;
 
   const pendingAppeals = appeals.filter(a => a.status === "pending");
   const processedAppeals = appeals.filter(a => a.status !== "pending");

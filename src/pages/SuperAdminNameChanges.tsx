@@ -28,21 +28,17 @@ interface NameChangeRequest {
 
 export default function SuperAdminNameChanges() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading } = useSuperadmin();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<NameChangeRequest[]>([]);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/");
-      return;
-    }
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchRequests();
     }
-  }, [isSuperadmin, authLoading]);
+  }, [hasPanelAccess, authLoading]);
 
   const fetchRequests = async () => {
     setLoading(true);

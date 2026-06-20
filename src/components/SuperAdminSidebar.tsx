@@ -14,6 +14,7 @@ import {
   Webhook,
   Mail,
   Megaphone,
+  Users,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -28,14 +29,15 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
+import { useSuperadmin } from "@/hooks/useSuperadmin";
+import { canAccessRoute } from "@/lib/superadminPermissions";
 
 const navigation = [
   { name: 'Overview', href: '/superadmin', icon: LayoutDashboard },
+  { name: 'Team & Roles', href: '/superadmin/team', icon: Users, fullSuperadminOnly: true },
   { name: 'Organizations', href: '/superadmin/organizations', icon: Building2 },
   { name: 'Payouts', href: '/superadmin/payouts', icon: Clock },
   { name: 'Deletions', href: '/superadmin/deletions', icon: ShieldAlert },
@@ -57,6 +59,12 @@ export function SuperAdminSidebar() {
   const isExpanded = isMobile ? openMobile : open;
 
   const { signOut } = useAuth();
+  const { isSuperadmin, departments } = useSuperadmin();
+
+  const visibleNav = navigation.filter((item) => {
+    if (item.fullSuperadminOnly && !isSuperadmin) return false;
+    return canAccessRoute(item.href, isSuperadmin, departments);
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -109,7 +117,7 @@ export function SuperAdminSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {navigation.map((item) => (
+              {visibleNav.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.href)}

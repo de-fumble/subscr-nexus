@@ -83,7 +83,7 @@ interface Analytics {
 export default function SuperAdminOrganization() {
   const { orgId } = useParams();
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [details, setDetails] = useState<OrganizationDetails | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,13 +99,6 @@ export default function SuperAdminOrganization() {
   useEffect(() => {
     setDashboardDataSource(dataSource);
   }, [dataSource]);
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   const fetchData = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -127,10 +120,10 @@ export default function SuperAdminOrganization() {
   }, [invokeSuperadmin, orgId, dataSource]);
 
   useEffect(() => {
-    if (isSuperadmin && orgId) {
+    if (hasPanelAccess && orgId) {
       fetchData();
     }
-  }, [isSuperadmin, orgId, fetchData, dataSource]);
+  }, [hasPanelAccess, orgId, fetchData, dataSource]);
 
   useEffect(() => {
     if (details?.organization && apiKeysDialogOpen) {

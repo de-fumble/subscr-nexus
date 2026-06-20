@@ -330,14 +330,21 @@ const Dashboard = () => {
       if (!orgData) {
         // Before erroring out, check if this user is a superadmin —
         // they don't have an org and should go to /superadmin, not /auth.
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "superadmin")
-          .maybeSingle();
+        const [{ data: roleData }, { data: deptData }] = await Promise.all([
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "superadmin")
+            .maybeSingle(),
+          supabase
+            .from("superadmin_role_assignments")
+            .select("department")
+            .eq("user_id", user.id)
+            .limit(1),
+        ]);
 
-        if (roleData) {
+        if (roleData || (deptData && deptData.length > 0)) {
           navigate("/superadmin", { replace: true });
           return;
         }

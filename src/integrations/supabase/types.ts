@@ -973,6 +973,30 @@ export type Database = {
         }
         Relationships: []
       }
+      superadmin_role_assignments: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          department: Database["public"]["Enums"]["superadmin_department"]
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          department: Database["public"]["Enums"]["superadmin_department"]
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          department?: Database["public"]["Enums"]["superadmin_department"]
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       organization_balances: {
@@ -1017,14 +1041,30 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_superadmin_department: {
+        Args: {
+          _department: Database["public"]["Enums"]["superadmin_department"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_superadmin_panel_access: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_org_owner: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_superadmin: {
+        Args: { _user_id: string }
         Returns: boolean
       }
     }
     Enums: {
       app_role: "superadmin" | "admin" | "user"
       org_role: "admin" | "staff"
+      superadmin_department: "auditor" | "it_admin" | "marketing"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1154,6 +1194,7 @@ export const Constants = {
     Enums: {
       app_role: ["superadmin", "admin", "user"],
       org_role: ["admin", "staff"],
+      superadmin_department: ["auditor", "it_admin", "marketing"],
     },
   },
 } as const

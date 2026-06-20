@@ -41,24 +41,17 @@ interface Organization {
 
 export default function SuperAdminOrganizations() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
-
-  useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchOrganizations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuperadmin]);
+  }, [hasPanelAccess]);
 
   const fetchOrganizations = async () => {
     try {
@@ -81,7 +74,7 @@ export default function SuperAdminOrganizations() {
     return <PremiumLoader fullScreen message="Loading organizations directory..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

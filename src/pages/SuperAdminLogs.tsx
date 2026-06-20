@@ -7,13 +7,13 @@ import { PremiumLoader } from "@/components/PremiumLoader";
 
 export default function SuperAdminLogs() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading } = useSuperadmin();
+  const { hasPanelAccess, loading } = useSuperadmin();
 
   if (loading) {
     return <PremiumLoader fullScreen message="Loading logs..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     navigate("/dashboard");
     return null;
   }

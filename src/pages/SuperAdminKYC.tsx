@@ -64,7 +64,7 @@ interface KYCEditRequest {
 
 export default function SuperAdminKYC() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading } = useSuperadmin();
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,13 +78,6 @@ export default function SuperAdminKYC() {
   const [sendEmail, setSendEmail] = useState(false);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   const fetchSubmissions = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -142,11 +135,11 @@ export default function SuperAdminKYC() {
   };
 
   useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchSubmissions().then(() => setLoading(false));
       fetchEditRequests();
     }
-  }, [isSuperadmin]);
+  }, [hasPanelAccess]);
 
   const handleReview = (submission: KYCSubmission) => {
     setSelectedSubmission(submission);
@@ -334,7 +327,7 @@ export default function SuperAdminKYC() {
     return <PremiumLoader fullScreen message="Loading KYC data..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

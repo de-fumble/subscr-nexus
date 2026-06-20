@@ -29,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SuperAdminDeletions() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [deletions, setDeletions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -38,17 +38,10 @@ export default function SuperAdminDeletions() {
   const [activeTab, setActiveTab] = useState("pending");
 
   useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
-
-  useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchDeletions();
     }
-  }, [isSuperadmin, activeTab]);
+  }, [hasPanelAccess, activeTab]);
 
   const fetchDeletions = async () => {
     setLoading(true);
@@ -101,7 +94,7 @@ export default function SuperAdminDeletions() {
     return <PremiumLoader fullScreen message="Authenticating..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

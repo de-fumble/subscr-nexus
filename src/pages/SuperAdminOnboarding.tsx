@@ -61,7 +61,7 @@ const ALL_SOURCES = Object.keys(SOURCE_LABELS);
 
 export default function SuperAdminOnboarding() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading } = useSuperadmin();
 
   const [rows, setRows] = useState<ReferralSource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,13 +70,6 @@ export default function SuperAdminOnboarding() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   const fetchData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -120,9 +113,9 @@ export default function SuperAdminOnboarding() {
   };
 
   useEffect(() => {
-    if (isSuperadmin) fetchData();
+    if (hasPanelAccess) fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuperadmin, dateFilter]);
+  }, [hasPanelAccess, dateFilter]);
 
   // Client-side filters
   const filtered = rows.filter((r) => {
@@ -159,7 +152,7 @@ export default function SuperAdminOnboarding() {
     return <PremiumLoader fullScreen message="Loading onboarding data..." />;
   }
 
-  if (!isSuperadmin) return null;
+  if (!hasPanelAccess) return null;
 
   const maxCount = Math.max(...breakdown.map((b) => b.count), 1);
 

@@ -12,16 +12,9 @@ import { PremiumLoader } from "@/components/PremiumLoader";
 
 export default function SuperAdminProfile() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading } = useSuperadmin();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -37,16 +30,16 @@ export default function SuperAdminProfile() {
       }
     };
     
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchUser();
     }
-  }, [isSuperadmin]);
+  }, [hasPanelAccess]);
 
   if (authLoading || loading) {
     return <PremiumLoader fullScreen message="Loading profile..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

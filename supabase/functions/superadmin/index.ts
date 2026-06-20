@@ -8,6 +8,51 @@ const corsHeaders = {
 
 const PLATFORM_FEE_PER_TRANSACTION = 1500; // ₦1,500 flat fee per transaction
 
+type SuperadminDepartment = 'auditor' | 'it_admin' | 'marketing';
+
+const ACTION_DEPARTMENTS: Record<string, SuperadminDepartment[]> = {
+  get_platform_stats: ['auditor', 'it_admin', 'marketing'],
+  get_all_organizations: ['auditor', 'it_admin'],
+  get_organization_details: ['auditor', 'it_admin'],
+  get_organization_analytics: ['auditor'],
+  get_payout_requests: ['auditor'],
+  approve_payout: ['auditor'],
+  reject_payout: ['auditor'],
+  complete_payout: ['auditor'],
+  get_eligible_payouts: ['auditor'],
+  get_audit_logs: ['auditor'],
+  send_email: ['marketing'],
+  update_api_keys: ['it_admin'],
+};
+
+const FULL_SUPERADMIN_ACTIONS = new Set([
+  'suspend_organization', 'restore_organization', 'approve_deletion', 'reject_deletion',
+  'get_deletion_requests', 'get_defaulted_subscribers', 'mark_payment_resolved',
+  'get_suspension_appeals', 'approve_appeal', 'reject_appeal',
+  'list_team_members', 'assign_department_role', 'remove_department_role',
+]);
+
+async function getUserAccess(supabase: any, userId: string) {
+  const [{ data: roleData }, { data: deptData }] = await Promise.all([
+    supabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'superadmin').maybeSingle(),
+    supabase.from('superadmin_role_assignments').select('department').eq('user_id', userId),
+  ]);
+
+  const isSuperadmin = !!roleData;
+  const departments: SuperadminDepartment[] = (deptData || []).map((d: any) => d.department);
+  const hasPanelAccess = isSuperadmin || departments.length > 0;
+
+  return { isSuperadmin, departments, hasPanelAccess };
+}
+
+function canPerformAction(action: string, isSuperadmin: boolean, departments: SuperadminDepartment[]): boolean {
+  if (isSuperadmin) return true;
+  if (FULL_SUPERADMIN_ACTIONS.has(action)) return false;
+  const allowed = ACTION_DEPARTMENTS[action];
+  if (!allowed) return false;
+  return departments.some((d) => allowed.includes(d));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -37,22 +82,25 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is superadmin
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'superadmin')
-      .single();
+    // Check superadmin panel access (full superadmin or delegated department)
+    const access = await getUserAccess(supabase, user.id);
 
-    if (!roleData) {
-      return new Response(JSON.stringify({ error: 'Access denied. Superadmin role required.' }), {
+    if (!access.hasPanelAccess) {
+      return new Response(JSON.stringify({ error: 'Access denied. Superadmin panel access required.' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const { action, ...params } = await req.json();
+
+    if (!canPerformAction(action, access.isSuperadmin, access.departments)) {
+      return new Response(JSON.stringify({ error: 'Access denied. You do not have permission for this action.' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log(`Superadmin action: ${action}`, params);
 
     let result;
@@ -144,6 +192,18 @@ serve(async (req) => {
 
       case 'update_api_keys':
         result = await updateApiKeys(supabase, user.id, params.org_id, params.public_key, params.secret_key);
+        break;
+
+      case 'list_team_members':
+        result = await listTeamMembers(supabase);
+        break;
+
+      case 'assign_department_role':
+        result = await assignDepartmentRole(supabase, user.id, params.email, params.department);
+        break;
+
+      case 'remove_department_role':
+        result = await removeDepartmentRole(supabase, user.id, params.user_id, params.department);
         break;
 
       default:
@@ -1437,6 +1497,100 @@ async function updateApiKeys(supabase: any, actorId: string, orgId: string, publ
     entity_type: 'organization',
     entity_id: orgId,
     details: { update_type: 'paystack_keys' },
+  });
+
+  return { success: true };
+}
+
+async function listTeamMembers(supabase: any) {
+  const { data: assignments, error } = await supabase
+    .from('superadmin_role_assignments')
+    .select('user_id, department, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  const byUser: Record<string, { user_id: string; departments: SuperadminDepartment[]; assigned_at: string }> = {};
+
+  for (const row of assignments || []) {
+    if (!byUser[row.user_id]) {
+      byUser[row.user_id] = { user_id: row.user_id, departments: [], assigned_at: row.created_at };
+    }
+    byUser[row.user_id].departments.push(row.department);
+  }
+
+  const members = await Promise.all(
+    Object.values(byUser).map(async (member) => {
+      const { data: userData } = await supabase.auth.admin.getUserById(member.user_id);
+      return {
+        ...member,
+        email: userData?.user?.email || 'Unknown',
+      };
+    }),
+  );
+
+  return { members };
+}
+
+async function assignDepartmentRole(
+  supabase: any,
+  actorId: string,
+  email: string,
+  department: SuperadminDepartment,
+) {
+  const validDepartments: SuperadminDepartment[] = ['auditor', 'it_admin', 'marketing'];
+  if (!validDepartments.includes(department)) {
+    throw new Error('Invalid department');
+  }
+
+  const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+  if (listError) throw listError;
+
+  const targetUser = users.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+  if (!targetUser) {
+    throw new Error('No user found with that email. They must create a Recurra account first.');
+  }
+
+  const { error } = await supabase
+    .from('superadmin_role_assignments')
+    .upsert(
+      { user_id: targetUser.id, department, assigned_by: actorId },
+      { onConflict: 'user_id,department' },
+    );
+
+  if (error) throw error;
+
+  await supabase.from('audit_logs').insert({
+    actor_id: actorId,
+    action: 'assign_department_role',
+    entity_type: 'superadmin_role',
+    entity_id: targetUser.id,
+    details: { email, department },
+  });
+
+  return { success: true };
+}
+
+async function removeDepartmentRole(
+  supabase: any,
+  actorId: string,
+  userId: string,
+  department: SuperadminDepartment,
+) {
+  const { error } = await supabase
+    .from('superadmin_role_assignments')
+    .delete()
+    .eq('user_id', userId)
+    .eq('department', department);
+
+  if (error) throw error;
+
+  await supabase.from('audit_logs').insert({
+    actor_id: actorId,
+    action: 'remove_department_role',
+    entity_type: 'superadmin_role',
+    entity_id: userId,
+    details: { department },
   });
 
   return { success: true };

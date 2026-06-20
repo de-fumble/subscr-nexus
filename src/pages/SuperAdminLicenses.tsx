@@ -45,18 +45,11 @@ const PLAN_LABELS: Record<string, string> = {
 
 export default function SuperAdminLicenses() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading } = useSuperadmin();
   const [organizations, setOrganizations] = useState<OrganizationWithLicense[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   const fetchData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -99,10 +92,10 @@ export default function SuperAdminLicenses() {
   };
 
   useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchData();
     }
-  }, [isSuperadmin]);
+  }, [hasPanelAccess]);
 
   const filteredOrganizations = organizations.filter(
     (org) =>
@@ -158,7 +151,7 @@ export default function SuperAdminLicenses() {
     return <PremiumLoader fullScreen message="Loading licenses..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

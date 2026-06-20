@@ -35,19 +35,12 @@ interface Defaulter {
 
 export default function SuperAdminDefaulters() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [defaulters, setDefaulters] = useState<Defaulter[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
 
   const fetchDefaulters = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -64,10 +57,10 @@ export default function SuperAdminDefaulters() {
   }, [invokeSuperadmin]);
 
   useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchDefaulters();
     }
-  }, [isSuperadmin, fetchDefaulters]);
+  }, [hasPanelAccess, fetchDefaulters]);
 
   const handleMarkResolved = async (subscriberId: string) => {
     setActionLoading(subscriberId);
@@ -108,7 +101,7 @@ export default function SuperAdminDefaulters() {
     return <PremiumLoader fullScreen message="Authenticating..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

@@ -33,7 +33,7 @@ interface Organization {
 
 export default function SuperAdminApiKeys() {
   const navigate = useNavigate();
-  const { isSuperadmin, loading: authLoading, invokeSuperadmin } = useSuperadmin();
+  const { hasPanelAccess, loading: authLoading, invokeSuperadmin } = useSuperadmin();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,17 +46,10 @@ export default function SuperAdminApiKeys() {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !isSuperadmin) {
-      navigate("/dashboard");
-      toast.error("Access denied. Superadmin privileges required.");
-    }
-  }, [authLoading, isSuperadmin, navigate]);
-
-  useEffect(() => {
-    if (isSuperadmin) {
+    if (hasPanelAccess) {
       fetchOrganizations();
     }
-  }, [isSuperadmin]);
+  }, [hasPanelAccess]);
 
   const fetchOrganizations = async () => {
     try {
@@ -111,7 +104,7 @@ export default function SuperAdminApiKeys() {
     return <PremiumLoader fullScreen message="Loading API directory..." />;
   }
 
-  if (!isSuperadmin) {
+  if (!hasPanelAccess) {
     return null;
   }
 

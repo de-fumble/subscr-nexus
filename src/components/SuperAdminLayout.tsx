@@ -2,19 +2,20 @@ import { useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { useSuperadmin } from "@/hooks/useSuperadmin";
 import { PremiumLoader } from "@/components/PremiumLoader";
-import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
 
 const SuperAdminHeader = () => {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  
+  const { isSuperadmin, departments } = useSuperadmin();
+
   return (
     <header className="sticky top-0 z-10 flex h-14 w-full shrink-0 items-center justify-between border-b border-border/30 bg-background/95 backdrop-blur-sm px-4">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity" />
         <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight">
-          SuperAdmin Dashboard
+          {isSuperadmin
+            ? "SuperAdmin Dashboard"
+            : `${departments.map((d) => d.replace("_", " ")).join(", ")} Panel`}
         </h1>
       </div>
     </header>
@@ -22,21 +23,20 @@ const SuperAdminHeader = () => {
 };
 
 export function SuperAdminLayout() {
-  const { isSuperadmin, loading } = useSuperadmin();
+  const { hasPanelAccess, loading } = useSuperadmin();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !isSuperadmin) {
+    if (!loading && !hasPanelAccess) {
       navigate("/dashboard");
     }
-  }, [loading, isSuperadmin, navigate]);
+  }, [loading, hasPanelAccess, navigate]);
 
   if (loading) {
     return <PremiumLoader fullScreen message="Authenticating SuperAdmin..." />;
   }
 
-  // Prevent flashing content if not superadmin
-  if (!isSuperadmin) return null;
+  if (!hasPanelAccess) return null;
 
   return (
     <SidebarProvider>
