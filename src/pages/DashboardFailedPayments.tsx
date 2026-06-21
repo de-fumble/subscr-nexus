@@ -1,11 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { PremiumLoader } from "@/components/PremiumLoader";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -13,9 +8,7 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   RefreshCw,
-  User,
   CreditCard,
-  Calendar,
   AlertCircle,
   Search,
   X,
@@ -25,12 +18,12 @@ import {
   ShieldCheck,
   History,
   Sparkles,
-  ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { FloatingSupport } from "@/components/FloatingSupport";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import logoSvg from "@/assets/logo.svg";
 import {
   Select,
@@ -39,10 +32,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { APPLE_FONT, card, pageWrap, pageInner, sectionLabel, statValue, detailText, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 const ITEMS_PER_PAGE = 30;
 
-// Helper to get initials
 const getInitials = (name: string | null | undefined) => {
   if (!name) return "??";
   return name
@@ -377,41 +370,27 @@ const DashboardFailedPayments = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    if (status === "abandoned") return <Badge variant="secondary">Abandoned</Badge>;
-    if (status === "failed") return <Badge variant="destructive">Failed</Badge>;
-    return <Badge variant="outline">{status}</Badge>;
+  const getStatusText = (status: string) => {
+    if (status === "abandoned") return <span className="text-[12px] font-medium text-black/40 dark:text-white/40">Abandoned</span>;
+    if (status === "failed") return <span className="text-[12px] font-semibold text-red-500">Failed</span>;
+    return <span className="text-[12px] text-black/50">{status}</span>;
   };
 
   const getFailureIcon = (reason: string) => {
     if (reason.toLowerCase().includes("insufficient")) {
-      return <CreditCard className="h-4 w-4 text-destructive" />;
+      return <CreditCard className="h-3.5 w-3.5 text-red-500" />;
     }
-    if (reason.toLowerCase().includes("cancelled") || reason.toLowerCase().includes("abandoned")) {
-      return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
-    }
-    return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+    return <AlertTriangle className="h-3.5 w-3.5 text-black/30 dark:text-white/30" />;
   };
 
   if (loading) {
     return (
       <SidebarInset className="flex-1 flex flex-col">
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
-          <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
-          <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            Failed Payments
-          </h1>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Failed Payments</h1>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <div className="max-w-6xl mx-auto space-y-4">
-            <div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
-            <div className="h-24 bg-muted animate-pulse rounded-xl" />
-            <div className="grid gap-4 md:grid-cols-2">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
-            </div>
-          </div>
-        </main>
+        <PremiumLoader message="Loading payments..." />
         <FloatingSupport />
       </SidebarInset>
     );
@@ -419,119 +398,136 @@ const DashboardFailedPayments = () => {
 
   return (
     <SidebarInset className="flex-1 flex flex-col">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
-        <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
-        <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-destructive" />
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em] flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-500" />
           Failed Payments
         </h1>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={handleExportToExcel} disabled={exporting || filteredPayments.length === 0} className={pillBtn}>
+            <Download className="w-3 h-3" /> Export
+          </button>
+          <button onClick={() => organization && fetchFailedPayments(organization)} className={pillBtn}>
+            <RefreshCw className="w-3 h-3" /> Refresh
+          </button>
+        </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 sm:p-6">
-        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-16 space-y-7">
+          
           {/* Tabs Navigation */}
-          <div className="flex border-b border-border/50">
+          <div className="flex border-b border-black/5 dark:border-white/5">
             <button
               onClick={() => setActiveTab("history")}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              className={`px-4 py-2 text-[13px] font-medium transition-colors relative ${
                 activeTab === "history" 
-                ? "text-primary border-b-2 border-primary" 
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-black dark:text-white border-b-2 border-black dark:border-white" 
+                : "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
               }`}
             >
               Transaction History
             </button>
             <button
               onClick={() => setActiveTab("recovery")}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${
+              className={`px-4 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-2 ${
                 activeTab === "recovery" 
-                ? "text-primary border-b-2 border-primary" 
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-black dark:text-white border-b-2 border-black dark:border-white" 
+                : "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
               }`}
             >
               Recovery Queue
               {retryQueue.length > 0 && (
-                <Badge variant="destructive" className="h-4 min-w-[16px] px-1 text-[10px]">
+                <span className="bg-red-500 text-white rounded-full px-1.5 py-0.5 text-[9px] font-bold">
                   {retryQueue.length}
-                </Badge>
+                </span>
               )}
             </button>
           </div>
 
           {activeTab === "history" ? (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-6">
               {/* Quick Status Filters */}
               <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  size="sm"
+                <button
                   onClick={() => setStatusFilter("all")}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all ${
+                    statusFilter === "all"
+                      ? "bg-black dark:bg-white text-white dark:text-black"
+                      : "bg-black/5 dark:bg-white/6 text-black/60 dark:text-white/60 hover:bg-black/10"
+                  }`}
                 >
                   All ({failedPayments.length})
-                </Button>
-                <Button
-                  variant={statusFilter === "failed" ? "destructive" : "outline"}
-                  size="sm"
+                </button>
+                <button
                   onClick={() => setStatusFilter("failed")}
-                  className="gap-1"
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all ${
+                    statusFilter === "failed"
+                      ? "bg-red-500 text-white"
+                      : "bg-black/5 dark:bg-white/6 text-black/60 dark:text-white/60 hover:bg-black/10"
+                  }`}
                 >
-                  <AlertTriangle className="h-3.5 w-3.5" />
                   Failed ({failedCount})
-                </Button>
-                <Button
-                  variant={statusFilter === "abandoned" ? "secondary" : "outline"}
-                  size="sm"
+                </button>
+                <button
                   onClick={() => setStatusFilter("abandoned")}
-                  className="gap-1"
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all ${
+                    statusFilter === "abandoned"
+                      ? "bg-black dark:bg-white text-white dark:text-black"
+                      : "bg-black/5 dark:bg-white/6 text-black/60 dark:text-white/60 hover:bg-black/10"
+                  }`}
                 >
-                  <AlertCircle className="h-3.5 w-3.5" />
                   Abandoned ({abandonedCount})
-                </Button>
+                </button>
               </div>
 
               {/* Filters Card */}
-              <Card className="p-4 glass-card">
+              <div className={`${card} p-5`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Name / Email</Label>
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-black/35 dark:text-white/35 uppercase tracking-wider">Name / Email</span>
                     <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black/30 dark:text-white/30" />
+                      <input
                         placeholder="Search..."
                         value={searchName}
                         onChange={(e) => setSearchName(e.target.value)}
-                        className="pl-9"
+                        className="pl-8 h-8 w-full text-[13px] bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10"
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Reference</Label>
-                    <Input
-                      placeholder="Search by reference..."
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-black/35 dark:text-white/35 uppercase tracking-wider">Reference</span>
+                    <input
+                      placeholder="Search ref..."
                       value={searchReference}
                       onChange={(e) => setSearchReference(e.target.value)}
+                      className="h-8 w-full text-[13px] px-3 bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">From Date</Label>
-                    <Input
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-black/35 dark:text-white/35 uppercase tracking-wider">From Date</span>
+                    <input
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
+                      className="h-8 w-full text-[13px] px-3 bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">To Date</Label>
-                    <Input
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-black/35 dark:text-white/35 uppercase tracking-wider">To Date</span>
+                    <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
+                      className="h-8 w-full text-[13px] px-3 bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Filter by Plan</Label>
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-black/35 dark:text-white/35 uppercase tracking-wider">Plan</span>
                     <Select value={planFilter} onValueChange={setPlanFilter}>
-                      <SelectTrigger className="w-full h-10">
+                      <SelectTrigger className="w-full h-8 text-[12px] bg-[#f5f5f7] dark:bg-[#000] border-none rounded-[8px]">
                         <SelectValue placeholder="All Plans" />
                       </SelectTrigger>
                       <SelectContent>
@@ -544,104 +540,66 @@ const DashboardFailedPayments = () => {
                   </div>
                 </div>
                 {hasActiveFilters && (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-black/5">
+                    <p className="text-[12px] text-black/40">
                       Showing {filteredPayments.length} of {failedPayments.length} payments
                     </p>
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-                      <X className="h-3 w-3" />
-                      Clear filters
-                    </Button>
+                    <button onClick={clearFilters} className="text-[11px] font-medium text-black/45 dark:text-white/45 flex items-center gap-1">
+                      <X className="h-3 w-3" /> Clear filters
+                    </button>
                   </div>
                 )}
-              </Card>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportToExcel}
-                  disabled={exporting || filteredPayments.length === 0}
-                  className="gap-2"
-                >
-                  <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
-                  Export to Excel
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => organization && fetchFailedPayments(organization)}
-                  disabled={loading}
-                  className="gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                  Refresh
-                </Button>
               </div>
 
               {/* Payments List */}
               {filteredPayments.length === 0 ? (
-                <Card className="p-12 glass-card text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                    {hasActiveFilters ? (
-                      <Search className="h-8 w-8 text-muted-foreground" />
-                    ) : (
-                      <CreditCard className="h-8 w-8 text-muted-foreground" />
-                    )}
+                <div className={`${card} p-12 text-center`}>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-black/5 dark:bg-white/8">
+                    <CreditCard className="h-6 w-6 text-black/40 dark:text-white/40" />
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">
-                    {hasActiveFilters ? "No Matching Payments" : "No Failed Payments"}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {hasActiveFilters
-                      ? "No failed payments match your filters"
-                      : "All your subscribers' payments are up to date"}
+                  <h4 className="text-[14px] font-semibold mb-1">No Failed Payments</h4>
+                  <p className="text-[12px] text-black/30 max-w-xs mx-auto">
+                    All your subscribers' payments are up to date.
                   </p>
-                  {hasActiveFilters && (
-                    <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
-                      Clear filters
-                    </Button>
-                  )}
-                </Card>
+                </div>
               ) : (
-                <>
+                <div className={card}>
                   {/* Desktop Table View */}
-                  <div className="hidden md:block overflow-x-auto w-full bg-card rounded-xl border shadow-sm">
-                    <table className="w-full text-sm text-left whitespace-nowrap">
-                      <thead className="bg-muted/50 text-muted-foreground border-b text-[11px] uppercase tracking-wider font-semibold">
+                  <div className="hidden md:block overflow-x-auto w-full">
+                    <table className="w-full text-left whitespace-nowrap">
+                      <thead className="border-b border-black/5 dark:border-white/5">
                         <tr>
-                          <th className="py-3 px-4">Customer</th>
-                          <th className="py-3 px-4">Reference</th>
-                          <th className="py-3 px-4">Plan</th>
-                          <th className="py-3 px-4 text-right">Amount</th>
-                          <th className="py-3 px-4">Status</th>
-                          <th className="py-3 px-4">Reason</th>
-                          <th className="py-3 px-4 text-right">Date</th>
+                          <th className={thCell}>Customer</th>
+                          <th className={thCell}>Reference</th>
+                          <th className={thCell}>Plan</th>
+                          <th className={`${thCell} text-right`}>Amount</th>
+                          <th className={thCell}>Status</th>
+                          <th className={thCell}>Reason</th>
+                          <th className={`${thCell} text-right`}>Date</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border/50">
+                      <tbody className={tableDivider}>
                         {paginatedPayments.map((payment) => (
-                          <tr key={payment.id} className="hover:bg-muted/30 transition-colors">
-                            <td className="py-3 px-4">
+                          <tr key={payment.id} className={trRow}>
+                            <td className={tdCell}>
                               <div className="flex flex-col">
-                                <span className="font-medium text-foreground">{payment.customer_name || "Unknown"}</span>
-                                <span className="text-[11px] text-muted-foreground">{payment.email}</span>
+                                <span className="text-[13px] font-medium text-black dark:text-white">{payment.customer_name || "Unknown"}</span>
+                                <span className="text-[11px] text-black/35 dark:text-white/35">{payment.email}</span>
                               </div>
                             </td>
-                            <td className="py-3 px-4">
-                              <span className="font-mono text-xs">{payment.reference}</span>
+                            <td className={tdCell}>
+                              <span className="font-mono text-[11px] text-black/40 dark:text-white/40">{payment.reference}</span>
                             </td>
-                            <td className="py-3 px-4 text-muted-foreground">{payment.plan_name}</td>
-                            <td className="py-3 px-4 text-right font-medium">₦{payment.amount.toLocaleString()}</td>
-                            <td className="py-3 px-4">{getStatusBadge(payment.status)}</td>
-                            <td className="py-3 px-4 max-w-[220px] truncate text-muted-foreground" title={payment.failure_reason || "Unknown error"}>
+                            <td className={`${tdCell} text-[12px] text-black/50 dark:text-white/50`}>{payment.plan_name}</td>
+                            <td className={`${tdCell} text-right text-[13px] font-semibold text-black dark:text-white`}>₦{payment.amount.toLocaleString()}</td>
+                            <td className={tdCell}>{getStatusText(payment.status)}</td>
+                            <td className={`${tdCell} max-w-[220px] truncate text-black/50 dark:text-white/50 text-[12px]`} title={payment.failure_reason || "Unknown error"}>
                               <div className="flex items-center gap-1.5">
                                 {getFailureIcon(payment.failure_reason || "")}
                                 <span className="truncate">{payment.failure_reason || "Unknown error"}</span>
                               </div>
                             </td>
-                            <td className="py-3 px-4 text-right text-muted-foreground">
+                            <td className={`${tdCell} text-right text-[12px] text-black/35 dark:text-white/35`}>
                               {new Date(payment.failed_at).toLocaleDateString()}
                             </td>
                           </tr>
@@ -651,32 +609,32 @@ const DashboardFailedPayments = () => {
                   </div>
 
                   {/* Mobile List View */}
-                  <div className="grid gap-3 md:hidden">
+                  <div className={`grid gap-0 md:hidden ${tableDivider}`}>
                     {paginatedPayments.map((payment) => (
                       <div
                         key={payment.id}
-                        className="p-3 bg-card rounded-lg border shadow-sm space-y-2.5"
+                        className="p-4 space-y-2"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex flex-col min-w-0 pr-2">
-                            <p className="font-medium text-sm truncate">{payment.customer_name || "Unknown"}</p>
-                            <p className="text-xs text-muted-foreground truncate">{payment.email}</p>
+                            <p className="text-[13px] font-medium text-black dark:text-white truncate">{payment.customer_name || "Unknown"}</p>
+                            <p className="text-[11px] text-black/35 dark:text-white/35 truncate">{payment.email}</p>
                           </div>
                           <div className="shrink-0">
-                            {getStatusBadge(payment.status)}
+                            {getStatusText(payment.status)}
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-semibold text-foreground">₦{payment.amount.toLocaleString()}</span>
-                          <span className="text-xs text-muted-foreground">{new Date(payment.failed_at).toLocaleDateString()}</span>
+                        <div className="flex items-center justify-between text-[12px]">
+                          <span className="font-semibold text-black dark:text-white">₦{payment.amount.toLocaleString()}</span>
+                          <span className="text-black/35 dark:text-white/35">{new Date(payment.failed_at).toLocaleDateString()}</span>
                         </div>
 
-                        <div className="p-2 rounded bg-destructive/5 border border-destructive/10 flex items-start gap-2">
+                        <div className="p-2.5 rounded-[8px] bg-red-500/5 border border-red-500/10 flex items-start gap-2">
                           <div className="mt-0.5 shrink-0">
                             {getFailureIcon(payment.failure_reason || "")}
                           </div>
-                          <p className="text-[11px] leading-tight text-muted-foreground line-clamp-2">
+                          <p className="text-[11px] text-black/45 dark:text-white/45 leading-normal line-clamp-2">
                             {payment.failure_reason || "Unknown error"}
                           </p>
                         </div>
@@ -686,270 +644,221 @@ const DashboardFailedPayments = () => {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-black/5 dark:border-white/5">
+                      <p className="text-[12px] text-black/40">
                         Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} of {filteredPayments.length}
                       </p>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
-                          className="gap-1"
+                          className="flex items-center justify-center p-1.5 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-40"
                         >
                           <ChevronLeft className="h-4 w-4" />
-                          <span className="hidden sm:inline">Previous</span>
-                        </Button>
-                        <span className="text-sm font-medium px-2">
+                        </button>
+                        <span className="text-[12px] font-semibold">
                           {currentPage} / {totalPages}
                         </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
                           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
-                          className="gap-1"
+                          className="flex items-center justify-center p-1.5 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-40"
                         >
-                          <span className="hidden sm:inline">Next</span>
                           <ChevronRight className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           ) : (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-6">
               {/* Recovery Banner */}
-              <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/5 via-background to-background p-6 shadow-sm">
+              <div className={`${card} p-6 relative overflow-hidden`}>
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background shadow-premium border-2 border-primary/10 overflow-hidden p-1.5">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/8 overflow-hidden p-1.5">
                       <img src={logoSvg} alt="Recurra Logo" className="h-full w-full object-contain rounded-full" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                      <h4 className="text-[14px] font-semibold text-black dark:text-white flex items-center gap-2">
                         Manual Recovery Center
                       </h4>
-                      <p className="mt-1 text-sm text-muted-foreground max-w-2xl leading-relaxed">
-                        Intelligent recovery engine matched <span className="font-semibold text-foreground">{retryQueue.length}</span> recoverable failures. 
+                      <p className="mt-1 text-[12px] text-black/40 dark:text-white/40 max-w-xl leading-relaxed">
+                        Intelligent recovery engine matched <span className="font-semibold text-black dark:text-white">{retryQueue.length}</span> recoverable failures. 
                         Manually trigger retries for subscribers with saved payment methods.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 shrink-0">
-                    <div className="flex flex-col px-4 py-2.5 rounded-xl bg-background/60 backdrop-blur-sm border border-border/50 shadow-sm">
-                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Potential Recovery</span>
-                      <span className="text-xl font-bold text-foreground leading-none flex items-baseline gap-1">
-                        <span className="text-sm font-medium text-muted-foreground">₦</span>
-                        {retryQueue.reduce((sum, sub) => sum + (sub.amount || 0), 0).toLocaleString()}
+                  <div className="grid grid-cols-2 gap-3 shrink-0">
+                    <div className="flex flex-col px-4 py-2 rounded-[12px] bg-black/[0.015] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 shadow-sm">
+                      <span className="text-[9px] uppercase tracking-widest text-black/35 dark:text-white/35 font-bold mb-1">Potential Recovery</span>
+                      <span className="text-[16px] font-bold text-black dark:text-white leading-none">
+                        ₦{retryQueue.reduce((sum, sub) => sum + (sub.amount || 0), 0).toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex flex-col px-4 py-2.5 rounded-xl bg-background/60 backdrop-blur-sm border border-border/50 shadow-sm">
-                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Queue Status</span>
-                      <span className="text-xl font-bold text-foreground leading-none">
+                    <div className="flex flex-col px-4 py-2 rounded-[12px] bg-black/[0.015] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 shadow-sm">
+                      <span className="text-[9px] uppercase tracking-widest text-black/35 dark:text-white/35 font-bold mb-1">Queue Status</span>
+                      <span className="text-[16px] font-bold text-black dark:text-white leading-none">
                         {retryQueue.filter(s => s.has_authorization).length} 
-                        <span className="text-xs font-medium text-muted-foreground ml-1">Ready</span>
+                        <span className="text-[10px] font-medium text-black/30 dark:text-white/30 ml-1">Ready</span>
                       </span>
                     </div>
                   </div>
                 </div>
-                {/* Decorative Elements */}
-                <div className="absolute -top-12 -right-12 h-64 w-64 bg-primary/5 rounded-full blur-3xl opacity-50" />
-                <div className="absolute -bottom-12 -left-12 h-48 w-48 bg-secondary/5 rounded-full blur-3xl opacity-30" />
               </div>
 
               {queueLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border/50">
-                  <div className="relative h-12 w-12 mb-4">
-                    <RefreshCw className="h-12 w-12 text-primary/40 animate-spin absolute inset-0" />
-                    <RefreshCw className="h-12 w-12 text-primary animate-spin duration-700 absolute inset-0 opacity-40" />
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">Synchronizing recovery queue...</p>
+                <div className="flex flex-col items-center justify-center py-20 bg-black/[0.01] rounded-2xl border border-dashed border-black/10 dark:border-white/10">
+                  <Loader2 className="h-6 w-6 text-black/30 dark:text-white/30 animate-spin mb-3" />
+                  <p className="text-[12px] font-medium text-black/40">Synchronizing recovery queue...</p>
                 </div>
               ) : retryQueue.length === 0 ? (
-                <Card className="flex flex-col items-center justify-center py-24 text-center border-dashed border-2 glass-card">
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
-                    <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-background border border-border/50 shadow-xl">
-                      <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                <div className={`${card} flex flex-col items-center justify-center py-20 text-center`}>
+                  <div className="relative mb-4">
+                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-black/5 dark:bg-white/8 shadow-sm">
+                      <CheckCircle2 className="h-7 w-7 text-emerald-500" />
                     </div>
                   </div>
-                  <h4 className="text-xl font-bold mb-2">Recovery Queue Clear</h4>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-8">
-                    Excellent! All your subscribers are currently in good standing. No recoverable failures detected at this time.
+                  <h4 className="text-[14px] font-semibold mb-1">Recovery Queue Clear</h4>
+                  <p className="text-[12px] text-black/30 max-w-xs mx-auto mb-6">
+                    All your subscribers are currently in good standing. No recoverable failures detected.
                   </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="gap-2 px-6 rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  <button 
+                    className={pillBtn}
                     onClick={() => organization && fetchRetryQueue(organization)}
                   >
-                    <RefreshCw className="h-3.5 w-3.5" />
+                    <RefreshCw className="h-3 w-3" />
                     Check for Updates
-                  </Button>
-                </Card>
+                  </button>
+                </div>
               ) : (
-                <div className="bg-card rounded-2xl border shadow-premium overflow-hidden">
+                <div className={card}>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left border-collapse">
+                    <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-muted/30 text-muted-foreground border-b text-[11px] uppercase tracking-widest font-bold">
-                          <th className="py-4 px-6">Subscriber Identity</th>
-                          <th className="py-4 px-6">Current Plan</th>
-                          <th className="py-4 px-6 text-right">Recovery Amount</th>
-                          <th className="py-4 px-6 text-center">Retry Attempts</th>
-                          <th className="py-4 px-6">Failed Transaction</th>
-                          <th className="py-4 px-6">Reason</th>
-                          <th className="py-4 px-6">Status Details</th>
-                          <th className="py-4 px-6 text-right">Action</th>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                          <th className={thCell}>Subscriber Identity</th>
+                          <th className={thCell}>Current Plan</th>
+                          <th className={`${thCell} text-right`}>Recovery Amount</th>
+                          <th className={`${thCell} text-center`}>Retry Attempts</th>
+                          <th className={thCell}>Failed Transaction</th>
+                          <th className={thCell}>Reason</th>
+                          <th className={thCell}>Status Details</th>
+                          <th className={`${thCell} text-right`}>Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border/30">
+                      <tbody className={tableDivider}>
                         {retryQueue.map((sub) => {
                           const queueItemId = sub.id;
                           const subscriberId = sub.subscriber_id || sub.id;
                           return (
-                          <tr key={queueItemId} className="group hover:bg-muted/10 transition-all duration-200 whitespace-nowrap">
-                            <td className="py-4 px-6">
+                          <tr key={queueItemId} className={trRow}>
+                            <td className={tdCell}>
                               <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9 border border-border/50 shadow-sm transition-transform group-hover:scale-105">
-                                  <AvatarFallback className="bg-primary/5 text-primary text-[11px] font-bold">
+                                <Avatar className="h-8 w-8 rounded-xl shrink-0">
+                                  <AvatarFallback className="bg-black/5 dark:bg-white/8 text-black/50 dark:text-white/50 text-[10px] font-bold rounded-xl">
                                     {getInitials(sub.customer_name)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col min-w-0">
-                                  <span className="font-semibold text-foreground truncate max-w-[180px]">
+                                  <span className="text-[13px] font-medium text-black dark:text-white truncate max-w-[180px]">
                                     {sub.customer_name || "Anonymous Subscriber"}
                                   </span>
-                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                  <span className="text-[10px] text-black/35 dark:text-white/35">
                                     {sub.email}
                                   </span>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-2">
-                                <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
-                                <span className="text-muted-foreground font-medium">{sub.plan_name}</span>
-                              </div>
+                            <td className={tdCell}>
+                              <span className="text-black/50 dark:text-white/50 font-medium text-[12px]">{sub.plan_name}</span>
                             </td>
-                            <td className="py-4 px-6 text-right">
-                              <div className="flex flex-col items-end">
-                                <span className="font-bold text-foreground">₦{sub.amount.toLocaleString()}</span>
-                                <span className="text-[10px] text-muted-foreground leading-tight uppercase tracking-tighter">Full Balance</span>
-                              </div>
+                            <td className={`${tdCell} text-right`}>
+                              <span className="font-semibold text-black dark:text-white text-[13px]">₦{sub.amount.toLocaleString()}</span>
                             </td>
-                            <td className="py-4 px-6 text-center">
-                              <div className="inline-flex flex-col items-center gap-1.5">
-                                <div className="flex gap-1.5">
+                            <td className={`${tdCell} text-center`}>
+                              <div className="inline-flex flex-col items-center gap-1">
+                                <div className="flex gap-1">
                                   {[1, 2, 3].map((i) => (
                                     <div 
                                       key={i} 
-                                      className={`h-1 w-5 rounded-full transition-all duration-500 ${
+                                      className={`h-1 w-4 rounded-full transition-all duration-300 ${
                                         i <= (sub.retry_count || 0) 
-                                        ? "bg-destructive/70 shadow-[0_0_8px_rgba(239,68,68,0.3)]" 
-                                        : "bg-muted-foreground/10"
+                                        ? "bg-red-500/80" 
+                                        : "bg-black/10 dark:bg-white/10"
                                       }`} 
                                     />
                                   ))}
                                 </div>
-                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-                                  {sub.retry_count || 0} OF 3 USED
+                                <span className="text-[9px] font-semibold text-black/25 dark:text-white/25 uppercase tracking-wider">
+                                  {sub.retry_count || 0} OF 3
                                 </span>
                               </div>
                             </td>
-                            <td className="py-4 px-6">
+                            <td className={tdCell}>
                               <div className="flex flex-col min-w-0">
-                                <span className="font-mono text-[11px] text-foreground truncate max-w-[180px]">
+                                <span className="font-mono text-[10px] text-black/40 dark:text-white/40 truncate max-w-[180px]">
                                   {sub.reference || "No reference"}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground">
+                                <span className="text-[10px] text-black/30 dark:text-white/30">
                                   {sub.payment_failed_at
-                                    ? new Date(sub.payment_failed_at).toLocaleString()
+                                    ? new Date(sub.payment_failed_at).toLocaleDateString()
                                     : "Unknown time"}
                                 </span>
                               </div>
                             </td>
-                            <td className="py-4 px-6">
+                            <td className={tdCell}>
                               <div 
-                                className={`flex items-start gap-2 text-muted-foreground transition-all duration-300 cursor-pointer hover:text-foreground ${
-                                  expandedReasons.has(queueItemId) ? "max-w-[300px]" : "max-w-[180px]"
-                                }`}
+                                className={`flex items-start gap-1.5 text-black/45 dark:text-white/45 cursor-pointer max-w-[180px]`}
                                 onClick={() => toggleReason(queueItemId)}
                               >
                                 <div className="mt-0.5 shrink-0">
                                   {getFailureIcon(sub.failure_reason || "")}
                                 </div>
-                                <span className={`text-[11px] leading-relaxed ${expandedReasons.has(queueItemId) ? "whitespace-normal" : "truncate"}`}>
+                                <span className={`text-[11px] leading-tight ${expandedReasons.has(queueItemId) ? "whitespace-normal" : "truncate"}`}>
                                   {sub.failure_reason || "Unknown error"}
                                 </span>
                               </div>
                             </td>
-                            <td className="py-4 px-6">
-                              <div className="flex flex-col gap-1.5">
+                            <td className={tdCell}>
+                              <div className="flex flex-col gap-1">
                                 {sub.has_authorization ? (
-                                  <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 font-bold text-[10px] py-0.5 w-fit">
-                                    <ShieldCheck className="h-3 w-3" />
-                                    READY TO RECOVER
-                                  </Badge>
+                                  <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">Ready to Recover</span>
                                 ) : (
-                                  <Badge variant="outline" className="bg-destructive/5 text-destructive/60 border-destructive/20 gap-1 font-bold text-[10px] py-0.5 w-fit">
-                                    <AlertCircle className="h-3 w-3" />
-                                    NO AUTH TOKEN
-                                  </Badge>
+                                  <span className="text-[10px] text-black/30 dark:text-white/30 font-semibold uppercase tracking-wider">No Auth Token</span>
                                 )}
-                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-1 text-[10px] text-black/30 dark:text-white/30">
                                   <History className="h-3 w-3" />
                                   {sub.last_retry_at 
-                                    ? `Last tried ${new Date(sub.last_retry_at).toLocaleDateString()}` 
-                                    : sub.payment_failed_at 
-                                      ? `Failed on ${new Date(sub.payment_failed_at).toLocaleDateString()}`
-                                      : 'No attempts yet'
+                                    ? `Tried ${new Date(sub.last_retry_at).toLocaleDateString()}` 
+                                    : 'No attempts'
                                   }
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-6 text-right">
-                              <Button
-                                size="sm"
-                                variant={sub.has_authorization ? "default" : "secondary"}
+                            <td className={`${tdCell} text-right`}>
+                              <button
                                 onClick={() => handleRetry(subscriberId, queueItemId)}
                                 disabled={retryingId === queueItemId || !sub.has_authorization || sub.retry_count >= 3}
-                                className={`gap-2 px-4 h-9 font-semibold transition-all duration-300 ${
-                                  sub.has_authorization && retryingId !== queueItemId
-                                  ? "hover:shadow-glow hover:scale-[1.02] bg-primary text-primary-foreground" 
-                                  : ""
-                                }`}
+                                className={`text-[11px] font-semibold tracking-[-0.01em] bg-black dark:bg-white text-white dark:text-black rounded-full px-3.5 py-1.5 transition-all disabled:opacity-40`}
                               >
                                 {retryingId === queueItemId ? (
-                                  <>
-                                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                                    Retrying...
-                                  </>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : sub.retry_count >= 3 ? (
                                   "Limit Reached"
                                 ) : (
-                                  <>
-                                    <RefreshCw className="h-3.5 w-3.5" />
-                                    Retry Now
-                                  </>
+                                  "Retry Now"
                                 )}
-                              </Button>
+                              </button>
                             </td>
                           </tr>
                         )})}
                       </tbody>
                     </table>
                   </div>
-                    <div className="bg-muted/30 px-6 py-3 border-t">
-                      <p className="text-[11px] text-muted-foreground text-center italic leading-relaxed">
-                        Manual recovery attempts are processed via the secure gateway. Each attempt is tracked against the recovery limit. After 3 unsuccessful attempts, the subscriber's status will be updated to <span className="font-bold text-destructive">Payment Failed</span>.
-                      </p>
-                    </div>
                 </div>
               )}
             </div>

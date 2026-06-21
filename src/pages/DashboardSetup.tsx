@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SetupProgressCard } from "@/components/SetupProgressCard";
-import { Button } from "@/components/ui/button";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { PremiumLoader } from "@/components/PremiumLoader";
-import { ArrowRight, Rocket } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import logoImage from "@/assets/logo.svg";
+import { APPLE_FONT, card, pageWrap, pageInner, sectionLabel, statValue, detailText, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 interface Organization {
   id: string;
@@ -84,25 +84,25 @@ const DashboardSetup = () => {
 
   return (
     <SidebarInset className="flex-1 flex flex-col">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-3 sm:px-4">
-        <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
-        <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight">Setup</h1>
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Setup</h1>
       </header>
 
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-4xl space-y-6 sm:space-y-10">
-          <div className="text-center space-y-3 mb-2 sm:mb-6">
-            <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-background shadow-xl border border-border/50 mb-6 group transition-all duration-500 hover:scale-110 hover:shadow-accent/20">
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="max-w-[650px] mx-auto px-6 pt-10 pb-16 space-y-8">
+          <div className="text-center space-y-3">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-[#1c1c1e] shadow-sm border border-black/5 mb-4">
               <img 
                 src={logoImage} 
                 alt="Recurra Logo" 
-                className="h-10 w-10 sm:h-12 sm:w-12 object-contain transition-transform duration-500 group-hover:rotate-6 rounded-full" 
+                className="h-10 w-10 object-contain rounded-full" 
               />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight px-4">
+            <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-black dark:text-white">
               Welcome to {organization?.org_name || "Recurra"}
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xs sm:max-w-md mx-auto px-6">
+            <p className="text-[12px] text-black/40 dark:text-white/40 max-w-xs mx-auto">
               Complete these few steps to start collecting payments.
             </p>
           </div>
@@ -115,20 +115,16 @@ const DashboardSetup = () => {
           />
 
           <div className="flex justify-center pt-2">
-            <Button
-              size="lg"
+            <button
               onClick={() => {
-                // The user intentionally chose to continue to the dashboard.
-                // We keep the redirect guard in place so Dashboard won't send
-                // them back here automatically on this session.
                 sessionStorage.setItem("setup_redirect_done", "true");
                 navigate("/dashboard", { replace: true });
               }}
-              className="gap-2 rounded-full px-8"
+              className={pillBtn + " px-8 py-2 text-[13px] font-semibold"}
             >
               {setupComplete ? "Go to Dashboard" : "Continue to Dashboard"}
               <ArrowRight className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
         <FloatingSupport />

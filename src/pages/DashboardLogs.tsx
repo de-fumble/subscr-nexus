@@ -6,6 +6,7 @@ import { AuditLogViewer } from "@/components/AuditLogViewer";
 import { Loader2 } from "lucide-react";
 import { FloatingSupport } from "@/components/FloatingSupport";
 import { useOrgRole } from "@/hooks/useOrgRole";
+import { APPLE_FONT, card, pageWrap, pageInner, sectionLabel, statValue, detailText, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 interface Organization {
   id: string;
@@ -84,25 +85,29 @@ export default function DashboardLogs() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading logs...</p>
+      <SidebarInset className="flex-1">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Activity Logs</h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center bg-[#f5f5f7] dark:bg-[#000]">
+          <div className="text-center">
+            <Loader2 className="h-6 w-6 animate-spin text-black/40 dark:text-white/40 mx-auto mb-3" />
+            <p className="text-[12px] text-black/40">Loading logs...</p>
+          </div>
         </div>
-      </div>
+      </SidebarInset>
     );
   }
 
   return (
     <SidebarInset className="flex-1">
-      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-        <SidebarTrigger />
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-foreground">Activity Logs</h1>
-        </div>
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Activity Logs</h1>
       </header>
-      <main className="flex-1 overflow-auto">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-16">
           {organization && (
             <AuditLogViewer orgId={organization.id} isPremium={isPremium} />
           )}

@@ -1,29 +1,21 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-// CSV export — no extra dependency needed
 import { toast } from "sonner";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { FloatingSupport } from "@/components/FloatingSupport";
-import { PremiumLoader } from "@/components/PremiumLoader";
-import { useOrgRole } from "@/hooks/useOrgRole";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import {
   CreditCard, Banknote, Zap, Search, X, Download,
   ChevronLeft, ChevronRight, ArrowUpRight, TrendingUp,
   Loader2, RefreshCw, ListFilter,
 } from "lucide-react";
 import { getDashboardDataSource } from "@/lib/dataSource";
-
+import { useOrgRole } from "@/hooks/useOrgRole";
+import { PremiumLoader } from "@/components/PremiumLoader";
+import { APPLE_FONT, card, sectionLabel, statValue, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 const PAGE_SIZE = 25;
 
@@ -49,9 +41,9 @@ interface Organization {
 }
 
 const TYPE_META: Record<TxType, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-  subscription:   { label: "Subscription",    icon: CreditCard, color: "text-blue-500",    bg: "bg-blue-500/10"   },
-  one_time:       { label: "Standard Payment", icon: Banknote,   color: "text-emerald-500", bg: "bg-emerald-500/10"},
-  quick_checkout: { label: "Quick Checkout",   icon: Zap,        color: "text-violet-500",  bg: "bg-violet-500/10" },
+  subscription:   { label: "Subscription",    icon: CreditCard, color: "text-black/50 dark:text-white/50",    bg: "bg-black/5 dark:bg-white/8"   },
+  one_time:       { label: "Standard Payment", icon: Banknote,   color: "text-black/50 dark:text-white/50", bg: "bg-black/5 dark:bg-white/8"},
+  quick_checkout: { label: "Quick Checkout",   icon: Zap,        color: "text-black/50 dark:text-white/50",  bg: "bg-black/5 dark:bg-white/8" },
 };
 
 function TypeBadge({ type }: { type: TxType }) {
@@ -109,124 +101,163 @@ export default function DashboardAllTransactions() {
           .maybeSingle();
         if (mem) {
           orgId = mem.org_id;
-          const { data: staffOrg } = await supabase
+          const { data: memOrg } = await supabase
             .from("organizations")
             .select("id, org_name, email, logo_url")
             .eq("id", orgId)
             .maybeSingle();
-          if (staffOrg) setOrganization(staffOrg);
+          setOrganization(memOrg);
         }
       }
 
-      if (!orgId) { navigate("/auth"); return; }
-      await fetchAll(orgId);
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to load data");
-    } finally {
+      if (!orgId) {
+        setLoading(false);
+        return;
+      }
+
+      await fetchTransactions(orgId, false);
+    } catch {
+      toast.error("Boot failed");
       setLoading(false);
     }
   };
 
-  const fetchAll = async (orgId: string) => {
-    const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
-      body: {
-        action: "export_transactions",
-        orgId,
-        dataSource: getDashboardDataSource(),
-      },
-    });
-    if (error) throw error;
+  const fetchTransactions = async (orgId: string, isRefresh: boolean) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
 
-    const rows = Array.isArray((data as any)?.transactions) ? (data as any).transactions : [];
-    const unified: UnifiedTransaction[] = rows.map((tx: any, index: number) => {
-      const rawType = String(tx.type || "").toLowerCase();
-      const isOneTime = rawType.includes("one-time") || rawType.includes("one_time") || rawType.includes("standard");
-      return {
-        id: String(tx.reference || tx.id || index),
-        date: tx.paid_at || tx.created_at || new Date().toISOString(),
-        amount: Number(tx.amount) || 0,
-        label: tx.plan_name || "Unknown",
-        payer_name: tx.customer_name || null,
-        payer_email: tx.email || "Unknown",
-        reference: tx.reference || "N/A",
-        type: isOneTime ? "one_time" : "subscription",
-        status: tx.status || "success",
-      };
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-paystack-analytics", {
+        body: {
+          action: "export_transactions",
+          orgId,
+          dataSource: getDashboardDataSource(),
+        },
+      });
 
-    // Sort newest first
-    unified.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    setTransactions(unified);
+      if (error) throw error;
+
+      const raw = (data as any)?.transactions;
+      const rows = Array.isArray(raw) ? raw : [];
+
+      const mapped: UnifiedTransaction[] = rows.map((txn, index) => {
+        const rawType = String(txn.type || "").toLowerCase();
+        let type: TxType = "subscription";
+        if (rawType.includes("one")) {
+          type = "one_time";
+        } else if (rawType.includes("quick")) {
+          type = "quick_checkout";
+        }
+
+        return {
+          id: String(txn.reference || txn.id || index),
+          date: txn.paid_at || txn.created_at || new Date().toISOString(),
+          amount: Number(txn.amount) || 0,
+          label: txn.plan_name || (type === "one_time" ? "Standard Payment" : type === "quick_checkout" ? "Quick Checkout" : "Unknown Plan"),
+          payer_name: txn.customer_name || null,
+          payer_email: txn.email || "Unknown",
+          reference: txn.reference || "N/A",
+          type,
+          status: txn.status || "success",
+        };
+      });
+
+      setTransactions(mapped);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load transactions");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const handleRefresh = async () => {
-    if (!organization) return;
-    setRefreshing(true);
-    setPage(1);
-    try { await fetchAll(organization.id); toast.success("Transactions refreshed"); }
-    catch { toast.error("Refresh failed"); }
-    finally { setRefreshing(false); }
+  const handleRefresh = () => {
+    if (organization) {
+      fetchTransactions(organization.id, true);
+    }
   };
 
-  // ── Derived / filtered ─────────────────────────────────────────────────
+  // ── Filters logic ───────────────────────────────────────────────────────
   const filtered = useMemo(() => {
-    return transactions.filter(tx => {
-      if (typeFilter !== "all" && tx.type !== typeFilter) return false;
-      if (dateFrom && new Date(tx.date) < new Date(dateFrom)) return false;
-      if (dateTo && new Date(tx.date) > new Date(dateTo + "T23:59:59")) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !tx.payer_email.toLowerCase().includes(q) &&
-          !(tx.payer_name?.toLowerCase().includes(q)) &&
-          !tx.label.toLowerCase().includes(q) &&
-          !tx.reference.toLowerCase().includes(q)
-        ) return false;
-      }
-      return true;
-    });
-  }, [transactions, typeFilter, dateFrom, dateTo, search]);
+    let list = [...transactions];
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (typeFilter !== "all") {
+      list = list.filter(tx => tx.type === typeFilter);
+    }
+
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(tx => {
+        const name = (tx.payer_name || "").toLowerCase();
+        const email = tx.payer_email.toLowerCase();
+        const ref = tx.reference.toLowerCase();
+        const lbl = tx.label.toLowerCase();
+        return name.includes(q) || email.includes(q) || ref.includes(q) || lbl.includes(q);
+      });
+    }
+
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      list = list.filter(tx => new Date(tx.date) >= from);
+    }
+
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      list = list.filter(tx => new Date(tx.date) <= to);
+    }
+
+    return list;
+  }, [transactions, search, typeFilter, dateFrom, dateTo]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, page]);
 
-  // Reset page when filters change
-  useEffect(() => { setPage(1); }, [typeFilter, dateFrom, dateTo, search]);
+  useEffect(() => { setPage(1); }, [search, typeFilter, dateFrom, dateTo]);
 
-  const hasFilters = typeFilter !== "all" || dateFrom || dateTo || search;
-  const clearFilters = () => { setTypeFilter("all"); setDateFrom(""); setDateTo(""); setSearch(""); };
+  const hasFilters = search || typeFilter !== "all" || dateFrom || dateTo;
 
-  // Summary stats
-  const totalAmount = useMemo(() => filtered.reduce((s, t) => s + t.amount, 0), [filtered]);
-  const countByType = useMemo(() => ({
-    subscription: transactions.filter(t => t.type === "subscription").length,
-    one_time: transactions.filter(t => t.type === "one_time").length,
-    quick_checkout: transactions.filter(t => t.type === "quick_checkout").length,
-  }), [transactions]);
+  const clearFilters = () => {
+    setSearch("");
+    setTypeFilter("all");
+    setDateFrom("");
+    setDateTo("");
+  };
 
-  // Export
+  // Stats
+  const { totalAmount, countByType } = useMemo(() => {
+    let sum = 0;
+    const counts: Record<TxType, number> = { subscription: 0, one_time: 0, quick_checkout: 0 };
+    filtered.forEach(tx => {
+      sum += tx.amount;
+      counts[tx.type] = (counts[tx.type] || 0) + 1;
+    });
+    return { totalAmount: sum, countByType: counts };
+  }, [filtered]);
+
+  // ── CSV Export ──────────────────────────────────────────────────────────
   const handleExport = () => {
-    if (!filtered.length) { toast.error("Nothing to export"); return; }
     setExporting(true);
     try {
-      const header = ["Date", "Type", "Label", "Payer Name", "Payer Email", "Amount (₦)", "Reference", "Status"];
-      const rows = filtered.map(tx => [
-        new Date(tx.date).toLocaleString(),
-        TYPE_META[tx.type].label,
-        tx.label,
-        tx.payer_name || "—",
-        tx.payer_email,
-        tx.amount.toFixed(2),
-        tx.reference,
-        tx.status,
-      ]);
-      const csv = [header, ...rows]
-        .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
-        .join("\n");
+      let csv = "Date,Type,Label,Payer Name,Payer Email,Amount,Reference\n";
+      filtered.forEach(tx => {
+        const row = [
+          new Date(tx.date).toLocaleDateString(),
+          tx.type,
+          `"${tx.label.replace(/"/g, '""')}"`,
+          `"${(tx.payer_name || "").replace(/"/g, '""')}"`,
+          tx.payer_email,
+          tx.amount,
+          tx.reference,
+        ];
+        csv += row.join(",") + "\n";
+      });
+
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -239,78 +270,70 @@ export default function DashboardAllTransactions() {
     finally { setExporting(false); }
   };
 
-  // ── Skeleton ────────────────────────────────────────────────────────────
   if (loading) {
     return <PremiumLoader message="Loading transactions..." />;
   }
 
   return (
-            <SidebarInset className="flex-1 flex flex-col">
+    <SidebarInset className="flex-1 flex flex-col">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">All Transactions</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={handleRefresh} disabled={refreshing} className={pillBtn}>
+            <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button onClick={handleExport} disabled={exporting || !filtered.length} className={pillBtn}>
+            <Download className={`w-3 h-3 ${exporting ? 'animate-pulse' : ''}`} /> Export
+          </button>
+        </div>
+      </header>
 
-          {/* Sticky Header */}
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/30 bg-background/95 backdrop-blur-sm px-4">
-            <SidebarTrigger className="opacity-60 hover:opacity-100 transition-opacity shrink-0" />
-            <div className="flex items-center gap-2 flex-1">
-              <ListFilter className="h-4 w-4 text-primary" />
-              <h1 className="text-sm font-semibold tracking-tight">All Transactions</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-1.5 h-8 text-xs">
-                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting || !filtered.length} className="gap-1.5 h-8 text-xs">
-                <Download className={`h-3.5 w-3.5 ${exporting ? "animate-pulse" : ""}`} />
-                Export
-              </Button>
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-auto p-4 sm:p-6 space-y-5">
+      <main className="flex-1 overflow-auto p-4 sm:p-6 space-y-5 bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
 
             {/* Summary cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Card className="glass-card border-border/50 p-4 hover-lift">
-                <p className="text-xs text-muted-foreground mb-1">Total Volume</p>
-                <p className="text-xl font-bold tracking-tight">₦{totalAmount.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <div className={`${card} px-5 py-4 flex flex-col justify-between`}>
+                <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1.5">Total Volume</p>
+                <p className={statValue}>₦{totalAmount.toLocaleString()}</p>
+                <p className="text-[11px] text-black/25 dark:text-white/25 mt-1 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-emerald-500" />
                   {filtered.length} transactions
                 </p>
-              </Card>
+              </div>
               {(["subscription", "one_time", "quick_checkout"] as TxType[]).map(type => {
                 const m = TYPE_META[type];
                 const count = countByType[type];
                 return (
-                  <Card key={type} className="glass-card border-border/50 p-4 hover-lift cursor-pointer"
+                  <div key={type} className={`${card} px-5 py-4 flex flex-col justify-between hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] hover:-translate-y-px transition-all duration-200 cursor-pointer`}
                     onClick={() => setTypeFilter(typeFilter === type ? "all" : type)}>
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs text-muted-foreground">{m.label}</p>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em]">{m.label}</p>
                       <div className={`h-6 w-6 rounded-lg ${m.bg} flex items-center justify-center`}>
                         <m.icon className={`h-3.5 w-3.5 ${m.color}`} />
                       </div>
                     </div>
-                    <p className="text-xl font-bold">{count}</p>
-                    <p className="text-xs text-muted-foreground mt-1">transactions</p>
-                  </Card>
+                    <p className={statValue}>{count}</p>
+                    <p className="text-[11px] text-black/25 dark:text-white/25 mt-1">transactions</p>
+                  </div>
                 );
               })}
             </div>
 
             {/* Filter bar */}
-            <Card className="glass-card border-border/50 p-3 sm:p-4">
+            <div className={`${card} p-5`}>
               <div className="flex flex-wrap gap-3 items-end">
                 <div className="relative flex-1 min-w-[180px]">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black/30 dark:text-white/30" />
+                  <input
                     placeholder="Search name, email, reference…"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-9 h-9 text-sm"
+                    className="pl-8 h-8 w-full text-[13px] bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10"
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={v => setTypeFilter(v as any)}>
-                  <SelectTrigger className="h-9 w-44 text-sm">
+                  <SelectTrigger className="h-8 w-44 text-[12px] bg-[#f5f5f7] dark:bg-[#000] border-none rounded-[8px]">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -320,104 +343,104 @@ export default function DashboardAllTransactions() {
                     <SelectItem value="quick_checkout">Quick Checkout</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 w-36 text-sm" />
-                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 w-36 text-sm" />
+                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-8 w-36 text-[12px] px-3 bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10" />
+                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-8 w-36 text-[12px] px-3 bg-[#f5f5f7] dark:bg-[#000] rounded-[8px] border-none focus:outline-none focus:ring-1 focus:ring-black/10" />
                 {hasFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 h-9 text-xs">
+                  <button onClick={clearFilters} className="text-[11px] font-medium text-black/45 dark:text-white/45 h-8 flex items-center gap-1">
                     <X className="h-3.5 w-3.5" /> Clear
-                  </Button>
+                  </button>
                 )}
               </div>
               {hasFilters && (
-                <p className="text-xs text-muted-foreground mt-3">
+                <p className="text-[11px] text-black/30 dark:text-white/30 mt-3">
                   Showing <strong>{filtered.length}</strong> of <strong>{transactions.length}</strong> transactions
                 </p>
               )}
-            </Card>
+            </div>
 
             {/* Table */}
             {filtered.length === 0 ? (
-              <Card className="glass-card border-border/50 p-12 text-center">
-                <ListFilter className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="font-semibold">{hasFilters ? "No matching transactions" : "No transactions yet"}</p>
-                <p className="text-sm text-muted-foreground mt-1">{hasFilters ? "Try adjusting your filters." : "Transactions will appear here once payments come in."}</p>
-                {hasFilters && <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">Clear filters</Button>}
-              </Card>
+              <div className={`${card} p-12 text-center`}>
+                <ListFilter className="h-8 w-8 text-black/30 dark:text-white/30 mx-auto mb-3" />
+                <p className="font-semibold text-xs text-black dark:text-white">{hasFilters ? "No matching transactions" : "No transactions yet"}</p>
+                <p className="text-[11px] text-black/30 mt-1">{hasFilters ? "Try adjusting your filters." : "Transactions will appear here once payments come in."}</p>
+                {hasFilters && <button onClick={clearFilters} className="mt-4 text-[11px] font-medium text-black/50 underline">Clear filters</button>}
+              </div>
             ) : (
               <>
                 {/* Desktop Table */}
-                <Card className="glass-card border-border/50 hidden md:block overflow-hidden">
+                <div className={`${card} hidden md:block overflow-hidden`}>
                   <div className="overflow-auto max-h-[calc(100vh-18rem)]">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-                        <TableRow className="border-border/30">
-                          <TableHead className="text-xs font-semibold">Date & Time</TableHead>
-                          <TableHead className="text-xs font-semibold">Type</TableHead>
-                          <TableHead className="text-xs font-semibold">Label</TableHead>
-                          <TableHead className="text-xs font-semibold">Payer</TableHead>
-                          <TableHead className="text-xs font-semibold text-right">Amount</TableHead>
-                          <TableHead className="text-xs font-semibold">Reference</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                          <th className={thCell}>Date & Time</th>
+                          <th className={thCell}>Type</th>
+                          <th className={thCell}>Label</th>
+                          <th className={thCell}>Payer</th>
+                          <th className={`${thCell} text-right`}>Amount</th>
+                          <th className={thCell}>Reference</th>
+                        </tr>
+                      </thead>
+                      <tbody className={tableDivider}>
                         {paginated.map(tx => (
-                          <TableRow key={tx.id} className="hover:bg-muted/20 border-border/20 transition-colors group">
-                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          <tr key={tx.id} className={trRow}>
+                            <td className={`${tdCell} text-[12px] text-black/40 dark:text-white/40 whitespace-nowrap`}>
                               <div>{new Date(tx.date).toLocaleDateString()}</div>
                               <div className="text-[10px] opacity-70">{new Date(tx.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-                            </TableCell>
-                            <TableCell><TypeBadge type={tx.type} /></TableCell>
-                            <TableCell className="font-medium text-sm max-w-[180px] truncate" title={tx.label}>{tx.label}</TableCell>
-                            <TableCell>
-                              <div className="text-sm font-medium">{tx.payer_name || "—"}</div>
-                              <div className="text-[11px] text-muted-foreground truncate max-w-[180px]">{tx.payer_email}</div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className="font-bold text-sm text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-0.5">
-                                <ArrowUpRight className="h-3 w-3" />
+                            </td>
+                            <td className={tdCell}><TypeBadge type={tx.type} /></td>
+                            <td className={`${tdCell} font-semibold text-[13px] text-black dark:text-white max-w-[180px] truncate`} title={tx.label}>{tx.label}</td>
+                            <td className={tdCell}>
+                              <div className="text-[13px] font-medium text-black dark:text-white">{tx.payer_name || "—"}</div>
+                              <div className="text-[11px] text-black/35 dark:text-white/35 truncate max-w-[180px]">{tx.payer_email}</div>
+                            </td>
+                            <td className={`${tdCell} text-right`}>
+                              <span className="font-semibold text-[13px] text-black dark:text-white flex items-center justify-end gap-0.5">
+                                <ArrowUpRight className="h-3 w-3 text-black/30" />
                                 ₦{tx.amount.toLocaleString()}
                               </span>
-                            </TableCell>
-                            <TableCell className="font-mono text-[11px] text-muted-foreground">{tx.reference}</TableCell>
-                          </TableRow>
+                            </td>
+                            <td className={`${tdCell} font-mono text-[11px] text-black/35 dark:text-white/35`}>{tx.reference}</td>
+                          </tr>
                         ))}
-                      </TableBody>
-                    </Table>
+                      </tbody>
+                    </table>
                   </div>
-                </Card>
+                </div>
 
                 {/* Mobile cards */}
-                <div className="md:hidden space-y-2">
+                <div className={`md:hidden ${tableDivider} ${card} overflow-hidden`}>
                   {paginated.map(tx => (
-                    <Card key={tx.id} className="glass-card border-border/40 p-4 space-y-2">
+                    <div key={tx.id} className="p-4 space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-semibold text-sm">{tx.label}</p>
-                          <p className="text-xs text-muted-foreground">{tx.payer_name || tx.payer_email}</p>
+                          <p className="font-medium text-[13px] text-black dark:text-white">{tx.label}</p>
+                          <p className="text-[11px] text-black/35 dark:text-white/35">{tx.payer_name || tx.payer_email}</p>
                         </div>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm shrink-0">
+                        <span className="font-semibold text-black dark:text-white text-[13px] shrink-0">
                           ₦{tx.amount.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <TypeBadge type={tx.type} />
-                        <span className="text-[10px] text-muted-foreground">{new Date(tx.date).toLocaleString()}</span>
+                        <span className="text-[10px] text-black/30 dark:text-white/30">{new Date(tx.date).toLocaleString()}</span>
                       </div>
-                      <p className="font-mono text-[10px] text-muted-foreground truncate">{tx.reference}</p>
-                    </Card>
+                      <p className="font-mono text-[10px] text-black/35 dark:text-white/35 truncate">{tx.reference}</p>
+                    </div>
                   ))}
                 </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                    <p className="text-[12px] text-black/40">
                       Showing <strong>{(page - 1) * PAGE_SIZE + 1}</strong>–<strong>{Math.min(page * PAGE_SIZE, filtered.length)}</strong> of <strong>{filtered.length}</strong>
                     </p>
                     <div className="flex items-center gap-1">
-                      <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-8 w-8 p-0">
+                      <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="flex items-center justify-center p-1.5 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-40">
                         <ChevronLeft className="h-4 w-4" />
-                      </Button>
+                      </button>
                       {Array.from({ length: totalPages }, (_, i) => i + 1)
                         .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
                         .reduce<(number | "...")[]>((acc, p, idx, arr) => {
@@ -427,29 +450,31 @@ export default function DashboardAllTransactions() {
                         }, [])
                         .map((p, i) =>
                           p === "..." ? (
-                            <span key={`e-${i}`} className="text-xs px-1 text-muted-foreground">…</span>
+                            <span key={`e-${i}`} className="text-[11px] px-1 text-black/30">…</span>
                           ) : (
-                            <Button
+                            <button
                               key={p}
-                              variant={page === p ? "default" : "outline"}
-                              size="sm"
                               onClick={() => setPage(p as number)}
-                              className="h-8 w-8 p-0 text-xs"
+                              className={`h-7 w-7 rounded-full text-[11px] font-semibold transition-all ${
+                                page === p
+                                  ? "bg-black dark:bg-white text-white dark:text-black"
+                                  : "hover:bg-black/5 dark:hover:bg-white/5 text-black/50"
+                              }`}
                             >
                               {p}
-                            </Button>
+                            </button>
                           )
                         )}
-                      <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="h-8 w-8 p-0">
+                      <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex items-center justify-center p-1.5 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-40">
                         <ChevronRight className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 )}
               </>
             )}
-          </main>
-          <FloatingSupport />
-        </SidebarInset>
+      </main>
+      <FloatingSupport />
+    </SidebarInset>
   );
 }

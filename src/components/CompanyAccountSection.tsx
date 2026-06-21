@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import { KYCEditRequestDialog } from "./KYCEditRequestDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { card, pillBtn } from "@/lib/appleLayout";
 
 interface Bank {
   name: string;
@@ -139,64 +139,63 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
 
   return (
     <AccordionItem value="company-account" className="border-none">
-      <Card className="glass-card border-0 shadow-[var(--shadow-medium)] border-l-4 border-l-indigo-500 group hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <div className={`${card} overflow-hidden`}>
         <AccordionTrigger className="w-full px-6 py-6 hover:no-underline relative z-10 [&[data-state=open]>div>div>svg]:rotate-180">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-left w-full">
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-500 bg-gradient-to-br from-indigo-500/20 to-indigo-600/5">
-              <Building2 className="h-7 w-7 text-indigo-500 drop-shadow-sm" />
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-black/5 dark:bg-white/5 text-black/70 dark:text-white/70">
+              <Building2 className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0 pr-4">
-              <CardTitle className="text-xl flex items-center gap-2">Company Bank Account</CardTitle>
-              <CardDescription className="text-sm mt-1">
+              <h2 className="text-[16px] font-semibold text-black dark:text-white flex items-center gap-2">Company Bank Account</h2>
+              <p className="text-[12px] text-black/40 dark:text-white/40 mt-1 font-normal">
                 {hasAccountDetails
                   ? "Your registered bank account for receiving payments"
                   : "Add your bank account details to receive payments from subscribers"}
-              </CardDescription>
+              </p>
             </div>
             {hasAccountDetails && !isEditing && (
               <div className="shrink-0 mt-4 sm:mt-0" onClick={(e) => e.stopPropagation()}>
                 {organization.kyc_verified ? (
                   <KYCEditRequestDialog orgId={organization.id}>
-                    <Button variant="outline" size="sm" className="text-accent hover:text-accent hover:bg-accent/5 gap-2 rounded-full border-accent/20">
-                      <Edit3 className="h-4 w-4" />
+                    <Button variant="outline" size="sm" className="text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 gap-1.5 rounded-full border-black/10 dark:border-white/10 text-[11px] h-7 px-2.5">
+                      <Edit3 className="h-3.5 w-3.5" />
                       Request Edit
                     </Button>
                   </KYCEditRequestDialog>
                 ) : (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-full">
-                    <Edit2 className="h-4 w-4 mr-2" /> Edit
+                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 gap-1.5 rounded-full border-black/10 dark:border-white/10 text-[11px] h-7 px-2.5">
+                    <Edit2 className="h-3.5 w-3.5" /> Edit
                   </Button>
                 )}
               </div>
             )}
           </div>
         </AccordionTrigger>
-        <AccordionContent className="px-6 pb-6 pt-2 relative z-10 border-t border-border/10">
+        <AccordionContent className="px-6 pb-6 pt-2 relative z-10 border-t border-black/5 dark:border-white/5">
           <div className="pt-4">
             {!hasAccountDetails && !isEditing ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 rounded-xl border border-border/50">
-                <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-sm text-muted-foreground mb-4">
+              <div className="flex flex-col items-center justify-center py-6 text-center bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
+                <Building2 className="h-10 w-10 text-black/40 dark:text-white/40 mb-3" />
+                <p className="text-[12px] text-black/40 dark:text-white/40 mb-4">
                   No bank account details added yet
                 </p>
                 {organization.kyc_verified ? (
                   <KYCEditRequestDialog orgId={organization.id}>
-                    <Button className="gap-2 rounded-full">
-                       <Edit3 className="h-4 w-4" />
+                    <Button className={pillBtn}>
+                       <Edit3 className="h-3.5 w-3.5" />
                        Request to Add Bank Account
                     </Button>
                   </KYCEditRequestDialog>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)} className="rounded-full px-6">
+                  <Button onClick={() => setIsEditing(true)} className={pillBtn}>
                     Add Bank Account
                   </Button>
                 )}
               </div>
             ) : isEditing ? (
               <div className="space-y-4 max-w-xl">
-                <div className="space-y-2">
-                  <Label htmlFor="bank_name">Bank Name</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="bank_name" className="text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">Bank Name</Label>
                   <Select
                     value={selectedBankCode}
                     onValueChange={(value) => {
@@ -208,7 +207,7 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
                       setIsVerified(false);
                     }}
                   >
-                    <SelectTrigger className="h-12 rounded-xl">
+                    <SelectTrigger className="h-9 rounded-lg border-black/10 dark:border-white/10 text-[13px] bg-white dark:bg-[#1c1c1e]">
                       <SelectValue placeholder="Select a bank" />
                     </SelectTrigger>
                     <SelectContent>
@@ -220,8 +219,8 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account_number">Account Number</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="account_number" className="text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">Account Number</Label>
                   <div className="flex gap-2">
                     <Input
                       id="account_number"
@@ -232,83 +231,88 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
                         setIsVerified(false);
                       }}
                       maxLength={10}
-                      className="h-12 rounded-xl"
+                      className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] font-mono transition-all shadow-sm"
                     />
                     <Button 
                       type="button"
                       onClick={verifyAccount} 
                       disabled={verifying || !formData.account_number || !selectedBankCode}
                       variant="outline"
-                      className="h-12 rounded-xl px-6"
+                      className="h-9 px-4 text-[12px] border-black/10 dark:border-white/10 text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"
                     >
                       {verifying ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : isVerified ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                       ) : (
                         'Verify'
                       )}
                     </Button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account_name">Account Name</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="account_name" className="text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">Account Name</Label>
                   <Input
                     id="account_name"
                     placeholder="Account holder name"
                     value={formData.account_name}
                     readOnly
                     disabled
-                    className={`h-12 rounded-xl ${isVerified ? "bg-green-50 dark:bg-green-500/10 border-green-300 dark:border-green-500/30 text-green-700 dark:text-green-400 font-medium" : ""}`}
+                    className={`h-9 px-3 text-[13px] rounded-lg border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-black/45 dark:text-white/45 ${isVerified ? "bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-medium" : ""}`}
                   />
                   {isVerified && (
-                    <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
-                      <CheckCircle2 className="h-4 w-4" />
+                    <p className="text-[11px] text-emerald-600 flex items-center gap-1 mt-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
                       Account verified
                     </p>
                   )}
                 </div>
-                <div className="flex gap-3 pt-4">
-                  <Button onClick={handleSave} disabled={saving || !isVerified} className="rounded-full px-8">
-                    <Save className="h-4 w-4 mr-2" />
+                <div className="flex gap-3 pt-3">
+                  <Button onClick={handleSave} disabled={saving || !isVerified} className={pillBtn}>
+                    <Save className="h-3.5 w-3.5" />
                     Save Details
                   </Button>
-                  <Button variant="outline" onClick={handleCancel} disabled={saving} className="rounded-full px-8">
-                    <X className="h-4 w-4 mr-2" />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancel} 
+                    disabled={saving} 
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-transparent border border-black/15 dark:border-white/15 text-black/60 dark:text-white/60 text-[12px] font-medium transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+                  >
+                    <X className="h-3.5 w-3.5" />
                     Cancel
                   </Button>
                 </div>
                 {!isVerified && formData.account_number && selectedBankCode && (
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-[11px] text-black/40 dark:text-white/40 mt-1">
                     Please verify your account before saving
                   </p>
                 )}
               </div>
             ) : (
-              <div className="space-y-4 max-w-xl">
-                <div className="flex justify-between items-center py-3 border-b border-border/50">
-                  <span className="text-sm text-muted-foreground">Bank Name</span>
-                  <span className="text-base font-medium">{organization.bank_name}</span>
+              <div className="space-y-3 max-w-xl">
+                <div className="flex justify-between items-center py-2.5 border-b border-black/5 dark:border-white/5">
+                  <span className="text-[13px] text-black/40 dark:text-white/40">Bank Name</span>
+                  <span className="text-[13px] font-medium text-black dark:text-white">{organization.bank_name}</span>
                 </div>
-                <div className="flex justify-between items-center py-3 border-b border-border/50">
-                  <span className="text-sm text-muted-foreground">Account Name</span>
-                  <span className="text-base font-medium">{organization.account_name}</span>
+                <div className="flex justify-between items-center py-2.5 border-b border-black/5 dark:border-white/5">
+                  <span className="text-[13px] text-black/40 dark:text-white/40">Account Name</span>
+                  <span className="text-[13px] font-medium text-black dark:text-white">{organization.account_name}</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-black/5 dark:border-white/5">
+                  <span className="text-[13px] text-black/40 dark:text-white/40">Account Number</span>
+                  <span className="text-[13px] font-medium text-black dark:text-white">{organization.account_number}</span>
                 </div>
                 {organization.kyc_verified && (
-                  <div className="flex items-center gap-2 p-3 mt-2 rounded-xl bg-accent/5 border border-accent/10 text-sm text-muted-foreground">
-                    <Lock className="h-4 w-4 text-accent shrink-0" />
+                  <div className="flex items-center gap-2 p-3 mt-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[11px] text-black/50 dark:text-white/50">
+                    <Lock className="h-3.5 w-3.5 text-black/40 dark:text-white/40 shrink-0" />
                     Verified bank details are locked. Request an edit to make changes.
                   </div>
                 )}
-                <div className="flex justify-between items-center py-3">
-                  <span className="text-sm text-muted-foreground">Account Number</span>
-                  <span className="text-base font-medium">{organization.account_number}</span>
-                </div>
               </div>
             )}
           </div>
         </AccordionContent>
-      </Card>
+      </div>
     </AccordionItem>
   );
 }

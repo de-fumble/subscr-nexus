@@ -3,7 +3,6 @@ import { PremiumLoader } from "@/components/PremiumLoader";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, ExternalLink, RefreshCw, Loader2, CheckCircle2, DollarSign, TrendingUp, FileText, Download, Users, Ban, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -13,9 +12,9 @@ import { FloatingSupport } from "@/components/FloatingSupport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
-
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import * as XLSX from "xlsx";
+import { APPLE_FONT, card, pageWrap, pageInner, sectionLabel, statValue, detailText, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 interface PaymentTransaction {
   id: string;
@@ -171,7 +170,7 @@ const OneTimePayments = () => {
   const copyPaymentLink = (paymentId: string) => {
     const link = `${window.location.origin}/pay/${paymentId}`;
     navigator.clipboard.writeText(link);
-    toast.success("Payment link copied to clipboard!");
+    toast.success("Payment link copied!");
   };
 
   const allTransactions = payments.flatMap(p => p.one_time_payment_transactions || []);
@@ -311,315 +310,308 @@ const OneTimePayments = () => {
     const linkRevenue = txns.reduce((sum, t) => sum + t.amount, 0);
 
     return (
-      <Card
+      <div
         key={payment.id}
-        className={`p-6 glass-card border-0 shadow-[var(--shadow-medium)] transition-all duration-300 hover:shadow-[var(--shadow-strong)] animate-fade-in flex flex-col h-full ${payment.is_active === false ? 'opacity-75 grayscale-[0.3]' : ''}`}
-        style={{ animationDelay: `${index * 100}ms` }}
+        className={`${card} p-5 flex flex-col h-full ${payment.is_active === false ? 'opacity-65 grayscale-[0.2]' : ''}`}
       >
         <div className="mb-4 flex items-start justify-between">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-foreground line-clamp-1">
+          <div className="flex-1 min-w-0 pr-2">
+            <h3 className="text-[15px] font-semibold text-black dark:text-white truncate">
               {payment.name}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] text-black/30 dark:text-white/30 mt-1">
               Created {new Date(payment.created_at).toLocaleDateString()}
             </p>
           </div>
           {payment.is_active !== false ? (
-            <Badge variant="default" className="gap-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 shrink-0 ml-2">
-              <CheckCircle2 className="h-3 w-3" />
-              Active
-            </Badge>
+            <span className="px-2 py-0.5 rounded-full border border-emerald-500/10 text-emerald-600 bg-emerald-500/5 text-[10px] font-semibold shrink-0">Active</span>
           ) : (
-            <Badge variant="default" className="gap-1 bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/20 shrink-0 ml-2">
-              <Ban className="h-3 w-3" />
-              Deleted
-            </Badge>
+            <span className="px-2 py-0.5 rounded-full border border-black/8 dark:border-white/8 text-[10px] text-black/40 dark:text-white/40 shrink-0">Cancelled</span>
           )}
         </div>
 
         {payment.description && (
-          <p className="mb-4 text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
+          <p className="mb-4 text-[12px] text-black/40 dark:text-white/40 line-clamp-2 min-h-[36px] leading-relaxed">
             {payment.description}
           </p>
         )}
 
         <div className="mb-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-foreground">
+          <div className="flex items-baseline gap-1">
+            <span className="text-[22px] font-semibold text-black dark:text-white">
               ₦{payment.amount.toLocaleString()}
             </span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-[11px] text-black/30 dark:text-white/30">
               per transaction
             </span>
           </div>
         </div>
 
-        <div className="mb-6 flex-1 rounded-xl bg-muted/50 p-4 border border-border/50">
-          <div className="flex justify-between items-center mb-2 text-sm">
-            <span className="text-muted-foreground">Total Generated</span>
-            <span className="font-semibold text-foreground">₦{linkRevenue.toLocaleString()}</span>
+        <div className="mb-5 flex-1 rounded-xl bg-black/[0.015] dark:bg-white/[0.02] p-3 border border-black/5 dark:border-white/5 space-y-1.5">
+          <div className="flex justify-between items-center text-[12px]">
+            <span className="text-black/35 dark:text-white/35">Total Generated</span>
+            <span className="font-semibold text-black dark:text-white">₦{linkRevenue.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Successful Payments</span>
-            <span className="font-semibold text-foreground">{txns.length}</span>
+          <div className="flex justify-between items-center text-[12px]">
+            <span className="text-black/35 dark:text-white/35">Successful Payments</span>
+            <span className="font-semibold text-black dark:text-white">{txns.length}</span>
           </div>
         </div>
 
         <div className="space-y-2 mt-auto">
           {payment.is_active !== false ? (
             <div className="flex gap-2 w-full">
-              <Button
+              <button
                 onClick={() => copyPaymentLink(payment.id)}
-                variant="outline"
-                className="flex-1 gap-2 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+                className="flex-1 px-3.5 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center justify-center gap-1"
               >
-                <ExternalLink className="h-4 w-4" />
-                <span className="hidden sm:inline">Copy Link</span>
-                <span className="sm:hidden">Copy</span>
-              </Button>
+                <ExternalLink className="h-3 w-3" /> Copy Link
+              </button>
 
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="shrink-0 transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+                  <button
+                    className="p-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0 text-black/50 dark:text-white/50"
                     title="Show QR Code"
                   >
-                    <QrCode className="h-4 w-4" />
-                  </Button>
+                    <QrCode className="h-3.5 w-3.5" />
+                  </button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md bg-white dark:bg-[#1c1c1e] border-black/5 rounded-[16px]">
                   <DialogHeader>
-                    <DialogTitle className="text-center">{payment.name} QR Code</DialogTitle>
+                    <DialogTitle className="text-center text-[15px] font-semibold">{payment.name} QR Code</DialogTitle>
                   </DialogHeader>
                   <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl mt-4">
                     <QRCodeSVG 
                       value={`${window.location.origin}/pay/${payment.id}`}
-                      size={250}
+                      size={200}
                       level={"M"}
                       includeMargin={true}
                       className="shadow-sm rounded-lg"
                     />
-                    <p className="mt-6 text-sm text-zinc-500 font-medium text-center">
+                    <p className="mt-4 text-[11px] text-black/40 font-medium text-center">
                       Scan this code to go directly to the payment page.
                     </p>
                   </div>
                 </DialogContent>
               </Dialog>
 
-              <Button
+              <button
                 onClick={() => handleCancelLink(payment.id)}
-                variant="ghost"
-                className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="p-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-red-500/10 hover:text-red-500 transition-all shrink-0 text-black/40"
                 title="Cancel Payment Link"
               >
-                <Ban className="h-4 w-4" />
-              </Button>
+                <Ban className="h-3.5 w-3.5" />
+              </button>
             </div>
           ) : (
-            <Button
-              variant="outline"
+            <button
               disabled
-              className="w-full gap-2 opacity-50 cursor-not-allowed"
+              className="w-full px-3.5 py-1.5 rounded-full border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 text-[11px] font-medium opacity-50 cursor-not-allowed text-black/30 flex items-center justify-center gap-1.5"
             >
-              <Ban className="h-4 w-4" />
-              Link Disabled
-            </Button>
+              <Ban className="h-3.5 w-3.5" /> Link Disabled
+            </button>
           )}
         </div>
-      </Card>
+      </div>
     );
   };
 
   if (loading) {
     return (
       <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Standard Payments</h1>
+        </header>
         <PremiumLoader message="Loading payments..." />
         <FloatingSupport />
       </SidebarInset>
     );
   }
 
+  const tooltipStyle = {
+    backgroundColor: "white",
+    border: "none",
+    borderRadius: 10,
+    fontSize: 12,
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    fontFamily: APPLE_FONT,
+    padding: "6px 12px",
+  } as const;
+
+  const axisStyle = {
+    fontSize: 11,
+    fill: "rgba(0,0,0,0.28)",
+    fontFamily: APPLE_FONT,
+  } as const;
+
   return (
-    <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-            <SidebarTrigger />
-            
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Standard Payments</h1>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={syncMissingPayments}
-                disabled={refreshing}
-                className="h-8 w-8 sm:h-9 sm:w-9"
-                title="Sync and Refresh"
-              >
-                {refreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-              </Button>
-              {organization && (
-                <QuickCheckoutModal orgId={organization.id} />
-              )}
-              {canCreatePlans && (
-                <Button
-                  onClick={() => navigate("/payments/create")}
-                  className="bg-accent hover:bg-accent/90 gap-2 text-sm"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Create Payment</span>
-                  <span className="sm:hidden">New</span>
-                </Button>
-              )}
-            </div>
-          </header>
+    <SidebarInset className="flex-1 flex flex-col">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Standard Payments</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <button 
+            onClick={syncMissingPayments} 
+            disabled={refreshing} 
+            className={pillBtn}
+            title="Sync and Refresh"
+          >
+            {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+          </button>
+          {organization && (
+            <QuickCheckoutModal orgId={organization.id} />
+          )}
+          {canCreatePlans && (
+            <button 
+              onClick={() => navigate("/payments/create")} 
+              className={pillBtn}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" /> Create Payment
+            </button>
+          )}
+        </div>
+      </header>
 
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-              <div className="mb-6">
-                <p className="text-sm sm:text-base text-muted-foreground">Manage and track your reusable standard payment links</p>
-              </div>
-
-              {/* Analytics Section */}
-              <div className="mb-6 sm:mb-8 grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-                <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={handleExport}
-                        disabled={exporting || allTransactions.length === 0}
-                        title="Export to Excel"
-                      >
-                        {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                      </Button>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold">₦{totalCollected.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Across all payment links</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold">{totalTransactions.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Successful payments</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Payment Links</CardTitle>
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold">{totalPayments}</div>
-                    <p className="text-xs text-muted-foreground">Links ready for payments</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Avg Revenue / Link</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg sm:text-2xl font-bold">₦{Math.round(avgRevenuePerLink).toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Per standard payment link</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Charts Section */}
-              {allTransactions.length > 0 && (
-                <div className="mb-8 grid gap-6 lg:grid-cols-2">
-                  <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Revenue Trend</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={monthlyData}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis dataKey="month" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                          <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(val) => `₦${(val / 1000).toFixed(0)}k`} />
-                          <Tooltip
-                            formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
-                            contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                          />
-                          <Line type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: 'hsl(var(--accent))' }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Transaction Volume</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={monthlyData}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis dataKey="month" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                          <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                          <Tooltip
-                            formatter={(value: number) => [value, "Transactions"]}
-                            contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                          />
-                          <Bar dataKey="count" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {payments.length === 0 ? (
-                <Card className="p-12 glass-card border-0 shadow-[var(--shadow-medium)]">
-                  <div className="text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <Plus className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="mb-2 text-xl font-semibold text-foreground">
-                      No payment links yet
-                    </h3>
-                    <p className="mb-6 text-muted-foreground">
-                      Create your first reusable payment link to start collecting standard payments.
-                    </p>
-                    {canCreatePlans && (
-                      <Button
-                        onClick={() => navigate("/payments/create")}
-                        className="bg-accent hover:bg-accent/90"
-                      >
-                        Create Your First Payment Link
-                      </Button>
-                    )}
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-16 space-y-7">
+          <div>
+            <p className={sectionLabel}>Key Statistics</p>
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+              
+              <div className={`${card} px-5 py-4 flex flex-col justify-between`}>
+                <div className="flex items-center justify-between pb-2">
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em]">Total Collected</p>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="text-black/35 hover:text-black/60 transition-colors"
+                      onClick={handleExport}
+                      disabled={exporting || allTransactions.length === 0}
+                      title="Export to Excel"
+                    >
+                      {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    </button>
+                    <DollarSign className="h-3.5 w-3.5 text-black/30" />
                   </div>
-                </Card>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {payments.map((payment, index) => renderPaymentCard(payment, index))}
                 </div>
+                <div>
+                  <p className={statValue}>₦{totalCollected.toLocaleString()}</p>
+                  <p className="text-[10px] text-black/30 mt-0.5">Across all links</p>
+                </div>
+              </div>
+
+              <div className={`${card} px-5 py-4 flex flex-col justify-between`}>
+                <div className="flex items-center justify-between pb-2">
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em]">Total Transactions</p>
+                  <Users className="h-3.5 w-3.5 text-black/30" />
+                </div>
+                <div>
+                  <p className={statValue}>{totalTransactions.toLocaleString()}</p>
+                  <p className="text-[10px] text-black/30 mt-0.5">Successful payments</p>
+                </div>
+              </div>
+
+              <div className={`${card} px-5 py-4 flex flex-col justify-between`}>
+                <div className="flex items-center justify-between pb-2">
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em]">Active Links</p>
+                  <FileText className="h-3.5 w-3.5 text-black/30" />
+                </div>
+                <div>
+                  <p className={statValue}>{totalPayments}</p>
+                  <p className="text-[10px] text-black/30 mt-0.5">Ready for payments</p>
+                </div>
+              </div>
+
+              <div className={`${card} px-5 py-4 flex flex-col justify-between`}>
+                <div className="flex items-center justify-between pb-2">
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em]">Avg Rev / Link</p>
+                  <TrendingUp className="h-3.5 w-3.5 text-black/30" />
+                </div>
+                <div>
+                  <p className={statValue}>₦{Math.round(avgRevenuePerLink).toLocaleString()}</p>
+                  <p className="text-[10px] text-black/30 mt-0.5">Per standard link</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          {allTransactions.length > 0 && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className={card}>
+                <div className="py-3 px-5 border-b border-black/5 dark:border-white/5">
+                  <p className="text-[13px] font-semibold text-black dark:text-white">Revenue Trend</p>
+                </div>
+                <div className="p-4">
+                  <ResponsiveContainer width="100%" height={180}>
+                    <LineChart data={monthlyData} margin={{ top: 12, right: 12, left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={axisStyle} dy={6} />
+                      <YAxis axisLine={false} tickLine={false} tick={axisStyle} tickFormatter={(val) => `₦${(val / 1000).toFixed(0)}k`} width={48} />
+                      <Tooltip
+                        formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
+                        contentStyle={tooltipStyle}
+                        cursor={{ stroke: "rgba(0,0,0,0.05)", strokeWidth: 1 }}
+                      />
+                      <Line type="monotone" dataKey="revenue" stroke="rgba(0,0,0,0.4)" strokeWidth={1.5} dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: "rgba(0,0,0,0.6)" }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className={card}>
+                <div className="py-3 px-5 border-b border-black/5 dark:border-white/5">
+                  <p className="text-[13px] font-semibold text-black dark:text-white">Transaction Volume</p>
+                </div>
+                <div className="p-4">
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={monthlyData} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={axisStyle} dy={6} />
+                      <YAxis axisLine={false} tickLine={false} tick={axisStyle} allowDecimals={false} width={30} />
+                      <Tooltip
+                        formatter={(value: number) => [value, "Transactions"]}
+                        contentStyle={tooltipStyle}
+                        cursor={{ fill: 'rgba(0,0,0,0.015)' }}
+                      />
+                      <Bar dataKey="count" fill="rgba(0,0,0,0.4)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {payments.length === 0 ? (
+            <div className={`${card} p-12 text-center`}>
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-black/5 dark:bg-white/8">
+                <Plus className="h-6 w-6 text-black/40" />
+              </div>
+              <h3 className="mb-1 text-[14px] font-semibold text-black dark:text-white">
+                No payment links yet
+              </h3>
+              <p className="mb-6 text-[12px] text-black/35 max-w-xs mx-auto">
+                Create your first reusable payment link to start collecting standard payments.
+              </p>
+              {canCreatePlans && (
+                <button
+                  onClick={() => navigate("/payments/create")}
+                  className={pillBtn + " mx-auto"}
+                >
+                  Create Your First Payment Link
+                </button>
               )}
             </div>
-          </main>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {payments.map((payment, index) => renderPaymentCard(payment, index))}
+            </div>
+          )}
+        </div>
+      </main>
+      <FloatingSupport />
     </SidebarInset>
   );
 };
@@ -735,74 +727,70 @@ function QuickCheckoutModal({ orgId }: { orgId: string }) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          variant="default"
-          className="bg-primary hover:bg-primary/90 gap-2 text-sm h-8 sm:h-9"
-          size="sm"
+        <button
+          className={pillBtn}
         >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Quick Checkout</span>
-          <span className="sm:hidden">Quick</span>
-        </Button>
+          <Plus className="h-3.5 w-3.5 mr-1" /> Quick Checkout
+        </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-background/95 backdrop-blur-xl border-border/50">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-[#1c1c1e] border-black/5 rounded-[16px]" style={{ fontFamily: APPLE_FONT }}>
         <DialogHeader>
-          <DialogTitle className="text-center text-xl font-bold">
+          <DialogTitle className="text-center text-[15px] font-semibold text-black dark:text-white">
             {step === "form" ? "Quick Checkout" : step === "qr" ? "Scan to Pay" : "Payment Successful"}
           </DialogTitle>
         </DialogHeader>
         
         {step === "form" && (
-          <form onSubmit={handleGenerate} className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Amount (₦)</label>
-              <Input 
+          <form onSubmit={handleGenerate} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-black/35 uppercase tracking-wider">Amount (₦)</label>
+              <input 
                 type="number"
                 min="100"
                 required
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Enter amount"
-                className="h-12 bg-background/50 border-border/50 rounded-xl"
+                className="h-9 w-full px-3 text-[13px] bg-[#f5f5f7] dark:bg-[#000] border-none rounded-[8px] focus:outline-none focus:ring-1 focus:ring-black/10"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Description (Optional)</label>
-              <Input 
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-black/35 uppercase tracking-wider">Description (Optional)</label>
+              <input 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="RECURRA CHECKOUT"
-                className="h-12 bg-background/50 border-border/50 rounded-xl"
+                className="h-9 w-full px-3 text-[13px] bg-[#f5f5f7] dark:bg-[#000] border-none rounded-[8px] focus:outline-none focus:ring-1 focus:ring-black/10"
               />
             </div>
-            <Button type="submit" className="w-full mt-4 h-12 rounded-xl text-base font-bold shadow-xl shadow-primary/20" disabled={loading}>
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Generate Link & QR"}
-            </Button>
+            <button type="submit" className={pillBtn + " w-full h-9 justify-center mt-2"} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate Checkout"}
+            </button>
           </form>
         )}
         
         {step === "qr" && paymentId && (
-          <div className="flex flex-col items-center justify-center p-8 bg-card/50 rounded-2xl mt-4 border border-border/50 shadow-inner">
+          <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-[#1c1c1e] rounded-xl mt-4">
             <QRCodeSVG 
               value={`${window.location.origin}/pay/${paymentId}`}
-              size={220}
+              size={200}
               level={"M"}
               includeMargin={true}
-              className="shadow-md rounded-xl"
+              className="shadow-sm rounded-lg"
             />
-            <p className="mt-6 text-sm text-primary font-bold text-center animate-pulse flex items-center justify-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Waiting for payment...
+            <p className="mt-4 text-[12px] text-black/50 dark:text-white/50 font-semibold animate-pulse flex items-center justify-center gap-1.5">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Waiting for payment...
             </p>
           </div>
         )}
         
         {step === "success" && (
-          <div className="flex flex-col items-center justify-center p-8 bg-emerald-500/10 rounded-2xl mt-4 border border-emerald-500/20">
-            <div className="h-20 w-20 bg-emerald-500/20 rounded-full flex items-center justify-center animate-bounce mb-4">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+          <div className="flex flex-col items-center justify-center p-6 bg-emerald-500/5 rounded-xl mt-4 border border-emerald-500/10">
+            <div className="h-14 w-14 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle2 className="h-7 w-7 text-emerald-500" />
             </div>
-            <h3 className="text-2xl font-bold text-emerald-600 mb-2">Payment Received!</h3>
-            <p className="text-sm text-emerald-600/70 font-medium">Closing automatically in a moment...</p>
+            <h3 className="text-[15px] font-semibold text-emerald-600 mb-1">Payment Received!</h3>
+            <p className="text-[11px] text-emerald-600/60 font-medium">Closing automatically...</p>
           </div>
         )}
       </DialogContent>

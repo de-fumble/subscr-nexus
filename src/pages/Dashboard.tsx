@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Users, TrendingUp, Plus, Banknote, AlertTriangle, FileCheck, Key, Download, Filter, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Loader2, PlayCircle, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Wallet, Users, Download, Filter, Eye, EyeOff, Edit2, Loader2, ChevronRight, AlertTriangle, ArrowUpRight, PlayCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import * as XLSX from "xlsx";
@@ -25,6 +24,8 @@ import { FounderInsight } from "@/components/FounderInsight";
 import { KYCApprovalModal } from "@/components/KYCApprovalModal";
 import logoSvg from "@/assets/logo.svg";
 import { getDashboardDataSource } from "@/lib/dataSource";
+
+const APPLE_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif";
 interface Organization {
   id: string;
   org_name: string;
@@ -790,478 +791,406 @@ const Dashboard = () => {
   }
   const totalRevenueByPlan = revenueByPlan.reduce((sum, item) => sum + item.value, 0);
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
+  const axisStyle = { fontSize: 11, fill: "rgba(0,0,0,0.28)", fontFamily: APPLE_FONT };
+  const tooltipStyle = {
+    backgroundColor: "white",
+    border: "none",
+    borderRadius: 10,
+    fontSize: 12,
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    fontFamily: APPLE_FONT,
+    padding: "6px 12px",
+  };
+
   return (
     <SidebarInset className="flex-1">
-        <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
-        <main className="flex-1 overflow-auto">
-          <div className="mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full">
+      <DashboardHeader orgName={organization?.org_name} orgId={organization?.id} />
+      <main className="flex-1 overflow-auto" style={{ fontFamily: APPLE_FONT }}>
+        <div
+          className="min-h-screen bg-[#f5f5f7] dark:bg-[#000]"
+          style={{ fontFamily: APPLE_FONT }}
+        >
+          <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-16 space-y-7">
 
-            {/* Top Stats Row - 4 Cards */}
-            <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
-              {/* Toolbar row: stacks on mobile, side-by-side on desktop */}
-              <div className="col-span-full flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1.5 sm:gap-2 w-full">
-                {/* Founder Insight - top on mobile, left on desktop */}
-                <FounderInsight />
-                {/* Actions - right side */}
-                <div className="flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
-                    onClick={() => toast.info("Guided tour coming soon!")}
-                  >
-                    <PlayCircle className="h-3 sm:h-4 w-3 sm:w-4" />
-                    Tour
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
-                    onClick={() => toast.info("No new updates")}
-                  >
-                    <Sparkles className="h-3 sm:h-4 w-3 sm:w-4 text-indigo-500" />
-                    What's New
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  </Button>
-                  <div className="h-3 sm:h-4 w-px bg-border/50 my-auto mx-0.5 sm:mx-1 shrink-0" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="inline-flex gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 h-7 sm:h-8 shrink-0"
-                    onClick={() => setHideValues(!hideValues)}
-                  >
-                    {hideValues ? <EyeOff className="h-3 sm:h-4 w-3 sm:w-4" /> : <Eye className="h-3 sm:h-4 w-3 sm:w-4" />}
-                    {hideValues ? "Show" : "Hide"}
-                  </Button>
-                </div>
+            {/* ── Page Header ─────────────────────────────────── */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-black dark:text-white">
+                  {organization?.org_name}
+                </h1>
               </div>
-
-              {/* Total Revenue (MTD) */}
-              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
-                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <span className="stat-label text-xs sm:text-sm font-medium">Revenue</span>
-                      <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-accent hover:text-accent/80 text-[10px] sm:text-xs gap-1 opacity-70 hover:opacity-100 transition-opacity" onClick={handleExportRevenue} disabled={exportingRevenue}>
-                        {exportingRevenue ? <Loader2 className="h-3 sm:h-3.5 w-3 sm:w-3.5 animate-spin" /> : <Download className="h-3 sm:h-3.5 w-3 sm:w-3.5" />}
-                      </Button>
-                    </div>
-                    <div>
-                      <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">
-                        {hideValues ? "₦•••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : '0'}`}
-                      </p>
-                      <div className="flex items-center gap-1 text-emerald-600 text-[10px] sm:text-xs font-medium">
-                        <ArrowUp className="h-3 w-3" />
-                        <span>Live</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="hidden sm:block"><CircularProgress percentage={75} color="hsl(152, 69%, 40%)" /></div>
-                </div>
-              </Card>
-
-              {/* Active Subscribers */}
-              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between h-full">
-                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <span className="stat-label text-xs sm:text-sm font-medium">Active Subscriptions</span>
-                      <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-accent hover:text-accent/80 text-[10px] sm:text-xs" onClick={() => navigate("/dashboard/subscribers")}>
-                        View
-                      </Button>
-                    </div>
-                    <div>
-                      <p className="text-xl sm:text-3xl font-bold text-foreground mb-1 truncate">
-                        {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()}</span>
-                        <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                              <Edit2 className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[350px]">
-                            <DialogHeader>
-                              <DialogTitle>Edit Total Subscribers</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 pt-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="total">Total Subscribers Count</Label>
-                                <Input id="total" type="number" placeholder="Enter total subscribers" value={newTotalSubscribers} onChange={e => setNewTotalSubscribers(e.target.value)} />
-                              </div>
-                              <Button onClick={handleUpdateTotalSubscribers} className="w-full">
-                                Update
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="hidden sm:block"><CircularProgress percentage={stats.totalSubscribers > 0 ? Math.round(stats.activeSubscribers / stats.totalSubscribers * 100) : 0} color="hsl(35, 92%, 50%)" /></div>
-                </div>
-              </Card>
-
-              {/* Failed Payments */}
-              <Card className="dashboard-stat-card flex flex-col min-h-[100px] sm:min-h-auto overflow-hidden">
-                {/* Risk indicator strip — only shows when there are issues */}
-                {stats.totalFailedPayments > 0 && (
-                  <div className={`h-0.5 w-full ${stats.failedPayments > 0 ? 'bg-destructive' : 'bg-amber-500'}`} />
-                )}
-                <div className="flex flex-col justify-between h-full p-3 sm:p-5 gap-3">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="stat-label text-xs sm:text-sm font-medium">Payment Issues</span>
-                      {stats.totalFailedPayments > 0 && (
-                        <span className="text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive leading-none">
-                          {hideValues ? "•" : stats.totalFailedPayments}
-                        </span>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 sm:h-auto px-1.5 sm:px-2 text-muted-foreground hover:text-foreground text-[10px] sm:text-xs gap-1"
-                      onClick={() => navigate("/dashboard/failed-payments")}
-                    >
-                      Review
-                    </Button>
-                  </div>
-
-                  {/* Breakdown rows */}
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {/* Abandoned Checkouts */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Abandoned</span>
-                      </div>
-                      <span className={`text-[11px] sm:text-sm font-semibold tabular-nums ${stats.abandonedCheckouts > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
-                        {hideValues ? "••" : stats.abandonedCheckouts}
-                      </span>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-t border-border/30" />
-
-                    {/* Failed Payments */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
-                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Failed</span>
-                      </div>
-                      <span className={`text-[11px] sm:text-sm font-semibold tabular-nums ${stats.failedPayments > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {hideValues ? "••" : stats.failedPayments}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Upcoming Payouts */}
-              <Card className="p-3 sm:p-5 dashboard-stat-card flex flex-col justify-between min-h-[100px] sm:min-h-auto">
-                <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
-                  <div className="flex items-center justify-between mb-2 sm:mb-3">
-                    <span className="stat-label text-xs sm:text-sm font-medium">Payouts</span>
-                    <Button variant="ghost" size="sm" className="h-6 sm:h-auto px-1.5 sm:px-3 text-accent hover:text-accent/80 text-[10px] sm:text-xs" onClick={() => setShowPayoutDialog(true)}>
-                      Manage
-                    </Button>
-                  </div>
-                  <div className="space-y-1 sm:space-y-2 mt-auto">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Pending</span>
-                      <span className="font-semibold text-xs sm:text-base truncate">{hideValues ? "₦•••" : `₦${pendingPayouts.toLocaleString()}`}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Paid</span>
-                      <span className="font-semibold text-xs sm:text-base truncate">{hideValues ? "₦•••" : `₦${totalPaidOut.toLocaleString()}`}</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium text-black/40 dark:text-white/40 hover:text-black/60 hover:bg-black/5 dark:hover:bg-white/6 transition-all"
+                  onClick={() => toast.info("Guided tour coming soon!")}
+                >
+                  <PlayCircle className="w-3.5 h-3.5" /> Tour
+                </button>
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium text-black/40 dark:text-white/40 hover:text-black/60 hover:bg-black/5 dark:hover:bg-white/6 transition-all"
+                  onClick={() => toast.info("No new updates")}
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> What's New
+                </button>
+                <div className="w-px h-4 bg-black/10 dark:bg-white/10" />
+                <button
+                  onClick={() => setHideValues(!hideValues)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black dark:bg-white text-white dark:text-black text-[12px] font-medium transition-all hover:opacity-75 active:scale-95"
+                >
+                  {hideValues ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  {hideValues ? "Show" : "Hide"}
+                </button>
+              </div>
             </div>
 
-            {/* Charts Row */}
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-3 mb-4 sm:mb-6">
-              {/* Collections Over Time - Takes 2/3 on desktop, full width on mobile */}
-              <Card className="lg:col-span-2 p-3 sm:p-6 dashboard-stat-card">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-5 gap-2">
-                  <h3 className="text-sm sm:text-lg font-bold text-foreground">Collections Over Time</h3>
-                  <div className="flex gap-0.5 sm:gap-1 bg-muted rounded-lg p-0.5 sm:p-1 self-start sm:self-auto">
-                    {(['7D', '30D', '90D'] as const).map(period => (
-                      <Button
+            {/* ── KPI Cards ───────────────────────────────────── */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-black/35 dark:text-white/35 px-1 mb-2">At a Glance</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+                {/* Revenue */}
+                <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] transition-all duration-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-7 h-7 rounded-[8px] bg-black/5 dark:bg-white/8 flex items-center justify-center">
+                      <Wallet className="w-3.5 h-3.5 text-black/40 dark:text-white/40" />
+                    </div>
+                    <button
+                      onClick={handleExportRevenue}
+                      disabled={exportingRevenue}
+                      className="flex items-center gap-1 text-[11px] text-black/30 dark:text-white/30 hover:text-black/50 transition-colors disabled:opacity-40"
+                    >
+                      {exportingRevenue ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                    </button>
+                  </div>
+                  <p className="text-[22px] font-semibold tracking-[-0.02em] leading-none text-black dark:text-white tabular-nums mb-1.5">
+                    {hideValues ? "₦•••" : `₦${stats.totalRevenue > 0 ? stats.totalRevenue.toLocaleString() : "0"}`}
+                  </p>
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1">Revenue</p>
+                  <p className="text-[11px] text-black/25 dark:text-white/25 flex items-center gap-1">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                    </span>
+                    Live
+                  </p>
+                </div>
+
+                {/* Active Subscribers */}
+                <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] group cursor-pointer transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] hover:-translate-y-px" onClick={() => navigate("/dashboard/subscribers")}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-7 h-7 rounded-[8px] bg-black/5 dark:bg-white/8 flex items-center justify-center">
+                      <Users className="w-3.5 h-3.5 text-black/40 dark:text-white/40" />
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <p className="text-[22px] font-semibold tracking-[-0.02em] leading-none text-black dark:text-white tabular-nums mb-1.5">
+                    {hideValues ? "•••" : stats.activeSubscribers.toLocaleString()}
+                  </p>
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1">Active Subscriptions</p>
+                  <div className="flex items-center gap-1 text-[11px] text-black/25 dark:text-white/25">
+                    <span>of {hideValues ? "•••" : stats.totalSubscribers.toLocaleString()} total</span>
+                    <Dialog open={editTotalDialog} onOpenChange={setEditTotalDialog}>
+                      <DialogTrigger asChild>
+                        <button onClick={(e) => e.stopPropagation()} className="ml-0.5 hover:text-black/50 transition-colors">
+                          <Edit2 className="w-2.5 h-2.5" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[350px]">
+                        <DialogHeader><DialogTitle>Edit Total Subscribers</DialogTitle></DialogHeader>
+                        <div className="space-y-4 pt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="total">Total Subscribers Count</Label>
+                            <Input id="total" type="number" placeholder="Enter total subscribers" value={newTotalSubscribers} onChange={e => setNewTotalSubscribers(e.target.value)} />
+                          </div>
+                          <Button onClick={handleUpdateTotalSubscribers} className="w-full">Update</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+
+                {/* Payment Issues */}
+                <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] group cursor-pointer transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] hover:-translate-y-px" onClick={() => navigate("/dashboard/failed-payments")}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`w-7 h-7 rounded-[8px] flex items-center justify-center ${stats.totalFailedPayments > 0 ? "bg-red-50 dark:bg-red-500/12" : "bg-black/5 dark:bg-white/8"}`}>
+                      <AlertTriangle className={`w-3.5 h-3.5 ${stats.totalFailedPayments > 0 ? "text-red-400" : "text-black/30 dark:text-white/30"}`} />
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <p className={`text-[22px] font-semibold tracking-[-0.02em] leading-none tabular-nums mb-1.5 ${stats.totalFailedPayments > 0 ? "text-red-500" : "text-black dark:text-white"}`}>
+                    {hideValues ? "•••" : stats.totalFailedPayments}
+                  </p>
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1">Payment Issues</p>
+                  <div className="space-y-0.5 divide-y divide-black/4 dark:divide-white/4">
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-[10px] text-black/30 dark:text-white/30">Abandoned</span>
+                      <span className={`text-[10px] font-semibold tabular-nums ${stats.abandonedCheckouts > 0 ? "text-amber-500" : "text-black/25"}`}>{hideValues ? "••" : stats.abandonedCheckouts}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-[10px] text-black/30 dark:text-white/30">Failed</span>
+                      <span className={`text-[10px] font-semibold tabular-nums ${stats.failedPayments > 0 ? "text-red-500" : "text-black/25"}`}>{hideValues ? "••" : stats.failedPayments}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payouts */}
+                <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] group cursor-pointer transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] hover:-translate-y-px" onClick={() => setShowPayoutDialog(true)}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-7 h-7 rounded-[8px] bg-black/5 dark:bg-white/8 flex items-center justify-center">
+                      <ArrowUpRight className="w-3.5 h-3.5 text-black/40 dark:text-white/40" />
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <p className="text-[22px] font-semibold tracking-[-0.02em] leading-none text-black dark:text-white tabular-nums mb-1.5">
+                    {hideValues ? "₦•••" : `₦${pendingPayouts.toLocaleString()}`}
+                  </p>
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1">Payouts</p>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-black/25 dark:text-white/25">Paid out</span>
+                    <span className="text-black/40 dark:text-white/40 font-medium tabular-nums">{hideValues ? "₦•••" : `₦${totalPaidOut.toLocaleString()}`}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Charts Row ──────────────────────────────────── */}
+            <div className="grid gap-3 grid-cols-1 lg:grid-cols-3">
+
+              {/* Collections Over Time */}
+              <div className="lg:col-span-2 bg-white dark:bg-[#1c1c1e] rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] overflow-hidden">
+                <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] font-semibold text-black dark:text-white">Collections Over Time</p>
+                    <p className="text-[11px] text-black/35 dark:text-white/35 mt-0.5">Revenue collected per day</p>
+                  </div>
+                  <div className="flex items-center bg-black/5 dark:bg-white/6 rounded-full p-0.5 gap-0.5">
+                    {(["7D", "30D", "90D"] as const).map(period => (
+                      <button
                         key={period}
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 sm:h-7 px-2.5 sm:px-3 text-[10px] sm:text-xs"
+                        onClick={() => setChartPeriod(period)}
+                        className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all duration-200 ${
+                          chartPeriod === period
+                            ? "bg-white dark:bg-white/12 text-black dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                            : "text-black/40 dark:text-white/40 hover:text-black/60"
+                        }`}
                       >
                         {period}
-                      </Button>
+                      </button>
                     ))}
                   </div>
                 </div>
-                <div className="h-40 sm:h-64">
-                  {timeSeriesData.length > 0 ? <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={timeSeriesData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{
-                        fontSize: 10
-                      }} interval="preserveStartEnd" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{
-                        fontSize: 10
-                      }} width={45} tickFormatter={value => value > 0 ? `₦${(value / 1000).toFixed(0)}K` : '₦0'} />
-                      <Tooltip contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }} itemStyle={{ color: "hsl(var(--foreground))" }} labelStyle={{ color: "hsl(var(--foreground))" }} formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} />
-                      <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground text-xs sm:text-sm">
-                    No transaction data available for this period
-                  </div>}
+                <div className="px-2 pb-3">
+                  <div className="h-44">
+                    {timeSeriesData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={timeSeriesData} margin={{ top: 6, right: 12, left: -12, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" vertical={false} />
+                          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={axisStyle} interval="preserveStartEnd" dy={6} />
+                          <YAxis axisLine={false} tickLine={false} tick={axisStyle} width={48} tickFormatter={v => v > 0 ? `₦${(v / 1000).toFixed(0)}K` : "₦0"} />
+                          <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`₦${v.toLocaleString()}`, "Revenue"]} cursor={{ stroke: "rgba(0,0,0,0.05)", strokeWidth: 1 }} />
+                          <Line type="monotone" dataKey="value" stroke="rgba(0,0,0,0.5)" strokeWidth={1.5} dot={false} activeDot={{ r: 3, strokeWidth: 0, fill: "rgba(0,0,0,0.6)" }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-[12px] text-black/25 dark:text-white/25">
+                        No transaction data for this period
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </Card>
+              </div>
 
-              {/* Revenue Distribution by Plan - Takes 1/3 */}
-              <Card className="p-3 sm:p-6 dashboard-stat-card cursor-pointer" onClick={() => setShowRevenueDetailsDialog(true)}>
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
-                  <h3 className="text-sm sm:text-base font-semibold text-foreground">Revenue by Plan</h3>
-                  <Button variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-accent/80 text-xs">
-                    <Eye className="h-3 w-3 mr-1" />
-                    Details
-                  </Button>
+              {/* Revenue by Plan */}
+              <div
+                className="bg-white dark:bg-[#1c1c1e] rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] overflow-hidden cursor-pointer group transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)]"
+                onClick={() => setShowRevenueDetailsDialog(true)}
+              >
+                <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                  <p className="text-[13px] font-semibold text-black dark:text-white">Revenue by Plan</p>
+                  <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <div className="flex flex-row items-start gap-3 sm:flex-col sm:items-center">
+                <div className="px-5 pb-4">
                   {(() => {
-                    const topPlans = [...revenueByPlan].sort((a, b) => b.value - a.value).slice(0, 2);
-                    const othersValue = revenueByPlan
-                      .sort((a, b) => b.value - a.value)
-                      .slice(2)
-                      .reduce((sum, item) => sum + item.value, 0);
-                    const displayPlans = othersValue > 0
-                      ? [...topPlans, { name: `+${revenueByPlan.length - 2} more`, value: othersValue, color: 'hsl(var(--muted-foreground))' }]
+                    const topPlans = [...revenueByPlan].sort((a, b) => b.value - a.value).slice(0, 3);
+                    const othersValue = revenueByPlan.sort((a, b) => b.value - a.value).slice(3).reduce((s, i) => s + i.value, 0);
+                    const display = othersValue > 0
+                      ? [...topPlans, { name: `+${revenueByPlan.length - 3} more`, value: othersValue, color: CHART_COLORS[topPlans.length % CHART_COLORS.length] }]
                       : topPlans;
 
-                    return <>
-                      <div className="relative h-24 w-24 sm:h-40 sm:w-40 shrink-0 mb-0 sm:mb-4">
-                        {displayPlans.length > 0 ? <>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={displayPlans} cx="50%" cy="50%" innerRadius={22} outerRadius={42} paddingAngle={2} dataKey="value">
-                                {displayPlans.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[10px] sm:text-lg font-bold">₦{totalRevenueByPlan > 1000000 ? `${(totalRevenueByPlan / 1000000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}</span>
-                          </div>
-                        </> : <div className="flex items-center justify-center h-full text-muted-foreground text-xs sm:text-sm text-center">
-                          No data
-                        </div>}
-                      </div>
-                      <div className="space-y-1 sm:space-y-2 w-full min-w-0">
-                        {displayPlans.map((item, index) => <div key={index} className="flex items-center justify-between gap-1 sm:gap-2">
-                          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                            <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full shrink-0" style={{
-                              backgroundColor: item.color
-                            }} />
-                            <span className="text-[10px] sm:text-sm text-muted-foreground truncate">{item.name}</span>
-                          </div>
-                          <span className="text-[10px] sm:text-sm font-medium whitespace-nowrap">₦{item.value.toLocaleString()}</span>
-                        </div>)}
-                      </div>
-                    </>;
+                    return (
+                      <>
+                        <div className="relative h-32 w-32 mx-auto mb-4">
+                          {display.length > 0 ? (
+                            <>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie data={display} cx="50%" cy="50%" innerRadius={28} outerRadius={48} paddingAngle={2} dataKey="value">
+                                    {display.map((entry, i) => (
+                                      <Cell key={i} fill={entry.color || CHART_COLORS[i % CHART_COLORS.length]} />
+                                    ))}
+                                  </Pie>
+                                </PieChart>
+                              </ResponsiveContainer>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-[11px] font-semibold text-black dark:text-white">
+                                  ₦{totalRevenueByPlan >= 1_000_000 ? `${(totalRevenueByPlan / 1_000_000).toFixed(1)}M` : `${(totalRevenueByPlan / 1000).toFixed(0)}K`}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-[12px] text-black/25">No data</div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {display.map((item, i) => (
+                            <div key={i} className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: item.color || CHART_COLORS[i % CHART_COLORS.length] }} />
+                                <span className="text-[11px] text-black/50 dark:text-white/50 truncate">{item.name}</span>
+                              </div>
+                              <span className="text-[11px] font-medium text-black dark:text-white tabular-nums">₦{item.value.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    );
                   })()}
                 </div>
-              </Card>
+              </div>
 
-              {/* Revenue Details Dialog */}
+              {/* Revenue Details Dialog - unchanged structure */}
               <Dialog open={showRevenueDetailsDialog} onOpenChange={setShowRevenueDetailsDialog}>
                 <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Revenue by Plan - Detailed Breakdown</DialogTitle>
-                  </DialogHeader>
+                  <DialogHeader><DialogTitle>Revenue by Plan — Detailed Breakdown</DialogTitle></DialogHeader>
                   <div className="space-y-6 pt-4">
-                    {/* Summary */}
-                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <span className="text-muted-foreground">Total Revenue</span>
-                      <span className="text-2xl font-bold">₦{totalRevenueByPlan.toLocaleString()}</span>
+                    <div className="flex items-center justify-between p-4 bg-black/3 dark:bg-white/4 rounded-xl">
+                      <span className="text-[13px] text-black/50 dark:text-white/50">Total Revenue</span>
+                      <span className="text-[22px] font-semibold text-black dark:text-white tabular-nums">₦{totalRevenueByPlan.toLocaleString()}</span>
                     </div>
-
-                    {/* Larger Chart */}
-                    <div className="h-64 w-full">
-                      {revenueByPlan.length > 0 ? <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" label={({
-                            name,
-                            percent
-                          }) => `${name}: ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                            {revenueByPlan.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                          </Pie>
-                          <Tooltip formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']} contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px",
-                          }} itemStyle={{ color: "hsl(var(--foreground))" }} labelStyle={{ color: "hsl(var(--foreground))" }} />
-                        </PieChart>
-                      </ResponsiveContainer> : <div className="flex items-center justify-center h-full text-muted-foreground">
-                        No revenue data available
-                      </div>}
+                    <div className="h-56 w-full">
+                      {revenueByPlan.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={revenueByPlan} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} dataKey="value">
+                              {revenueByPlan.map((entry, i) => <Cell key={i} fill={entry.color || CHART_COLORS[i % CHART_COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip formatter={(v: number) => [`₦${v.toLocaleString()}`, "Revenue"]} contentStyle={tooltipStyle} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-black/25">No revenue data</div>
+                      )}
                     </div>
-
-                    {/* Detailed Table */}
-                    <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Plan</th>
-                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
-                            <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Share</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {revenueByPlan.map((item, index) => <tr key={index} className="border-t border-border/50">
-                            <td className="py-3 px-4">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                          <th className="text-left py-2 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/35 dark:text-white/35">Plan</th>
+                          <th className="text-right py-2 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/35 dark:text-white/35">Revenue</th>
+                          <th className="text-right py-2 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/35 dark:text-white/35">Share</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/4 dark:divide-white/4">
+                        {revenueByPlan.map((item, i) => (
+                          <tr key={i}>
+                            <td className="py-2.5 px-3 text-[13px] text-black dark:text-white">
                               <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full shrink-0" style={{
-                                  backgroundColor: item.color
-                                }} />
-                                <span className="text-sm font-medium">{item.name}</span>
+                                <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: item.color || CHART_COLORS[i % CHART_COLORS.length] }} />
+                                <span>{item.name}</span>
                               </div>
                             </td>
-                            <td className="py-3 px-4 text-right text-sm font-medium">
-                              ₦{item.value.toLocaleString()}
-                            </td>
-                            <td className="py-3 px-4 text-right text-sm text-muted-foreground">
-                              {totalRevenueByPlan > 0 ? (item.value / totalRevenueByPlan * 100).toFixed(1) : 0}%
-                            </td>
-                          </tr>)}
-                        </tbody>
-                        <tfoot className="bg-muted/50">
-                          <tr className="border-t">
-                            <td className="py-3 px-4 text-sm font-bold">Total</td>
-                            <td className="py-3 px-4 text-right text-sm font-bold">
-                              ₦{totalRevenueByPlan.toLocaleString()}
-                            </td>
-                            <td className="py-3 px-4 text-right text-sm font-bold">100%</td>
+                            <td className="py-2.5 px-3 text-right text-[13px] font-medium tabular-nums text-black dark:text-white">₦{item.value.toLocaleString()}</td>
+                            <td className="py-2.5 px-3 text-right text-[12px] text-black/40 dark:text-white/40">{totalRevenueByPlan > 0 ? (item.value / totalRevenueByPlan * 100).toFixed(1) : 0}%</td>
                           </tr>
-                        </tfoot>
-                      </table>
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </DialogContent>
               </Dialog>
             </div>
 
-            {/* Recent Transactions */}
-            <Card className="p-3 sm:p-6 dashboard-stat-card">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-5 gap-3">
-                <div>
-                  <h3 className="text-sm sm:text-base font-semibold text-foreground">Recent Transactions</h3>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Last 48 hours</p>
-                </div>
-                <div className="flex gap-2 self-start sm:self-auto">
-                  <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 text-[10px] sm:text-xs h-7 sm:h-8 opacity-80 hover:opacity-100 transition-opacity" onClick={() => setShowTransactionFilterDialog(true)}>
-                    <Filter className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span className="hidden sm:inline">Filter & Export</span>
-                    <span className="sm:hidden">Filter</span>
-                  </Button>
+            {/* ── Recent Transactions ─────────────────────────── */}
+            <div>
+              <div className="flex items-center justify-between px-1 mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-black/35 dark:text-white/35">Recent Transactions</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] text-black/25 dark:text-white/25">Last 48 hours</p>
+                  <button
+                    onClick={() => setShowTransactionFilterDialog(true)}
+                    className="flex items-center gap-1 text-[11px] font-medium text-black/40 hover:text-black/60 dark:text-white/40 dark:hover:text-white/60 transition-colors"
+                  >
+                    <Filter className="w-3 h-3" /> Filter
+                  </button>
                 </div>
               </div>
 
-              {/* Mobile card layout */}
-              <div className="sm:hidden space-y-2">
-                {recentTransactions.length > 0 ? recentTransactions.map(txn => (
-                  <div key={txn.id} className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium truncate max-w-[50%]">{txn.payer_name}</span>
-                      <span className="text-xs font-bold">₦{txn.amount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted-foreground truncate max-w-[50%]">{txn.plan_name}</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'}`}>
-                          {txn.type === 'subscription' ? 'Sub' : 'One-Time'}
-                        </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${txn.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                          {txn.status === 'success' ? '✓' : '✗'}
+              <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] overflow-hidden">
+                {/* Mobile cards */}
+                <div className="sm:hidden divide-y divide-black/4 dark:divide-white/4">
+                  {recentTransactions.length > 0 ? recentTransactions.map(txn => (
+                    <div key={txn.id} className="px-4 py-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[13px] font-medium text-black dark:text-white truncate max-w-[55%]">{txn.payer_name}</span>
+                        <span className="text-[13px] font-semibold text-black dark:text-white tabular-nums">₦{txn.amount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-black/35 dark:text-white/35 truncate">{txn.plan_name}</span>
+                        <span className={`text-[10px] font-medium ${txn.status === "success" ? "text-black/40 dark:text-white/40" : "text-red-500"}`}>
+                          {txn.status === "success" ? "Success" : "Failed"}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span className="font-mono">{txn.reference}</span>
-                      <span>{new Date(txn.paid_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="py-8 text-center text-muted-foreground text-xs">No recent transactions</div>
-                )}
-              </div>
+                  )) : (
+                    <div className="py-10 text-center text-[12px] text-black/25">No recent transactions</div>
+                  )}
+                </div>
 
-              {/* Desktop table layout */}
-              <div className="hidden sm:block overflow-x-auto w-full">
-                <table className="w-full premium-table min-w-[600px]">
-                  <thead>
-                    <tr>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">REF</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PAYER</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">PLAN</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">AMOUNT</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TYPE</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">STATUS</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">DATE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentTransactions.length > 0 ? recentTransactions.map(txn => <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="py-4 px-4 text-sm font-mono whitespace-nowrap">{txn.reference}</td>
-                      <td className="py-4 px-4 text-sm whitespace-nowrap">{txn.payer_name}</td>
-                      <td className="py-4 px-4 text-sm whitespace-nowrap">{txn.plan_name}</td>
-                      <td className="py-4 px-4 text-sm font-medium whitespace-nowrap">₦{txn.amount.toLocaleString()}</td>
-                      <td className="py-4 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400'}`}>
-                          {txn.type === 'subscription' ? 'Sub' : 'One-Time'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${txn.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}>
-                          {txn.status === 'success' ? 'Success' : 'Failed'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-sm text-muted-foreground whitespace-nowrap">
-                        {new Date(txn.paid_at).toLocaleDateString()}
-                      </td>
-                    </tr>) : <tr>
-                      <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                        No recent transactions
-                      </td>
-                    </tr>}
-                  </tbody>
-                </table>
+                {/* Desktop table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full min-w-[580px]">
+                    <thead>
+                      <tr className="border-b border-black/5 dark:border-white/5">
+                        {["Ref", "Payer", "Plan", "Amount", "Type", "Status", "Date"].map(h => (
+                          <th key={h} className="text-left py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.07em] text-black/30 dark:text-white/30">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/4 dark:divide-white/4">
+                      {recentTransactions.length > 0 ? recentTransactions.map(txn => (
+                        <tr key={txn.id} className="hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3 px-4 text-[12px] font-mono text-black/40 dark:text-white/40">{txn.reference}</td>
+                          <td className="py-3 px-4 text-[13px] text-black dark:text-white">{txn.payer_name}</td>
+                          <td className="py-3 px-4 text-[12px] text-black/50 dark:text-white/50 max-w-[160px] truncate">{txn.plan_name}</td>
+                          <td className="py-3 px-4 text-[13px] font-semibold text-black dark:text-white tabular-nums">₦{txn.amount.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-[11px] text-black/40 dark:text-white/40">{txn.type === "subscription" ? "Sub" : "One-Time"}</td>
+                          <td className="py-3 px-4">
+                            <span className={`text-[11px] font-medium ${txn.status === "success" ? "text-black/40 dark:text-white/40" : "text-red-500"}`}>
+                              {txn.status === "success" ? "Success" : "Failed"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-[12px] text-black/35 dark:text-white/35">{new Date(txn.paid_at).toLocaleDateString()}</td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan={7} className="py-10 text-center text-[12px] text-black/25">No recent transactions</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </Card>
+            </div>
 
             <FloatingSupport />
           </div>
-        </main>
+        </div>
+      </main>
 
-    <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
-
-    <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
-
-    <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
-
-    {kycApprovalNotification && (
-      <KYCApprovalModal 
-        notificationId={kycApprovalNotification} 
-        onClose={() => setKycApprovalNotification(null)} 
-      />
-    )}
-  </SidebarInset>
+      <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
+      <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
+      <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
+      {kycApprovalNotification && (
+        <KYCApprovalModal notificationId={kycApprovalNotification} onClose={() => setKycApprovalNotification(null)} />
+      )}
+    </SidebarInset>
   );
 };
 export default Dashboard;

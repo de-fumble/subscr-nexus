@@ -27,6 +27,7 @@ import { PlansHubLinkCard } from "@/components/PlansHubLinkCard";
 import { PlanManagementDialog } from "@/components/PlanManagementDialog";
 import { EditPlanFeaturesDialog } from "@/components/EditPlanFeaturesDialog";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { APPLE_FONT, card, pageWrap, pageInner, sectionLabel, statValue, detailText, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 interface Plan {
   id: string;
@@ -138,71 +139,69 @@ const Plans = () => {
   const renderPlanGrid = (plan: Plan) => (
     <div
       key={plan.id}
-      className="flex flex-col rounded-lg border bg-card p-6 shadow-sm"
+      className={`${card} p-6 flex flex-col h-full`}
     >
       <div className="flex items-start justify-between mb-4">
-        <h3 className="font-medium text-base text-foreground">{plan.name}</h3>
+        <h3 className="font-semibold text-[15px] text-black dark:text-white">{plan.name}</h3>
         {plan.category && (
-          <Badge variant="secondary" className="font-normal text-xs">{plan.category}</Badge>
+          <span className="px-2 py-0.5 rounded-full border border-black/8 dark:border-white/8 text-[10px] text-black/50 dark:text-white/50">{plan.category}</span>
         )}
       </div>
 
       <div className="mb-4">
-        <span className="text-2xl font-semibold text-foreground">
+        <span className="text-[22px] font-semibold text-black dark:text-white">
           ₦{plan.price.toLocaleString()}
         </span>
-        <span className="text-sm text-muted-foreground ml-1">
+        <span className="text-[12px] text-black/40 dark:text-white/40 ml-1">
           /{intervalShort[plan.interval] || plan.interval}
         </span>
       </div>
 
       {plan.description && (
-        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 min-h-[40px]">{plan.description}</p>
+        <p className="text-[12px] text-black/40 dark:text-white/40 mb-6 line-clamp-2 min-h-[40px] leading-relaxed">{plan.description}</p>
       )}
 
       <div className="mt-auto">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Users className="h-4 w-4" />
+        <div className="flex items-center gap-1.5 text-[12px] text-black/35 dark:text-white/35 mb-6">
+          <Users className="h-3.5 w-3.5" />
           <span>{plan.subscriber_count} active {(plan.subscriber_count === 1) ? 'subscriber' : 'subscribers'}</span>
         </div>
 
         <div className="flex gap-2">
           {plan.is_active && (
-            <Button
+            <button
               onClick={() => setPlanToManage(plan)}
-              variant="outline"
-              className="w-full font-medium"
+              className="flex-1 px-3 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all"
             >
               Manage
-            </Button>
+            </button>
           )}
-          <Button
+          <button
             onClick={() => copySubscriptionLink(plan.id)}
-            variant="outline"
-            className="w-full font-medium"
+            className="flex-1 px-3 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all"
             disabled={!plan.is_active}
           >
             {copiedId === plan.id ? "Copied" : "Copy Link"}
-          </Button>
+          </button>
 
           {canWrite && plan.is_active && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <button className="p-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0">
+                  <MoreVertical className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="bg-white dark:bg-[#1c1c1e] border-black/5">
                 <DropdownMenuItem 
-                  className="cursor-pointer font-medium"
+                  className="cursor-pointer font-medium text-[12px]"
                   onClick={() => setPlanToEditFeatures(plan)}
                 >
-                  <Pencil className="h-4 w-4 mr-2 text-accent" />
+                  <Pencil className="h-3.5 w-3.5 mr-2 text-black/50" />
                   Edit Features
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="text-destructive focus:text-destructive cursor-pointer"
+                  className="text-red-500 focus:text-red-500 cursor-pointer text-[12px]"
                   onClick={() => setPlanToDelete(plan.id)}
                 >
                   Archive Plan
@@ -218,56 +217,63 @@ const Plans = () => {
   const renderPlanRow = (plan: Plan) => (
     <div
       key={plan.id}
-      className="flex items-center gap-4 px-4 py-4 rounded-lg border bg-card shadow-sm"
+      className={`${card} flex items-center gap-4 px-5 py-4`}
     >
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm text-foreground truncate">{plan.name}</p>
-        {plan.description && <p className="text-sm text-muted-foreground truncate mt-1">{plan.description}</p>}
+        <p className="font-semibold text-[13px] text-black dark:text-white truncate">{plan.name}</p>
+        {plan.description && <p className="text-[11px] text-black/35 dark:text-white/35 truncate mt-1">{plan.description}</p>}
       </div>
       
       {plan.category && (
-        <Badge variant="secondary" className="hidden sm:inline-flex font-normal shrink-0">
+        <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full border border-black/8 dark:border-white/8 text-[10px] text-black/40 dark:text-white/40 shrink-0">
           {plan.category}
-        </Badge>
+        </span>
       )}
       
       <div className="text-right shrink-0 w-28">
-        <p className="font-medium text-sm text-foreground">₦{plan.price.toLocaleString()}</p>
-        <p className="text-xs text-muted-foreground">/{intervalShort[plan.interval] || plan.interval}</p>
+        <p className="font-semibold text-[13px] text-black dark:text-white">₦{plan.price.toLocaleString()}</p>
+        <p className="text-[10px] text-black/35 dark:text-white/35">/{intervalShort[plan.interval] || plan.interval}</p>
       </div>
       
-      <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground w-32 shrink-0">
-        <Users className="h-4 w-4" />
+      <div className="hidden md:flex items-center gap-1.5 text-[12px] text-black/35 w-32 shrink-0">
+        <Users className="h-3.5 w-3.5" />
         <span>{plan.subscriber_count} active</span>
       </div>
       
       <div className="flex items-center gap-2 shrink-0">
         {plan.is_active && (
-          <Button onClick={() => setPlanToManage(plan)} variant="outline" size="sm" className="font-medium">
+          <button 
+            onClick={() => setPlanToManage(plan)} 
+            className="px-3.5 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+          >
             Manage
-          </Button>
+          </button>
         )}
-        <Button onClick={() => copySubscriptionLink(plan.id)} variant="outline" size="sm" className="font-medium" disabled={!plan.is_active}>
-          {copiedId === plan.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        </Button>
+        <button 
+          onClick={() => copySubscriptionLink(plan.id)} 
+          className="p-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] hover:bg-black/5 dark:hover:bg-white/5 transition-all text-black/50 dark:text-white/50" 
+          disabled={!plan.is_active}
+        >
+          {copiedId === plan.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        </button>
         {canWrite && plan.is_active && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-9 px-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <button className="p-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                <MoreVertical className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white dark:bg-[#1c1c1e] border-black/5">
               <DropdownMenuItem 
-                className="cursor-pointer font-medium"
+                className="cursor-pointer font-medium text-[12px]"
                 onClick={() => setPlanToEditFeatures(plan)}
               >
-                <Pencil className="h-4 w-4 mr-2 text-accent" />
+                <Pencil className="h-3.5 w-3.5 mr-2 text-black/50" />
                 Edit Features
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="text-destructive focus:text-destructive cursor-pointer"
+                className="text-red-500 focus:text-red-500 cursor-pointer text-[12px]"
                 onClick={() => setPlanToDelete(plan.id)}
               >
                 Archive Plan
@@ -280,79 +286,83 @@ const Plans = () => {
   );
 
   if (loading) return (
-    <SidebarInset><PremiumLoader message="Loading plans..." /><FloatingSupport /></SidebarInset>
+    <SidebarInset>
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Subscription Plans</h1>
+      </header>
+      <PremiumLoader message="Loading plans..." />
+      <FloatingSupport />
+    </SidebarInset>
   );
 
   return (
     <SidebarInset className="flex-1">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-background px-4">
-        <SidebarTrigger />
-        <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-medium text-foreground">Subscription Plans</h1>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => fetchPlans(true)} disabled={refreshing} className="h-8 w-8">
-            {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          </Button>
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Subscription Plans</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => fetchPlans(true)} disabled={refreshing} className={pillBtn}>
+            {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          </button>
           {canCreatePlans && (
-            <Button onClick={() => navigate("/plans/create")} size="sm" className="h-8 gap-2 font-medium">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Plan</span>
-            </Button>
+            <button onClick={() => navigate("/plans/create")} className={pillBtn}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> New Plan
+            </button>
           )}
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="max-w-[1100px] mx-auto px-6 pt-8 pb-16 space-y-7">
 
           {organization && <PlansHubLinkCard orgId={organization.id} orgName={organization.org_name} />}
 
           {plans.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-12 text-center">
-              <h3 className="text-base font-medium text-foreground mb-2">No plans yet</h3>
-              <p className="text-sm text-muted-foreground mb-6">
+            <div className={`${card} p-12 text-center`}>
+              <h3 className="text-[14px] font-semibold mb-1 text-black dark:text-white">No plans yet</h3>
+              <p className="text-[12px] text-black/30 max-w-xs mx-auto mb-6">
                 Create your first subscription plan to start accepting recurring payments.
               </p>
               {canCreatePlans && (
-                <Button onClick={() => navigate("/plans/create")} className="font-medium gap-2">
-                  <Plus className="h-4 w-4" /> Create Plan
-                </Button>
+                <button onClick={() => navigate("/plans/create")} className={pillBtn + " mx-auto"}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Create Plan
+                </button>
               )}
             </div>
           ) : (
             <Tabs defaultValue="active" className="space-y-6">
               <div className="flex items-center justify-between">
-                <TabsList>
-                  <TabsTrigger value="active">
-                    Active <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs">{activePlans.length}</span>
+                <TabsList className="bg-black/5 dark:bg-white/6 rounded-full p-0.5">
+                  <TabsTrigger value="active" className="rounded-full text-[12px] px-3.5 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-white/12 data-[state=active]:text-black data-[state=active]:shadow-sm">
+                    Active <span className="ml-1.5 rounded-full bg-black/5 dark:bg-white/10 px-1.5 py-0.5 text-[10px]">{activePlans.length}</span>
                   </TabsTrigger>
-                  <TabsTrigger value="deleted">
-                    Archived <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs">{deletedPlans.length}</span>
+                  <TabsTrigger value="deleted" className="rounded-full text-[12px] px-3.5 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-white/12 data-[state=active]:text-black data-[state=active]:shadow-sm">
+                    Archived <span className="ml-1.5 rounded-full bg-black/5 dark:bg-white/10 px-1.5 py-0.5 text-[10px]">{deletedPlans.length}</span>
                   </TabsTrigger>
                 </TabsList>
                 
-                <div className="flex items-center gap-1 rounded-md border p-1 bg-muted/20">
-                  <Button variant="ghost" size="icon"
-                    className={`h-7 w-7 rounded-sm ${viewMode === "grid" ? "bg-background shadow-sm" : "hover:bg-muted"}`}
+                <div className="flex items-center gap-1 bg-black/5 dark:bg-white/6 rounded-full p-0.5">
+                  <button 
+                    className={`p-1 rounded-full transition-all ${viewMode === "grid" ? "bg-white dark:bg-white/12 text-black dark:text-white shadow-sm" : "text-black/40 hover:text-black/60"}`}
                     onClick={() => setViewMode("grid")}>
-                    <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <Button variant="ghost" size="icon"
-                    className={`h-7 w-7 rounded-sm ${viewMode === "list" ? "bg-background shadow-sm" : "hover:bg-muted"}`}
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                  <button 
+                    className={`p-1 rounded-full transition-all ${viewMode === "list" ? "bg-white dark:bg-white/12 text-black dark:text-white shadow-sm" : "text-black/40 hover:text-black/60"}`}
                     onClick={() => setViewMode("list")}>
-                    <List className="h-4 w-4 text-muted-foreground" />
-                  </Button>
+                    <List className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
               <TabsContent value="active" className="m-0 focus-visible:outline-none">
                 {activePlans.length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
+                  <div className={`${card} p-12 text-center text-[12px] text-black/35`}>
                     No active plans.
                   </div>
                 ) : viewMode === "grid" ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {activePlans.map((plan) => renderPlanGrid(plan))}
                   </div>
                 ) : (
@@ -364,11 +374,11 @@ const Plans = () => {
 
               <TabsContent value="deleted" className="m-0 focus-visible:outline-none">
                 {deletedPlans.length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
+                  <div className={`${card} p-12 text-center text-[12px] text-black/35`}>
                     No archived plans.
                   </div>
                 ) : viewMode === "grid" ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {deletedPlans.map((plan) => renderPlanGrid(plan))}
                   </div>
                 ) : (
@@ -385,19 +395,19 @@ const Plans = () => {
       <FloatingSupport />
 
       <AlertDialog open={!!planToDelete} onOpenChange={() => setPlanToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md bg-white dark:bg-[#1c1c1e] rounded-[16px] border border-black/5 dark:border-white/5 shadow-[0_12px_40px_rgba(0,0,0,0.15)]" style={{ fontFamily: APPLE_FONT }}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Archive this plan?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-[16px] font-semibold text-black dark:text-white">Archive this plan?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[12px] text-black/40 leading-relaxed">
               This plan will be archived and hidden from new subscribers. Existing subscription data is preserved. This action cannot be undone automatically.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel className="rounded-full h-8 text-[12px] font-medium border-black/10">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => { if (planToDelete) { handleArchivePlan(planToDelete); setPlanToDelete(null); } }}
               disabled={archiving}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-medium"
+              className="bg-red-500 hover:bg-red-600 text-white rounded-full h-8 text-[12px] font-medium"
             >
               {archiving ? "Archiving..." : "Archive Plan"}
             </AlertDialogAction>

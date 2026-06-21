@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { APPLE_FONT } from "@/lib/appleLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -396,14 +397,14 @@ export default function DashboardStaff() {
   if (loading || roleLoading) {
     return (
       <SidebarInset className="flex-1">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-          <SidebarTrigger />
-          <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
+          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Staff Management</h1>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]">
           <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
-            <div className="h-48 bg-muted animate-pulse rounded-xl" />
-            <div className="h-32 bg-muted animate-pulse rounded-xl" />
+            <div className="h-48 bg-black/5 dark:bg-white/5 animate-pulse rounded-2xl" />
+            <div className="h-32 bg-black/5 dark:bg-white/5 animate-pulse rounded-2xl" />
           </div>
         </main>
       </SidebarInset>
@@ -413,21 +414,17 @@ export default function DashboardStaff() {
   if (!canManageStaff) {
     return (
       <SidebarInset className="flex-1">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-          <SidebarTrigger />
-          <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
+          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Staff Management</h1>
         </header>
-        <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
-                <p className="text-muted-foreground text-center">
-                  Only organization owners can manage staff members.
-                </p>
-              </CardContent>
-            </Card>
+        <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+          <div className="container mx-auto px-4 sm:px-6 py-8">
+            <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-12 text-center">
+              <Shield className="h-10 w-10 text-black/20 dark:text-white/20 mx-auto mb-3" />
+              <p className="text-[15px] font-semibold text-black dark:text-white mb-1">Access Restricted</p>
+              <p className="text-[13px] text-black/40 dark:text-white/40">Only organization owners can manage staff members.</p>
+            </div>
           </div>
         </main>
       </SidebarInset>
@@ -436,14 +433,12 @@ export default function DashboardStaff() {
 
   return (
     <SidebarInset className="flex-1">
-      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-        <SidebarTrigger />
-        <div className="flex-1">
-          <h1 className="text-lg sm:text-xl font-bold text-foreground">Staff Management</h1>
-        </div>
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Staff Management</h1>
       </header>
-      <main className="flex-1 overflow-auto">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="container mx-auto px-4 sm:px-6 py-8 space-y-6">
 
           <div className="bg-card border border-border/80 shadow-sm rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">

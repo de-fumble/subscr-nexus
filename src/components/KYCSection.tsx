@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FileCheck, Upload, Building, Users, Briefcase, DollarSign, CheckCircle2, Clock, Lock, Edit3 } from "lucide-react";
 import { KYCEditRequestDialog } from "./KYCEditRequestDialog";
+import { card, pillBtn } from "@/lib/appleLayout";
+
 
 interface KYCData {
   business_nature: string | null;
@@ -153,52 +153,54 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
   const isVerified = kycData.kyc_verified;
 
   return (
-    <Card className="glass-card border-0 shadow-[var(--shadow-medium)]">
-      <CardHeader>
+    <div className={card}>
+      <div className="px-6 pt-6 pb-4 border-b border-black/5 dark:border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <FileCheck className="h-5 w-5 text-accent" />
+            <div className="h-10 w-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0 text-black/70 dark:text-white/70">
+              <FileCheck className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle>KYC Verification</CardTitle>
-              <CardDescription>Complete your business verification</CardDescription>
+              <h2 className="text-[16px] font-semibold text-black dark:text-white">KYC Verification</h2>
+              <p className="text-[12px] text-black/40 dark:text-white/40 mt-1 font-normal">Complete your business verification</p>
             </div>
           </div>
           {kycData.kyc_verified ? (
-            <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+              <CheckCircle2 className="h-3.5 w-3.5" />
               Verified
-            </Badge>
+            </span>
           ) : kycData.kyc_submitted_at ? (
-            <Badge variant="secondary">
-              <Clock className="h-3 w-3 mr-1" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/5 dark:bg-white/5 text-black/60 dark:text-white/60">
+              <Clock className="h-3.5 w-3.5" />
               Pending Review
-            </Badge>
+            </span>
           ) : (
-            <Badge variant="outline">Not Submitted</Badge>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border border-black/10 dark:border-white/10 text-black/50 dark:text-white/50">
+              Not Submitted
+            </span>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+      </div>
+      <div className="px-6 py-6 space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Building className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">
+              <Building className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
               Business Name
             </Label>
             <Input
               value={formData.business_name}
               onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
               placeholder="Enter your business name"
-              className="glass-card border-border/50"
+              className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 rounded-lg text-[13px] transition-all"
               disabled={disabled || isVerified}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">
+              <Briefcase className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
               Business Type
             </Label>
             <Select
@@ -206,7 +208,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
               onValueChange={(value) => setFormData({ ...formData, business_type: value })}
               disabled={disabled || isVerified}
             >
-              <SelectTrigger className="glass-card border-border/50">
+              <SelectTrigger className="h-9 text-[13px] bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 rounded-lg">
                 <SelectValue placeholder="Select business type" />
               </SelectTrigger>
               <SelectContent>
@@ -219,9 +221,9 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">
+              <Users className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
               Number of Staff
             </Label>
             <Select
@@ -229,7 +231,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
               onValueChange={(value) => setFormData({ ...formData, staff_count: value })}
               disabled={disabled || isVerified}
             >
-              <SelectTrigger className="glass-card border-border/50">
+              <SelectTrigger className="h-9 text-[13px] bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 rounded-lg">
                 <SelectValue placeholder="Select staff count" />
               </SelectTrigger>
               <SelectContent>
@@ -242,9 +244,9 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">
+              <DollarSign className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
               Monthly Revenue
             </Label>
             <Select
@@ -252,7 +254,7 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
               onValueChange={(value) => setFormData({ ...formData, monthly_revenue: value })}
               disabled={disabled || isVerified}
             >
-              <SelectTrigger className="glass-card border-border/50">
+              <SelectTrigger className="h-9 text-[13px] bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 rounded-lg">
                 <SelectValue placeholder="Select revenue range" />
               </SelectTrigger>
               <SelectContent>
@@ -266,22 +268,22 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Nature of Business</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-semibold text-black/45 dark:text-white/45 tracking-wide uppercase">Nature of Business</Label>
           <Textarea
             value={formData.business_nature}
             onChange={(e) => setFormData({ ...formData, business_nature: e.target.value })}
             placeholder="Briefly describe what your business does and how you plan to use Recurra..."
-            className="glass-card border-border/50 min-h-[100px]"
+            className="bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 rounded-lg text-[13px] min-h-[90px]"
             disabled={disabled || isVerified}
           />
         </div>
 
-        <div className="space-y-4 p-4 rounded-xl bg-muted/30">
+        <div className="space-y-3.5 p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <Label>Is your business registered?</Label>
-              <p className="text-sm text-muted-foreground">
+              <Label className="text-[13px] font-medium text-black dark:text-white">Is your business registered?</Label>
+              <p className="text-[11px] text-black/40 dark:text-white/40 mt-0.5">
                 Do you have a CAC certificate or equivalent?
               </p>
             </div>
@@ -293,19 +295,19 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
           </div>
 
           {formData.is_registered && (
-            <div className="space-y-2">
-              <Label>Upload Business Document</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Upload your CAC certificate or any valid business registration document
+            <div className="space-y-2 pt-2 border-t border-black/5 dark:border-white/5">
+              <Label className="text-[12px] font-medium text-black dark:text-white">Upload Business Document</Label>
+              <p className="text-[11px] text-black/40 dark:text-white/40 mb-2">
+                Upload your CAC certificate or any valid business registration document (Max 5MB)
               </p>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
-                  className="gap-2"
+                  className="h-8 px-3.5 text-[11px] gap-1.5 border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"
                   disabled={uploading || disabled || isVerified}
                   onClick={() => document.getElementById("doc-upload")?.click()}
                 >
-                  <Upload className="h-4 w-4" />
+                  <Upload className="h-3.5 w-3.5" />
                   {uploading ? "Uploading..." : "Upload Document"}
                 </Button>
                 <input
@@ -316,26 +318,26 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
                   onChange={handleDocumentUpload}
                 />
                 {kycData.registration_document_url && (
-                  <Badge variant="secondary" className="gap-1">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                     <CheckCircle2 className="h-3 w-3" />
                     Document uploaded
-                  </Badge>
+                  </span>
                 )}
               </div>
             </div>
           )}
         </div>
 
-        <div className="flex justify-end pt-4 border-t">
+        <div className="flex justify-end pt-4 border-t border-black/5 dark:border-white/5">
           {isVerified ? (
             <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-accent/5 px-4 py-2 rounded-lg border border-accent/10">
-                <Lock className="h-4 w-4 text-accent" />
+              <div className="flex items-center gap-1.5 text-[11px] text-black/50 dark:text-white/50 bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-black/5 dark:border-white/5">
+                <Lock className="h-3.5 w-3.5 text-black/40 dark:text-white/40" />
                 This profile is verified and locked. Contact admin for changes.
               </div>
               <KYCEditRequestDialog orgId={orgId}>
-                <Button variant="outline" className="gap-2 w-full sm:w-auto border-accent/20 hover:bg-accent/5">
-                  <Edit3 className="h-4 w-4 text-accent" />
+                <Button variant="outline" className="text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 gap-1.5 rounded-full border-black/10 dark:border-white/10 text-[11px] h-8 px-3">
+                  <Edit3 className="h-3.5 w-3.5" />
                   Request Edit
                 </Button>
               </KYCEditRequestDialog>
@@ -344,13 +346,13 @@ export function KYCSection({ orgId, kycData, onUpdate, disabled = false }: KYCSe
             <Button
               onClick={handleSave}
               disabled={saving || !isComplete || disabled}
-              className="bg-accent hover:bg-accent/90 gap-2 w-full sm:w-auto"
+              className={pillBtn + " w-full sm:w-auto"}
             >
               {saving ? "Saving..." : "Save KYC Information"}
             </Button>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { PremiumLoader } from "@/components/PremiumLoader";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -10,6 +8,7 @@ import { toast } from "sonner";
 import { Receipt, Plus, ArrowLeft, FileText, Sparkles, ShieldCheck, Send, Wand2 } from "lucide-react";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
 import { FloatingSupport } from "@/components/FloatingSupport";
+import { APPLE_FONT, card, pageWrap, pageInner, sectionLabel, statValue, detailText, thCell, trRow, tdCell, tableDivider, pillBtn } from "@/lib/appleLayout";
 
 interface Organization {
   id: string;
@@ -85,96 +84,111 @@ const DashboardInvoices = () => {
   };
 
   if (loading) {
-    return <PremiumLoader message="Loading invoice studio..." />;
+    return (
+      <SidebarInset className="flex-1">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Create Invoice</h1>
+        </header>
+        <PremiumLoader message="Loading invoice studio..." />
+        <FloatingSupport />
+      </SidebarInset>
+    );
   }
 
   return (
     <SidebarInset className="flex-1 flex flex-col">
-      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 glass-card px-4">
-        <SidebarTrigger />
-        <div className="flex-1 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-accent" />
-            Create Invoice
-          </h1>
-        </div>
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
+        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity shrink-0" />
+        <button 
+          onClick={() => navigate("/dashboard")} 
+          className="flex items-center gap-1 text-[11px] font-medium text-black/40 hover:text-black/60 dark:text-white/40 dark:hover:text-white/60 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em] flex items-center gap-2">
+          <Receipt className="h-4 w-4 text-black/45 dark:text-white/45" />
+          Create Invoice
+        </h1>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 sm:p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Card className="p-8 glass-card border-border/40 relative overflow-hidden">
-            <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
-            <div className="text-center space-y-6">
-              <div className="mx-auto w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center ring-8 ring-accent/5">
-                <FileText className="h-10 w-10 text-accent" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
-                  Create Premium Invoices
-                  <Sparkles className="h-5 w-5 text-accent" />
-                </h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Generate and send beautifully structured invoices with smart defaults,
-                  instant PDF export, and direct email delivery.
-                </p>
-              </div>
-              <Button size="lg" className="gap-2 rounded-full px-7" onClick={() => openInvoiceStudio()}>
-                <Plus className="h-5 w-5" />
-                Open Invoice Studio
-              </Button>
+      <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+        <div className="max-w-[800px] mx-auto px-6 pt-8 pb-16 space-y-6">
+          
+          <div className={`${card} p-8 relative overflow-hidden text-center`}>
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-black/5 dark:bg-white/8 flex items-center justify-center mb-6">
+              <FileText className="h-8 w-8 text-black/50 dark:text-white/50" />
             </div>
-          </Card>
+            <div className="space-y-2 mb-6">
+              <h2 className="text-[18px] font-semibold text-black dark:text-white flex items-center justify-center gap-1.5">
+                Create Premium Invoices
+                <Sparkles className="h-4 w-4 text-black/40 dark:text-white/40 animate-pulse" />
+              </h2>
+              <p className="text-[12px] text-black/40 dark:text-white/40 max-w-sm mx-auto leading-relaxed">
+                Generate and send beautifully structured invoices with smart defaults,
+                instant PDF export, and direct email delivery.
+              </p>
+            </div>
+            <button className={`${pillBtn} mx-auto`} onClick={() => openInvoiceStudio()}>
+              <Plus className="h-4 w-4" /> Open Invoice Studio
+            </button>
+          </div>
 
-          <Card className="p-5 sm:p-6 glass-card border-border/40">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <Wand2 className="h-4 w-4 text-accent" />
-              <p className="text-sm font-semibold">Quick Start Templates</p>
+          <div className={`${card} p-5`}>
+            <div className="flex items-center gap-2 mb-4">
+              <Wand2 className="h-4 w-4 text-black/45 dark:text-white/45" />
+              <p className="text-[12px] font-semibold text-black dark:text-white">Quick Start Templates</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" className="rounded-full" onClick={() => openInvoiceStudio("Consultation")}>
+              <button 
+                onClick={() => openInvoiceStudio("Consultation")}
+                className="px-3.5 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+              >
                 Consultation
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-full" onClick={() => openInvoiceStudio("Starter Package")}>
+              </button>
+              <button 
+                onClick={() => openInvoiceStudio("Starter Package")}
+                className="px-3.5 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+              >
                 Starter Package
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-full" onClick={() => openInvoiceStudio("Monthly Retainer")}>
+              </button>
+              <button 
+                onClick={() => openInvoiceStudio("Monthly Retainer")}
+                className="px-3.5 py-1.5 rounded-full border border-black/8 dark:border-white/8 bg-white dark:bg-[#1c1c1e] text-[11px] font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+              >
                 Monthly Retainer
-              </Button>
+              </button>
             </div>
-          </Card>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <Card className="p-6 glass-card text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
-                <ShieldCheck className="h-6 w-6 text-blue-500" />
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className={`${card} p-5 text-center space-y-2`}>
+              <div className="mx-auto w-10 h-10 rounded-xl bg-black/5 dark:bg-white/8 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-black/50 dark:text-white/50" />
               </div>
-              <h3 className="font-semibold mb-1">Premium Design</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-[13px] font-semibold text-black dark:text-white">Premium Design</h3>
+              <p className="text-[11px] text-black/40 dark:text-white/40 leading-relaxed">
                 Clean invoice layout with your organization details, ready for clients.
               </p>
-            </Card>
-            <Card className="p-6 glass-card text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
-                <Receipt className="h-6 w-6 text-green-500" />
+            </div>
+            <div className={`${card} p-5 text-center space-y-2`}>
+              <div className="mx-auto w-10 h-10 rounded-xl bg-black/5 dark:bg-white/8 flex items-center justify-center">
+                <Receipt className="h-5 w-5 text-black/50 dark:text-white/50" />
               </div>
-              <h3 className="font-semibold mb-1">Multiple Items</h3>
-              <p className="text-sm text-muted-foreground">
-                Add multiple line items with quantities and automatic calculations
+              <h3 className="text-[13px] font-semibold text-black dark:text-white">Multiple Items</h3>
+              <p className="text-[11px] text-black/40 dark:text-white/40 leading-relaxed">
+                Add multiple line items with quantities and automatic calculations.
               </p>
-            </Card>
-            <Card className="p-6 glass-card text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
-                <Send className="h-6 w-6 text-purple-500" />
+            </div>
+            <div className={`${card} p-5 text-center space-y-2`}>
+              <div className="mx-auto w-10 h-10 rounded-xl bg-black/5 dark:bg-white/8 flex items-center justify-center">
+                <Send className="h-5 w-5 text-black/50 dark:text-white/50" />
               </div>
-              <h3 className="font-semibold mb-1">Download or Send</h3>
-              <p className="text-sm text-muted-foreground">
-                Download as PDF or send directly to your customer's email
+              <h3 className="text-[13px] font-semibold text-black dark:text-white">Download or Send</h3>
+              <p className="text-[11px] text-black/40 dark:text-white/40 leading-relaxed">
+                Download as PDF or send directly to your customer's email.
               </p>
-            </Card>
+            </div>
           </div>
         </div>
         <FloatingSupport />
