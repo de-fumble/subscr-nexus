@@ -3,12 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgRole } from "@/hooks/useOrgRole";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { APPLE_FONT } from "@/lib/appleLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -28,15 +22,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Loader2, Shield, User, UserPlus, Trash2, Users, ChevronDown, ChevronUp, Mail, Calendar, Hash, Clock, UserX, UserCheck } from "lucide-react";
+import {
+  Loader2, Shield, User, UserPlus, Trash2, Users,
+  ChevronDown, Mail, Calendar, Clock, UserX, UserCheck,
+} from "lucide-react";
 import { FloatingSupport } from "@/components/FloatingSupport";
-
+import { APPLE_FONT, card, pageInner, sectionLabel, pillBtn } from "@/lib/appleLayout";
 
 interface Organization {
   id: string;
@@ -49,80 +41,175 @@ interface Organization {
 interface StaffMember {
   id: string;
   user_id: string;
-  role: 'admin' | 'staff';
+  role: "admin" | "staff";
   created_at: string;
   email?: string;
   is_suspended?: boolean;
 }
 
-interface StaffMemberCardProps {
+// ── Staff row ──────────────────────────────────────────────────────────────
+function StaffRow({
+  member,
+  index,
+  onUpdateRole,
+  onRemove,
+  onToggleSuspend,
+}: {
   member: StaffMember;
-  onUpdateRole: (memberId: string, newRole: 'admin' | 'staff') => void;
-  onRemove: (memberId: string) => void;
-  onToggleSuspend: (memberId: string, currentStatus: boolean) => void;
-}
+  index: number;
+  onUpdateRole: (id: string, role: "admin" | "staff") => void;
+  onRemove: (id: string) => void;
+  onToggleSuspend: (id: string, current: boolean) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
 
-function StaffMemberCard({ member, onUpdateRole, onRemove, onToggleSuspend }: StaffMemberCardProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const isAdmin = member.role === "admin";
+  const isSuspended = !!member.is_suspended;
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={`border rounded-lg bg-card overflow-hidden transition-opacity ${member.is_suspended ? 'opacity-80' : ''}`}>
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${member.is_suspended ? 'bg-amber-500/10' : 'bg-accent/10'}`}>
-              {member.is_suspended ? (
-                <UserX className="h-5 w-5 text-amber-500" />
-              ) : member.role === 'admin' ? (
-                <Shield className="h-5 w-5 text-accent" />
-              ) : (
-                <User className="h-5 w-5 text-muted-foreground" />
-              )}
+    <div
+      className="staff-row"
+      style={{ animationDelay: `${index * 55}ms` }}
+    >
+      {/* Primary row */}
+      <button
+        onClick={() => setExpanded((p) => !p)}
+        className="staff-row-header group"
+      >
+        {/* Avatar */}
+        <span
+          className={`staff-avatar ${
+            isSuspended
+              ? "staff-avatar--suspended"
+              : isAdmin
+              ? "staff-avatar--admin"
+              : "staff-avatar--staff"
+          }`}
+        >
+          {isSuspended ? (
+            <UserX className="h-4 w-4" />
+          ) : isAdmin ? (
+            <Shield className="h-4 w-4" />
+          ) : (
+            <User className="h-4 w-4" />
+          )}
+        </span>
+
+        {/* Identity */}
+        <span className="flex-1 min-w-0 text-left">
+          <span className="staff-email">
+            {member.email || `User ${member.user_id.slice(0, 8)}…`}
+          </span>
+          <span className="staff-meta-row">
+            <span className={`staff-role-pill ${isAdmin ? "staff-role-pill--admin" : "staff-role-pill--staff"}`}>
+              {isAdmin ? "Admin" : "Staff"}
+            </span>
+            {isSuspended && (
+              <span className="staff-role-pill staff-role-pill--suspended">Suspended</span>
+            )}
+            <span className="staff-joined">
+              <Calendar className="h-3 w-3" />
+              {new Date(member.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          </span>
+        </span>
+
+        {/* Chevron */}
+        <ChevronDown
+          className="staff-chevron"
+          style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+
+      {/* Expanded detail panel */}
+      <div className={`staff-detail ${expanded ? "staff-detail--open" : ""}`}>
+        <div className="staff-detail-inner">
+          {/* Detail grid */}
+          <div className="staff-detail-grid">
+            <div className="staff-detail-field">
+              <span className="staff-detail-label">
+                <Mail className="h-3 w-3" /> Email
+              </span>
+              <span className="staff-detail-value">{member.email || "—"}</span>
             </div>
-            <div>
-              <p className="font-medium text-sm flex items-center gap-2">
-                {member.email || `User ${member.user_id.slice(0, 8)}...`}
-                {member.is_suspended && <Badge variant="outline" className="text-amber-500 border-amber-500/30">Suspended</Badge>}
-              </p>
-              <Badge variant={member.role === 'admin' ? 'default' : 'secondary'} className="mt-1">
-                {member.role === 'admin' ? 'Admin' : 'Staff'}
-              </Badge>
+            <div className="staff-detail-field">
+              <span className="staff-detail-label">
+                <Calendar className="h-3 w-3" /> Added
+              </span>
+              <span className="staff-detail-value">
+                {new Date(member.created_at).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1">
-                {isOpen ? (
-                  <>
-                    <ChevronUp className="h-4 w-4" />
-                    Less
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4" />
-                    Details
-                  </>
-                )}
-              </Button>
-            </CollapsibleTrigger>
+
+          {/* Role selector */}
+          <div className="mt-4">
+            <p className="staff-detail-label mb-1.5">
+              <Shield className="h-3 w-3" /> Role
+            </p>
+            <Select
+              value={member.role}
+              onValueChange={(v: "admin" | "staff") => onUpdateRole(member.id, v)}
+            >
+              <SelectTrigger className="h-8 w-44 text-xs rounded-lg border-black/10 dark:border-white/10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="staff">
+                  <span className="flex items-center gap-2 text-xs">
+                    <User className="h-3 w-3" /> Staff — Read-only
+                  </span>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <span className="flex items-center gap-2 text-xs">
+                    <Shield className="h-3 w-3" /> Admin — Full access
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Actions row */}
+          <div className="staff-actions">
+            <button
+              onClick={() => onToggleSuspend(member.id, isSuspended)}
+              className={`staff-action-btn ${isSuspended ? "staff-action-btn--restore" : "staff-action-btn--suspend"}`}
+            >
+              {isSuspended ? (
+                <><UserCheck className="h-3.5 w-3.5" /> Restore Access</>
+              ) : (
+                <><UserX className="h-3.5 w-3.5" /> Suspend</>
+              )}
+            </button>
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <button className="staff-action-btn staff-action-btn--remove">
+                  <Trash2 className="h-3.5 w-3.5" /> Remove
+                </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent style={{ fontFamily: APPLE_FONT }}>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Remove Staff Member</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove the staff member's access to your organization. This action cannot be undone.
+                  <AlertDialogTitle className="text-[17px] font-semibold tracking-[-0.02em]">
+                    Remove Staff Member?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-[13px] text-black/50 dark:text-white/50">
+                    This will permanently revoke their access. This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="text-[13px] h-8 rounded-lg">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => onRemove(member.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="text-[13px] h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white"
                   >
                     Remove
                   </AlertDialogAction>
@@ -131,100 +218,102 @@ function StaffMemberCard({ member, onUpdateRole, onRemove, onToggleSuspend }: St
             </AlertDialog>
           </div>
         </div>
-        
-        <CollapsibleContent>
-          <div className="border-t px-4 py-4 bg-muted/30 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Mail className="h-3 w-3" />
-                  Email
-                </div>
-                <p className="text-sm font-medium">{member.email || "N/A"}</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Hash className="h-3 w-3" />
-                  Member ID
-                </div>
-                <p className="text-sm font-mono text-muted-foreground">{member.id.slice(0, 8)}...</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  Added On
-                </div>
-                <p className="text-sm font-medium">
-                  {new Date(member.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Shield className="h-3 w-3" />
-                  Role
-                </div>
-                <Select
-                  value={member.role}
-                  onValueChange={(value: 'admin' | 'staff') => onUpdateRole(member.id, value)}
-                >
-                  <SelectTrigger className="w-full h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="staff">
-                      <div className="flex items-center gap-2">
-                        <User className="h-3 w-3" />
-                        Staff (Read-only)
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="admin">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-3 w-3" />
-                        Admin (Full access)
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="pt-3 mt-3 border-t flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium text-amber-600 dark:text-amber-500">Suspend Account</Label>
-                <p className="text-xs text-muted-foreground">
-                  Temporarily revoke this member's access to the workspace.
-                </p>
-              </div>
-              <Button 
-                variant={member.is_suspended ? "outline" : "destructive"} 
-                size="sm"
-                onClick={() => onToggleSuspend(member.id, !!member.is_suspended)}
-                className="gap-2"
-              >
-                {member.is_suspended ? (
-                  <>
-                    <UserCheck className="h-4 w-4" />
-                    Restore Access
-                  </>
-                ) : (
-                  <>
-                    <UserX className="h-4 w-4" />
-                    Suspend Access
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CollapsibleContent>
       </div>
-    </Collapsible>
+    </div>
   );
 }
 
+// ── Add staff form ──────────────────────────────────────────────────────────
+function AddStaffForm({
+  onSubmit,
+  onCancel,
+  creating,
+}: {
+  onSubmit: (data: { email: string; password: string; role: "admin" | "staff" }) => void;
+  onCancel: () => void;
+  creating: boolean;
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"admin" | "staff">("staff");
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit({ email, password, role });
+      }}
+      className="staff-add-form"
+    >
+      <p className="text-[13px] font-semibold text-black dark:text-white mb-4 tracking-[-0.01em]">
+        New Staff Account
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <div className="space-y-1.5">
+          <label className="staff-field-label">Email</label>
+          <input
+            type="email"
+            required
+            placeholder="staff@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="staff-input"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="staff-field-label">Password</label>
+          <input
+            type="password"
+            required
+            minLength={6}
+            placeholder="Min. 6 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="staff-input"
+          />
+        </div>
+      </div>
+
+      <div className="mb-5 space-y-1.5">
+        <label className="staff-field-label">Role</label>
+        <Select value={role} onValueChange={(v: "admin" | "staff") => setRole(v)}>
+          <SelectTrigger className="h-9 text-[13px] rounded-lg border-black/10 dark:border-white/10">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="staff">
+              <span className="flex items-center gap-2 text-[13px]">
+                <User className="h-3.5 w-3.5" /> Staff — Read-only access
+              </span>
+            </SelectItem>
+            <SelectItem value="admin">
+              <span className="flex items-center gap-2 text-[13px]">
+                <Shield className="h-3.5 w-3.5" /> Admin — Full access
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex gap-2">
+        <button type="submit" disabled={creating} className={pillBtn}>
+          {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserPlus className="h-3.5 w-3.5" />}
+          {creating ? "Creating…" : "Create Account"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/5 dark:bg-white/8 text-black/60 dark:text-white/60 text-[12px] font-medium transition-all hover:bg-black/8 dark:hover:bg-white/12"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ── Page ────────────────────────────────────────────────────────────────────
 export default function DashboardStaff() {
   const navigate = useNavigate();
   const { role, canManageStaff, loading: roleLoading } = useOrgRole();
@@ -236,26 +325,13 @@ export default function DashboardStaff() {
   const [isClockedOut, setIsClockedOut] = useState(false);
   const [clockOutLoading, setClockOutLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    role: "staff" as 'admin' | 'staff',
-  });
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
+      if (!user) { navigate("/auth"); return; }
 
-      // Get organization
       const { data: orgData } = await supabase
         .from("organizations")
         .select("id, org_name, email, is_clocked_out")
@@ -265,97 +341,61 @@ export default function DashboardStaff() {
       if (orgData) {
         setOrganization(orgData);
         setIsClockedOut(orgData.is_clocked_out || false);
-        
-        // Fetch staff members using edge function to get emails
-        const { data, error } = await supabase.functions.invoke('manage-staff', {
-          body: {
-            action: 'list_staff',
-            org_id: orgData.id,
-          },
+        const { data, error } = await supabase.functions.invoke("manage-staff", {
+          body: { action: "list_staff", org_id: orgData.id },
         });
-
-        if (!error && data?.members) {
-          setMembers(data.members);
-        }
+        if (!error && data?.members) setMembers(data.members);
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateStaff = async ({ email, password, role }: {
+    email: string; password: string; role: "admin" | "staff";
+  }) => {
     if (!organization) return;
-    
-    if (!formData.email || !formData.password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-
     setCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-staff', {
-        body: {
-          action: 'create_staff',
-          org_id: organization.id,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        },
+      const { data, error } = await supabase.functions.invoke("manage-staff", {
+        body: { action: "create_staff", org_id: organization.id, email, password, role },
       });
-
       if (error) throw error;
       if (data.error) throw new Error(data.error);
-
-      toast.success('Staff member created successfully');
-      setFormData({ email: "", password: "", role: "staff" });
+      toast.success("Staff member created");
       setShowAddForm(false);
       fetchData();
-    } catch (error: any) {
-      console.error('Error creating staff:', error);
-      toast.error(error.message || 'Failed to create staff member');
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create staff member");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleUpdateRole = async (memberId: string, newRole: 'admin' | 'staff') => {
+  const handleUpdateRole = async (memberId: string, newRole: "admin" | "staff") => {
     try {
       const { error } = await supabase
-        .from('organization_members')
+        .from("organization_members")
         .update({ role: newRole })
-        .eq('id', memberId);
-
+        .eq("id", memberId);
       if (error) throw error;
-      toast.success('Role updated successfully');
+      toast.success("Role updated");
       fetchData();
-    } catch (error: any) {
-      console.error('Error updating role:', error);
-      toast.error('Failed to update role');
-    }
+    } catch { toast.error("Failed to update role"); }
   };
 
-  const handleToggleSuspend = async (memberId: string, currentStatus: boolean) => {
+  const handleToggleSuspend = async (memberId: string, current: boolean) => {
     try {
       const { error } = await supabase
-        .from('organization_members')
-        .update({ is_suspended: !currentStatus })
-        .eq('id', memberId);
-
+        .from("organization_members")
+        .update({ is_suspended: !current })
+        .eq("id", memberId);
       if (error) throw error;
-      toast.success(currentStatus ? 'Staff access restored' : 'Staff access suspended');
+      toast.success(current ? "Access restored" : "Access suspended");
       fetchData();
-    } catch (error: any) {
-      console.error('Error suspending member:', error);
-      toast.error('Failed to update member status');
-    }
+    } catch { toast.error("Failed to update status"); }
   };
 
   const handleToggleClockOut = async (checked: boolean) => {
@@ -363,67 +403,72 @@ export default function DashboardStaff() {
     setClockOutLoading(true);
     try {
       const { error } = await supabase
-        .from('organizations')
+        .from("organizations")
         .update({ is_clocked_out: checked })
-        .eq('id', organization.id);
-
+        .eq("id", organization.id);
       if (error) throw error;
       setIsClockedOut(checked);
-      toast.success(checked ? 'Workspace clocked out. Staff can no longer login.' : 'Workspace accessible. Staff can now login.');
-    } catch (error: any) {
-      console.error('Error toggling clock out:', error);
-      toast.error('Failed to update workspace status');
-    } finally {
-      setClockOutLoading(false);
-    }
+      toast.success(checked ? "Workspace locked" : "Workspace unlocked");
+    } catch { toast.error("Failed to update workspace status"); }
+    finally { setClockOutLoading(false); }
   };
 
   const handleRemoveStaff = async (memberId: string) => {
     try {
       const { error } = await supabase
-        .from('organization_members')
+        .from("organization_members")
         .delete()
-        .eq('id', memberId);
-
+        .eq("id", memberId);
       if (error) throw error;
-      toast.success('Staff member removed');
+      toast.success("Staff member removed");
       fetchData();
-    } catch (error: any) {
-      console.error('Error removing staff:', error);
-      toast.error('Failed to remove staff member');
-    }
+    } catch { toast.error("Failed to remove staff member"); }
   };
 
+  // ── Shell header (always shown) ──
+  const Header = () => (
+    <header
+      className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4"
+      style={{ fontFamily: APPLE_FONT }}
+    >
+      <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
+      <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">
+        Staff
+      </h1>
+    </header>
+  );
+
+  // ── Loading ──
   if (loading || roleLoading) {
     return (
       <SidebarInset className="flex-1">
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
-          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
-          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Staff Management</h1>
-        </header>
-        <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]">
-          <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
-            <div className="h-48 bg-black/5 dark:bg-white/5 animate-pulse rounded-2xl" />
-            <div className="h-32 bg-black/5 dark:bg-white/5 animate-pulse rounded-2xl" />
+        <Header />
+        <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
+          <div className={pageInner}>
+            <div className="h-[72px] bg-black/4 dark:bg-white/4 animate-pulse rounded-[16px]" />
+            <div className="h-[200px] bg-black/4 dark:bg-white/4 animate-pulse rounded-[16px]" />
+            <div className="h-[160px] bg-black/4 dark:bg-white/4 animate-pulse rounded-[16px]" />
           </div>
         </main>
       </SidebarInset>
     );
   }
 
+  // ── Access denied ──
   if (!canManageStaff) {
     return (
       <SidebarInset className="flex-1">
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
-          <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
-          <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Staff Management</h1>
-        </header>
+        <Header />
         <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
-          <div className="container mx-auto px-4 sm:px-6 py-8">
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-12 text-center">
-              <Shield className="h-10 w-10 text-black/20 dark:text-white/20 mx-auto mb-3" />
-              <p className="text-[15px] font-semibold text-black dark:text-white mb-1">Access Restricted</p>
-              <p className="text-[13px] text-black/40 dark:text-white/40">Only organization owners can manage staff members.</p>
+          <div className={pageInner}>
+            <div className={`${card} p-16 flex flex-col items-center text-center`}>
+              <Shield className="h-9 w-9 text-black/15 dark:text-white/15 mb-3" />
+              <p className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em] mb-1">
+                Access Restricted
+              </p>
+              <p className="text-[13px] text-black/40 dark:text-white/40">
+                Only organisation owners can manage staff.
+              </p>
             </div>
           </div>
         </main>
@@ -431,189 +476,187 @@ export default function DashboardStaff() {
     );
   }
 
+  // ── Main ──
+  const admins  = members.filter((m) => m.role === "admin");
+  const staff   = members.filter((m) => m.role === "staff");
+
   return (
     <SidebarInset className="flex-1">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-black/5 dark:border-white/5 bg-[#f5f5f7]/90 dark:bg-black/90 backdrop-blur-md px-4" style={{ fontFamily: APPLE_FONT }}>
-        <SidebarTrigger className="opacity-40 hover:opacity-70 transition-opacity" />
-        <h1 className="text-[15px] font-semibold text-black dark:text-white tracking-[-0.01em]">Staff Management</h1>
-      </header>
+      <Header />
       <main className="flex-1 overflow-auto bg-[#f5f5f7] dark:bg-[#000]" style={{ fontFamily: APPLE_FONT }}>
-        <div className="container mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className={pageInner}>
 
-          <div className="bg-card border border-border/80 shadow-sm rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Clock Out Workspace
-              </Label>
-              <p className="text-sm text-muted-foreground max-w-xl">
-                Lock the workspace. When clocked out, no staff members or admins aside from yourself will be able to login or access the system.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              {clockOutLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-              <Switch 
-                checked={isClockedOut}
-                onCheckedChange={handleToggleClockOut}
-                disabled={clockOutLoading}
-                className="data-[state=checked]:bg-destructive"
-              />
+          {/* ── Clock-out card ── */}
+          <div>
+            <p className={sectionLabel}>Workspace</p>
+            <div className={`${card} px-5 py-4 flex items-center justify-between gap-6`}>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/5 dark:bg-white/8 shrink-0">
+                  <Clock className="h-4 w-4 text-black/50 dark:text-white/50" />
+                </span>
+                <div>
+                  <p className="text-[14px] font-semibold text-black dark:text-white tracking-[-0.01em]">
+                    Clock Out Workspace
+                  </p>
+                  <p className="text-[12px] text-black/40 dark:text-white/40 mt-0.5 max-w-sm leading-relaxed">
+                    Lock the workspace. No staff or admins can log in while this is active.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {clockOutLoading && <Loader2 className="h-4 w-4 animate-spin text-black/30 dark:text-white/30" />}
+                <Switch
+                  checked={isClockedOut}
+                  onCheckedChange={handleToggleClockOut}
+                  disabled={clockOutLoading}
+                  className="data-[state=checked]:bg-destructive"
+                />
+              </div>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Staff Members
-              </CardTitle>
-              <CardDescription>
-                Add and manage staff members for your organization
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                  {/* Add Staff Button/Form */}
-                  {!showAddForm ? (
-                    <Button onClick={() => setShowAddForm(true)} className="gap-2 w-full sm:w-auto">
-                      <UserPlus className="h-4 w-4" />
-                      Add Staff Member
-                    </Button>
-                  ) : (
-                    <form onSubmit={handleCreateStaff} className="border rounded-lg p-4 space-y-4 bg-muted/30">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="staff@example.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="password">Password</Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder="Min 6 characters"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required
-                            minLength={6}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="role">Role</Label>
-                        <Select
-                          value={formData.role}
-                          onValueChange={(value: 'admin' | 'staff') => 
-                            setFormData({ ...formData, role: value })
-                          }
-                        >
-                          <SelectTrigger className="w-full md:w-64">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="staff">
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4" />
-                                Staff (Read-only access)
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="admin">
-                              <div className="flex items-center gap-2">
-                                <Shield className="h-4 w-4" />
-                                Admin (Full access except staff management)
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button type="submit" disabled={creating}>
-                          {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                          Create Staff Account
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setShowAddForm(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  )}
+          {/* ── Staff members ── */}
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <p className={sectionLabel} style={{ marginBottom: 0 }}>
+                Members · {members.length}
+              </p>
+              {!showAddForm && (
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className={pillBtn}
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Add member
+                </button>
+              )}
+            </div>
 
-                  {/* Staff Members List */}
-                  {members.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground border rounded-lg">
-                      <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No staff members yet. Add your first staff member above.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {members.map((member) => (
-                        <StaffMemberCard
-                          key={member.id}
-                          member={member}
-                          onUpdateRole={handleUpdateRole}
-                          onRemove={handleRemoveStaff}
-                          onToggleSuspend={handleToggleSuspend}
-                        />
-                      ))}
-                    </div>
-                  )}
-            </CardContent>
-          </Card>
+            <div className={card}>
+              {/* Add form */}
+              {showAddForm && (
+                <div className="px-5 pt-5 pb-4 border-b border-black/5 dark:border-white/5">
+                  <AddStaffForm
+                    onSubmit={handleCreateStaff}
+                    onCancel={() => setShowAddForm(false)}
+                    creating={creating}
+                  />
+                </div>
+              )}
 
-          {/* Role Permissions Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Role Permissions</CardTitle>
-              <CardDescription>
-                Understanding what each role can do
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="secondary">Staff</Badge>
-                    <span className="text-sm text-muted-foreground">(Read-only)</span>
-                  </div>
-                  <ul className="text-sm space-y-2 text-muted-foreground">
-                    <li className="flex items-center gap-2">✓ View analytics</li>
-                    <li className="flex items-center gap-2">✓ View subscribers</li>
-                    <li className="flex items-center gap-2">✓ View plans</li>
-                    <li className="flex items-center gap-2">✓ View activity logs</li>
-                    <li className="flex items-center gap-2">✓ View defaulted subscribers</li>
-                    <li className="flex items-center gap-2 text-destructive">✗ Cannot modify data</li>
-                    <li className="flex items-center gap-2 text-destructive">✗ Cannot access settings</li>
-                    <li className="flex items-center gap-2 text-destructive">✗ Cannot request payouts</li>
-                  </ul>
+              {/* Empty state */}
+              {members.length === 0 && !showAddForm && (
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <Users className="h-8 w-8 text-black/12 dark:text-white/12 mb-3" />
+                  <p className="text-[14px] font-semibold text-black dark:text-white tracking-[-0.01em] mb-1">
+                    No staff yet
+                  </p>
+                  <p className="text-[12px] text-black/35 dark:text-white/35">
+                    Add a staff member to get started.
+                  </p>
                 </div>
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="default">Admin</Badge>
-                    <span className="text-sm text-muted-foreground">(Full access)</span>
-                  </div>
-                  <ul className="text-sm space-y-2 text-muted-foreground">
-                    <li className="flex items-center gap-2">✓ All staff permissions</li>
-                    <li className="flex items-center gap-2">✓ Create/edit/delete subscribers</li>
-                    <li className="flex items-center gap-2">✓ Create/edit/delete plans</li>
-                    <li className="flex items-center gap-2">✓ Request payouts</li>
-                    <li className="flex items-center gap-2">✓ View billing history</li>
-                    <li className="flex items-center gap-2">✓ Modify organization details</li>
-                    <li className="flex items-center gap-2 text-destructive">✗ Cannot manage staff</li>
-                  </ul>
+              )}
+
+              {/* Admins */}
+              {admins.length > 0 && (
+                <div>
+                  <p className="px-5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-black/25 dark:text-white/25">
+                    Admins
+                  </p>
+                  {admins.map((m, i) => (
+                    <StaffRow
+                      key={m.id}
+                      member={m}
+                      index={i}
+                      onUpdateRole={handleUpdateRole}
+                      onRemove={handleRemoveStaff}
+                      onToggleSuspend={handleToggleSuspend}
+                    />
+                  ))}
                 </div>
+              )}
+
+              {/* Staff */}
+              {staff.length > 0 && (
+                <div>
+                  <p className="px-5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-black/25 dark:text-white/25">
+                    Staff
+                  </p>
+                  {staff.map((m, i) => (
+                    <StaffRow
+                      key={m.id}
+                      member={m}
+                      index={i + admins.length}
+                      onUpdateRole={handleUpdateRole}
+                      onRemove={handleRemoveStaff}
+                      onToggleSuspend={handleToggleSuspend}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Permissions reference ── */}
+          <div>
+            <p className={sectionLabel}>Permissions</p>
+            <div className={`${card} grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-black/5 dark:divide-white/5`}>
+              {/* Staff col */}
+              <div className="px-6 py-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="h-4 w-4 text-black/40 dark:text-white/40" />
+                  <span className="text-[13px] font-semibold text-black dark:text-white tracking-[-0.01em]">
+                    Staff
+                  </span>
+                  <span className="text-[11px] text-black/35 dark:text-white/35">Read-only</span>
+                </div>
+                <ul className="space-y-2">
+                  {["View analytics", "View subscribers", "View plans", "View activity logs"].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-[12px] text-black/55 dark:text-white/55">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                  {["Cannot modify data", "Cannot manage settings", "Cannot request payouts"].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-[12px] text-black/25 dark:text-white/25">
+                      <span className="h-1.5 w-1.5 rounded-full bg-black/15 dark:bg-white/15 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Admin col */}
+              <div className="px-6 py-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="h-4 w-4 text-accent" />
+                  <span className="text-[13px] font-semibold text-black dark:text-white tracking-[-0.01em]">
+                    Admin
+                  </span>
+                  <span className="text-[11px] text-black/35 dark:text-white/35">Full access</span>
+                </div>
+                <ul className="space-y-2">
+                  {[
+                    "All staff permissions",
+                    "Create / edit / delete subscribers",
+                    "Create / edit / delete plans",
+                    "Request payouts",
+                    "Modify organisation details",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-[12px] text-black/55 dark:text-white/55">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                  <li className="flex items-center gap-2 text-[12px] text-black/25 dark:text-white/25">
+                    <span className="h-1.5 w-1.5 rounded-full bg-black/15 dark:bg-white/15 shrink-0" />
+                    Cannot manage staff
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
         </div>
         <FloatingSupport />
       </main>
