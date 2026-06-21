@@ -553,4 +553,341 @@ All colors MUST be HSL.
         transparent 100%);
     padding: 1rem;
   }
+
+  /* ─── Apple-style Toast System ───────────────────────────────────── */
+
+  /* Entry animation for Radix toast only (data-state driven) */
+  @keyframes apple-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes apple-toast-out {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-5px) scale(0.98);
+    }
+  }
+
+  @keyframes apple-spinner {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes apple-toast-progress {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+  }
+
+  /* Animation utility classes — Radix toast only */
+  .animate-apple-toast-in {
+    animation: apple-toast-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-apple-toast-out {
+    animation: apple-toast-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  /* ── Base pill ── */
+  .apple-toast {
+    /* Dimensions */
+    width: auto;
+    min-width: 280px;
+    max-width: 400px;
+    border-radius: 20px;
+    padding: 13px 16px 13px 14px;
+
+    /* Frosted glass */
+    background: hsl(0 0% 100% / 0.82);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+
+    /* Border */
+    border: 1px solid hsl(0 0% 0% / 0.08);
+
+    /* Shadow — layered like macOS */
+    box-shadow:
+      0 0 0 0.5px hsl(0 0% 0% / 0.06),
+      0 2px 8px hsl(0 0% 0% / 0.08),
+      0 8px 24px hsl(0 0% 0% / 0.10),
+      0 24px 48px hsl(0 0% 0% / 0.06);
+
+    /* Layout */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    /* Pointer events */
+    cursor: default;
+    user-select: none;
+
+    /* Transition — box-shadow only; transform/opacity owned by Sonner state rules */
+    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Progress bar track */
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle inner highlight (like Apple glass) */
+  .apple-toast::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.35) 0%,
+      hsl(0 0% 100% / 0) 50%
+    );
+    pointer-events: none;
+  }
+
+  /* Progress bar at bottom */
+  .apple-toast::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: hsl(var(--foreground) / 0.12);
+    transform-origin: left center;
+    animation: apple-toast-progress 4s linear both;
+    border-radius: 0 0 20px 20px;
+  }
+
+  /* Hover: subtle lift */
+  .apple-toast:hover {
+    box-shadow:
+      0 0 0 0.5px hsl(0 0% 0% / 0.08),
+      0 4px 12px hsl(0 0% 0% / 0.10),
+      0 12px 32px hsl(0 0% 0% / 0.12),
+      0 32px 56px hsl(0 0% 0% / 0.06);
+    transform: translateY(-1px) scale(1.005);
+  }
+
+  /* Dark mode */
+  .dark .apple-toast {
+    background: hsl(220 15% 14% / 0.88);
+    border-color: hsl(0 0% 100% / 0.10);
+    box-shadow:
+      0 0 0 0.5px hsl(0 0% 100% / 0.06),
+      0 2px 8px hsl(0 0% 0% / 0.30),
+      0 8px 24px hsl(0 0% 0% / 0.28),
+      0 24px 48px hsl(0 0% 0% / 0.20);
+  }
+  .dark .apple-toast::before {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.06) 0%,
+      hsl(0 0% 100% / 0) 50%
+    );
+  }
+
+  /* ── Sonner toaster container ── */
+  .apple-toaster {
+    --width: 420px;
+    --offset: 20px;
+  }
+
+  /* ── Icon ── */
+  .apple-toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .apple-toast-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .apple-toast-icon--success,
+  .apple-toast-icon--error,
+  .apple-toast-icon--warning,
+  .apple-toast-icon--info,
+  .apple-toast-icon--loading {
+    background: hsl(0 0% 0% / 0.07);
+    color: hsl(0 0% 10%);
+  }
+  .dark .apple-toast-icon--success,
+  .dark .apple-toast-icon--error,
+  .dark .apple-toast-icon--warning,
+  .dark .apple-toast-icon--info,
+  .dark .apple-toast-icon--loading {
+    background: hsl(0 0% 100% / 0.10);
+    color: hsl(0 0% 88%);
+  }
+
+  /* Spinner */
+  .apple-spinner {
+    animation: apple-spinner 0.8s linear infinite;
+  }
+
+  /* ── Typography ── */
+  .apple-toast-title {
+    font-size: 13px;
+    font-weight: 590;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: hsl(var(--foreground));
+  }
+
+  .apple-toast-description {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    line-height: 1.45;
+    color: hsl(var(--muted-foreground));
+    margin-top: 1px;
+  }
+
+  /* ── Variant accent bars — all neutral ── */
+  .apple-toast--success::after,
+  .apple-toast--error::after,
+  .apple-toast--warning::after,
+  .apple-toast--info::after,
+  .apple-toast--loading::after {
+    background: hsl(0 0% 0% / 0.18);
+  }
+  .dark .apple-toast--success::after,
+  .dark .apple-toast--error::after,
+  .dark .apple-toast--warning::after,
+  .dark .apple-toast--info::after,
+  .dark .apple-toast--loading::after {
+    background: hsl(0 0% 100% / 0.18);
+  }
+
+  /* ── Action & Cancel buttons ── */
+  .apple-toast-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 590;
+    letter-spacing: -0.01em;
+    background: hsl(var(--foreground) / 0.88);
+    color: hsl(var(--background));
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .apple-toast-action:hover {
+    opacity: 0.82;
+    transform: scale(0.97);
+  }
+  .apple-toast-action:active {
+    transform: scale(0.94);
+  }
+
+  .apple-toast-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    background: hsl(var(--foreground) / 0.07);
+    color: hsl(var(--muted-foreground));
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .apple-toast-cancel:hover {
+    background: hsl(var(--foreground) / 0.11);
+    transform: scale(0.97);
+  }
+}
+
+/* ── Sonner override — ensure our apple-toast styles win ── */
+/* Sonner applies classNames.toast directly to [data-sonner-toast] (the li),
+   so .apple-toast IS [data-sonner-toast]. We just strip Sonner's hard-coded styles. */
+[data-sonner-toaster] {
+  --width: 400px !important;
+  --gap: 10px !important;
+}
+
+/* Override Sonner's own background/border/shadow on the toast element */
+[data-sonner-toast].apple-toast {
+  background: hsl(0 0% 100% / 0.82) !important;
+  backdrop-filter: saturate(180%) blur(24px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+  border: 1px solid hsl(0 0% 0% / 0.08) !important;
+  box-shadow:
+    0 0 0 0.5px hsl(0 0% 0% / 0.06),
+    0 2px 8px hsl(0 0% 0% / 0.08),
+    0 8px 24px hsl(0 0% 0% / 0.10),
+    0 24px 48px hsl(0 0% 0% / 0.06) !important;
+  border-radius: 20px !important;
+  padding: 13px 16px 13px 14px !important;
+}
+
+.dark [data-sonner-toast].apple-toast {
+  background: hsl(220 15% 14% / 0.88) !important;
+  border-color: hsl(0 0% 100% / 0.10) !important;
+  box-shadow:
+    0 0 0 0.5px hsl(0 0% 100% / 0.06),
+    0 2px 8px hsl(0 0% 0% / 0.30),
+    0 8px 24px hsl(0 0% 0% / 0.28),
+    0 24px 48px hsl(0 0% 0% / 0.20) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Sonner stack transitions — pure CSS, no keyframes
+   Every state change interpolates via transition, nothing snaps.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* 1. Give every Sonner toast a transition baseline.
+      This covers position changes Sonner makes in JS (transform, opacity, z-index). */
+[data-sonner-toast] {
+  will-change: transform, opacity;
+  transition:
+    transform  0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity    0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 2. Front toast — full presence, highest layer */
+[data-sonner-toast][data-front="true"] {
+  z-index: 100 !important;
+  opacity: 1 !important;
+  /* Sonner manages the actual transform; let it through */
+}
+
+/* 3. Back toast — fades behind the new front one.
+      Scale pulls it "away", opacity dissolves it.
+      This transition plays against the baseline above — silky smooth. */
+[data-sonner-toast][data-front="false"]:not([data-removed="true"]) {
+  z-index: 1 !important;
+  opacity: 0 !important;
+  transform: scale(0.92) translateY(-6px) !important;
+  pointer-events: none;
+}
+
+/* 4. Removed toast — just fades in place, no transform fighting */
+[data-sonner-toast][data-removed="true"] {
+  opacity: 0 !important;
+  pointer-events: none;
+  animation: none !important;
 }
