@@ -232,6 +232,12 @@ export function AppSidebar() {
           badge: "Review declined charges and recovery options",
         },
         {
+          title: "Refund Monitor",
+          icon: RotateCcw,
+          url: "/dashboard/refunds",
+          badge: "Track and monitor Paystack refund statuses",
+        },
+        {
           title: "Auto Retry Queue",
           icon: RotateCcw,
           url: "/dashboard/retry-queue",

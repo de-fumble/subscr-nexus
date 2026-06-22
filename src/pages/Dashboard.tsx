@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Wallet, Users, Download, Filter, Eye, EyeOff, Edit2, Loader2, ChevronRight, AlertTriangle, ArrowUpRight, PlayCircle, Sparkles } from "lucide-react";
+import { Wallet, Users, Download, Filter, Eye, EyeOff, Edit2, Loader2, ChevronRight, AlertTriangle, ArrowUpRight, RotateCcw, PlayCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import * as XLSX from "xlsx";
 import { SubscriberManagementDialog } from "@/components/SubscriberManagementDialog";
 import { SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { PayoutRequestDialog } from "@/components/PayoutRequestDialog";
+import { RefundRequestDialog } from "@/components/RefundRequestDialog";
 import { FailedPaymentsDialog } from "@/components/FailedPaymentsDialog";
 import { TransactionFilterDialog } from "@/components/TransactionFilterDialog";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -166,6 +167,7 @@ const Dashboard = () => {
   }>>([]);
   const [showSubscriberDialog, setShowSubscriberDialog] = useState(false);
   const [showPayoutDialog, setShowPayoutDialog] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [pendingPayouts, setPendingPayouts] = useState(0);
   const [totalPaidOut, setTotalPaidOut] = useState(0);
@@ -508,23 +510,53 @@ const Dashboard = () => {
   ) => {
     try {
       // Keep revenue card aligned with the same merged transaction feed used elsewhere.
-      const { data: exportData, error: exportError } = await supabase.functions.invoke("fetch-paystack-analytics", {
-        body: {
-          action: "export_transactions",
-          orgId,
-          dataSource,
-        },
-      });
+      // Run export_transactions and list_refunds in parallel so refunds are always deducted.
+      const [
+        { data: exportData, error: exportError },
+        { data: refundData, error: refundError },
+      ] = await Promise.all([
+        supabase.functions.invoke("fetch-paystack-analytics", {
+          body: { action: "export_transactions", orgId, dataSource },
+        }),
+        supabase.functions.invoke("fetch-paystack-analytics", {
+          body: { action: "list_refunds", orgId },
+        }),
+      ]);
 
       const exportRows = !exportError && Array.isArray((exportData as any)?.transactions)
         ? (exportData as any).transactions
         : [];
-      const exportTotalRevenue = exportRows.reduce((sum: number, txn: any) => sum + (Number(txn.amount) || 0), 0);
+
+      // Gross revenue from all successful transactions
+      const grossExportRevenue = exportRows.reduce((sum: number, txn: any) => sum + (Number(txn.amount) || 0), 0);
+
+      // Total amount refunded (processed refunds only — don't deduct pending/failed ones twice)
+      const totalRefunded = !refundError && refundData?.summary
+        ? (refundData.summary.total as number) || 0
+        : 0;
+
+      // Net revenue = gross minus refunds
+      const exportTotalRevenue = Math.max(0, grossExportRevenue - totalRefunded);
       const exportRevenueByPlanMap = exportRows.reduce((acc: Record<string, number>, txn: any) => {
         const name = String(txn.plan_name || "Other");
         acc[name] = (acc[name] || 0) + (Number(txn.amount) || 0);
         return acc;
       }, {});
+
+      // Deduct refunds from their respective plans
+      if (!refundError && refundData?.refunds) {
+        refundData.refunds.forEach((r: any) => {
+          if (!["failed", "declined"].includes(r.status)) {
+            // Find the exact transaction to guarantee plan name matches
+            const matchingTxn = exportRows.find((t: any) => t.reference === r.reference);
+            const name = String(matchingTxn?.plan_name || r.plan_name || "Other");
+            if (exportRevenueByPlanMap[name] !== undefined) {
+              exportRevenueByPlanMap[name] = Math.max(0, exportRevenueByPlanMap[name] - r.refund_amount);
+            }
+          }
+        });
+      }
+
       const exportRevenueByPlan = Object.entries(exportRevenueByPlanMap).map(([name, value], index) => ({
         name,
         value,
@@ -933,21 +965,25 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* Payouts */}
-                <div className="bg-white dark:bg-[#1c1c1e] rounded-[16px] px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] group cursor-pointer transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] hover:-translate-y-px" onClick={() => setShowPayoutDialog(true)}>
+                {/* File a Refund */}
+                <div
+                  className="bg-white dark:bg-[#1c1c1e] rounded-[16px] px-5 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.05)] group cursor-pointer transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] hover:-translate-y-px"
+                  style={{ fontFamily: APPLE_FONT }}
+                  onClick={() => setShowRefundDialog(true)}
+                >
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-7 h-7 rounded-[8px] bg-black/5 dark:bg-white/8 flex items-center justify-center">
-                      <ArrowUpRight className="w-3.5 h-3.5 text-black/40 dark:text-white/40" />
+                    <div className="w-7 h-7 rounded-[8px] bg-blue-50 dark:bg-blue-500/12 flex items-center justify-center">
+                      <RotateCcw className="w-3.5 h-3.5 text-blue-400" />
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <p className="text-[22px] font-semibold tracking-[-0.02em] leading-none text-black dark:text-white tabular-nums mb-1.5">
-                    {hideValues ? "₦•••" : `₦${pendingPayouts.toLocaleString()}`}
+                    Refunds
                   </p>
-                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1">Payouts</p>
+                  <p className="text-[11px] font-medium text-black/40 dark:text-white/40 uppercase tracking-[0.05em] mb-1">File a Refund</p>
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-black/25 dark:text-white/25">Paid out</span>
-                    <span className="text-black/40 dark:text-white/40 font-medium tabular-nums">{hideValues ? "₦•••" : `₦${totalPaidOut.toLocaleString()}`}</span>
+                    <span className="text-black/25 dark:text-white/25">Tap to request</span>
+                    <span className="text-blue-300 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">Open →</span>
                   </div>
                 </div>
               </div>
@@ -1186,6 +1222,7 @@ const Dashboard = () => {
 
       <SubscriberManagementDialog open={showSubscriberDialog} onOpenChange={setShowSubscriberDialog} orgId={organization?.id || ""} onSubscriberRemoved={fetchDashboardData} />
       <PayoutRequestDialog open={showPayoutDialog} onOpenChange={setShowPayoutDialog} orgId={organization?.id || ""} availableBalance={availableBalance} onRequestSubmitted={fetchDashboardData} />
+      <RefundRequestDialog open={showRefundDialog} onOpenChange={setShowRefundDialog} userEmail={userEmail || ""} orgId={organization?.id || ""} />
       <TransactionFilterDialog open={showTransactionFilterDialog} onOpenChange={setShowTransactionFilterDialog} orgId={organization?.id || ""} orgName={organization?.org_name || "Organization"} />
       {kycApprovalNotification && (
         <KYCApprovalModal notificationId={kycApprovalNotification} onClose={() => setKycApprovalNotification(null)} />

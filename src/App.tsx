@@ -34,6 +34,7 @@ import DashboardInvoices from "./pages/DashboardInvoices";
 import DashboardBillingProfiles from "./pages/DashboardBillingProfiles";
 import BillingProfileDetail from "./pages/BillingProfileDetail";
 import DashboardAllTransactions from "./pages/DashboardAllTransactions";
+import DashboardRefunds from "./pages/DashboardRefunds";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import SuperAdminOrganization from "./pages/SuperAdminOrganization";
@@ -135,6 +136,7 @@ const App = () => (
                 <Route path="/dashboard/billing-profiles" element={<DashboardBillingProfiles />} />
                 <Route path="/dashboard/billing-profiles/:profileId" element={<BillingProfileDetail />} />
                 <Route path="/dashboard/transactions" element={<DashboardAllTransactions />} />
+                <Route path="/dashboard/refunds" element={<DashboardRefunds />} />
               </Route>
               <Route element={<SuperAdminLayout />}>
                 <Route path="/superadmin" element={<ProtectedRoute><SuperAdminRouteGuard><SuperAdminDashboard /></SuperAdminRouteGuard></ProtectedRoute>} />
