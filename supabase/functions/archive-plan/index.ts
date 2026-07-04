@@ -160,6 +160,22 @@ serve(async (req) => {
       }
     }
 
+    // If any cancellation failed, we abort the archiving of the plan
+    const successCount = cancelResults.filter(r => r.success).length;
+    const failCount = cancelResults.filter(r => !r.success).length;
+
+    if (failCount > 0) {
+      console.error(`Failed to cancel ${failCount} subscriptions. Aborting plan archive.`);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: `Failed to cancel ${failCount} subscriptions. Plan was not archived.`,
+          cancelResults
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Archive the plan
     const { error: archiveError } = await supabase
       .from("subscription_plans")
@@ -174,13 +190,10 @@ serve(async (req) => {
       );
     }
 
-    const successCount = cancelResults.filter(r => r.success).length;
-    const failCount = cancelResults.filter(r => !r.success).length;
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Plan archived. ${successCount} subscriptions cancelled${failCount > 0 ? `, ${failCount} failed` : ''}.`,
+        message: `Plan archived successfully. ${successCount} subscriptions cancelled.`,
         cancelResults
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

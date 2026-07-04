@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, Loader2, FileText, CheckCircle2, AlertCircle, Clock3, Mail, ReceiptText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Search, Loader2, FileText, CheckCircle2, AlertCircle, Clock3, Mail, User, Hash, Calendar, CreditCard, Tag } from "lucide-react";
 import { TransactionReceiptDialog } from "./TransactionReceiptDialog";
+import { APPLE_FONT, card, pillBtn } from "@/lib/appleLayout";
 
 interface TransactionDetails {
   reference: string;
@@ -28,6 +25,9 @@ interface Organization {
 interface VerifyTransactionCardProps {
   organization?: Organization | null;
 }
+
+const inputCls =
+  "w-full h-10 px-3.5 rounded-[10px] border border-black/[0.08] dark:border-white/[0.10] bg-white dark:bg-white/[0.04] text-[13px] text-black dark:text-white placeholder:text-black/25 dark:placeholder:text-white/25 outline-none transition-all focus:border-black/20 dark:focus:border-white/20 focus:ring-2 focus:ring-black/[0.04] dark:focus:ring-white/[0.06] font-mono";
 
 export function VerifyTransactionCard({ organization }: VerifyTransactionCardProps) {
   const [reference, setReference] = useState("");
@@ -65,130 +65,159 @@ export function VerifyTransactionCard({ organization }: VerifyTransactionCardPro
     }
   };
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusConfig = (status: string) => {
     if (status === "success") {
-      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+      return {
+        icon: <CheckCircle2 className="h-[18px] w-[18px] text-emerald-500" strokeWidth={1.8} />,
+        label: "Successful",
+        bg: "bg-emerald-500/10",
+        text: "text-emerald-600 dark:text-emerald-400",
+        dot: "bg-emerald-500",
+      };
     }
     if (status === "failed") {
-      return "bg-destructive/10 text-destructive border-destructive/20";
+      return {
+        icon: <AlertCircle className="h-[18px] w-[18px] text-red-500" strokeWidth={1.8} />,
+        label: "Failed",
+        bg: "bg-red-500/10",
+        text: "text-red-600 dark:text-red-400",
+        dot: "bg-red-500",
+      };
     }
-    return "bg-amber-500/10 text-amber-600 border-amber-500/20";
-  };
-
-  const getStatusIcon = (status: string) => {
-    if (status === "success") return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
-    if (status === "failed") return <AlertCircle className="h-5 w-5 text-destructive" />;
-    return <Clock3 className="h-5 w-5 text-amber-500" />;
+    return {
+      icon: <Clock3 className="h-[18px] w-[18px] text-amber-500" strokeWidth={1.8} />,
+      label: "Pending",
+      bg: "bg-amber-500/10",
+      text: "text-amber-600 dark:text-amber-400",
+      dot: "bg-amber-500",
+    };
   };
 
   return (
-    <>
-      <Card className="border-border/40 shadow-sm">
-        <CardHeader className="space-y-3">
-          <CardTitle className="flex items-center gap-2">
-            <ReceiptText className="h-5 w-5 text-accent" />
-            Verify Transaction
-          </CardTitle>
-          <CardDescription>
-            Search by transaction reference to confirm payment status and generate a receipt.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="rounded-xl border border-border/40 bg-muted/20 p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                placeholder="Paste transaction reference (e.g. TRX-123...)"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleVerify()}
-                className="font-mono text-sm"
-              />
-              <Button onClick={handleVerify} disabled={loading} className="sm:min-w-36 gap-2">
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Checking...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4" />
-                    Verify
-                  </>
-                )}
-              </Button>
-            </div>
+    <div style={{ fontFamily: APPLE_FONT }}>
+      {/* Search Input */}
+      <div className={`${card} p-5`}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-black/35 dark:text-white/35 mb-3">
+          Transaction Reference
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/20 dark:text-white/20 pointer-events-none" />
+            <input
+              className={`${inputCls} pl-9`}
+              placeholder="Paste reference (e.g. TRX-abc123...)"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+            />
           </div>
+          <button
+            onClick={handleVerify}
+            disabled={loading}
+            className={`${pillBtn} sm:min-w-[120px] justify-center h-10 text-[13px] px-5 disabled:opacity-35 disabled:pointer-events-none`}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Checking…
+              </>
+            ) : (
+              "Verify"
+            )}
+          </button>
+        </div>
+      </div>
 
-          {transaction && (
-            <div className="space-y-4 animate-in fade-in-0 duration-300">
-              <div className="rounded-xl border border-border/40 bg-background p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(transaction.status)}
-                  <div>
-                    <p className="text-sm text-muted-foreground">Transaction status</p>
-                    <Badge variant="outline" className={getStatusBadgeClass(transaction.status)}>
-                      {transaction.status}
-                    </Badge>
+      {/* Results */}
+      {transaction && (
+        <div className="mt-4 space-y-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+          {/* Status + Amount Banner */}
+          {(() => {
+            const config = getStatusConfig(transaction.status);
+            return (
+              <div className={`${card} p-5`}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-[10px] ${config.bg} flex items-center justify-center shrink-0`}>
+                      {config.icon}
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-black/35 dark:text-white/35 uppercase tracking-[0.04em] font-medium">Status</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+                        <span className={`text-[14px] font-semibold ${config.text}`}>
+                          {config.label}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-[11px] text-black/35 dark:text-white/35 uppercase tracking-[0.04em] font-medium">Amount</p>
+                    <p className="text-[22px] font-semibold tracking-[-0.02em] text-black dark:text-white tabular-nums mt-0.5">
+                      {transaction.currency} {(transaction.amount / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
                 </div>
-                <div className="text-left sm:text-right">
-                  <p className="text-xs text-muted-foreground">Amount</p>
-                  <p className="text-xl font-bold tracking-tight">
-                    {transaction.currency} {(transaction.amount / 100).toLocaleString()}
+              </div>
+            );
+          })()}
+
+          {/* Details Grid */}
+          <div className={`${card} overflow-hidden divide-y divide-black/[0.04] dark:divide-white/[0.04]`}>
+            {[
+              {
+                icon: Hash,
+                label: "Reference",
+                value: transaction.reference,
+                mono: true,
+              },
+              {
+                icon: User,
+                label: "Customer",
+                value: transaction.customer_name || "N/A",
+              },
+              {
+                icon: Mail,
+                label: "Email",
+                value: transaction.customer_email || "N/A",
+              },
+              {
+                icon: Tag,
+                label: "Plan",
+                value: transaction.plan || "N/A",
+              },
+              {
+                icon: Calendar,
+                label: "Paid At",
+                value: transaction.paid_at ? new Date(transaction.paid_at).toLocaleString() : "N/A",
+              },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center gap-3 px-5 py-3.5">
+                <div className="w-7 h-7 rounded-[7px] bg-black/[0.03] dark:bg-white/[0.05] flex items-center justify-center shrink-0">
+                  <row.icon className="h-3.5 w-3.5 text-black/35 dark:text-white/35" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-black/30 dark:text-white/30 font-medium uppercase tracking-[0.04em]">{row.label}</p>
+                  <p className={`text-[13px] text-black dark:text-white mt-0.5 truncate ${row.mono ? "font-mono text-[12px]" : ""}`}>
+                    {row.value}
                   </p>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Card className="border-border/40">
-                  <CardContent className="p-4 space-y-1">
-                    <p className="text-xs text-muted-foreground">Reference</p>
-                    <p className="font-mono text-xs sm:text-sm break-all">{transaction.reference}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/40">
-                  <CardContent className="p-4 space-y-1">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Mail className="h-3.5 w-3.5" />
-                      Customer Email
-                    </p>
-                    <p className="text-sm break-all">{transaction.customer_email || "N/A"}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/40">
-                  <CardContent className="p-4 space-y-1">
-                    <p className="text-xs text-muted-foreground">Customer Name</p>
-                    <p className="text-sm">{transaction.customer_name || "N/A"}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/40">
-                  <CardContent className="p-4 space-y-1">
-                    <p className="text-xs text-muted-foreground">Plan</p>
-                    <p className="text-sm">{transaction.plan || "N/A"}</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className="border-border/40">
-                <CardContent className="p-4 space-y-1">
-                  <p className="text-xs text-muted-foreground">Paid At</p>
-                  <p className="text-sm">{new Date(transaction.paid_at).toLocaleString()}</p>
-                </CardContent>
-              </Card>
-
-              {transaction.status === "success" && (
-                <Button
-                  onClick={() => setShowReceipt(true)}
-                  className="w-full gap-2 rounded-full"
-                >
-                  <FileText className="h-4 w-4" />
-                  Generate Receipt
-                </Button>
-              )}
-            </div>
+          {/* Generate Receipt CTA */}
+          {transaction.status === "success" && (
+            <button
+              onClick={() => setShowReceipt(true)}
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-[13px] font-medium hover:opacity-80 transition-all active:scale-[0.98]"
+            >
+              <FileText className="h-4 w-4" strokeWidth={1.8} />
+              Generate Receipt
+            </button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
       {/* Receipt Dialog */}
       {transaction && (
@@ -199,6 +228,6 @@ export function VerifyTransactionCard({ organization }: VerifyTransactionCardPro
           organization={organization}
         />
       )}
-    </>
+    </div>
   );
 }

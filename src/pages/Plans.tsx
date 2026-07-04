@@ -129,7 +129,7 @@ const Plans = () => {
       if (data?.success) toast.success(data.message || "Plan archived");
       else throw new Error(data?.error || "Failed");
       fetchPlans();
-    } catch { toast.error("Failed to archive plan"); }
+    } catch (e: any) { toast.error(e?.message || "Failed to archive plan"); }
     finally { setArchiving(false); }
   };
 
