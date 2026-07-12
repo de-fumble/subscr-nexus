@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Shield, Lock, CreditCard, CheckCircle2, Sparkles, ArrowLeft, Star, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Loader2,
+  Shield,
+  Lock,
+  CreditCard,
+  CheckCircle2,
+  ArrowLeft,
+  Check,
+  Building2,
+  ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
-import logoImage from "@/assets/logo.svg";
+import { PageLoadingSkeleton } from "@/components/DashboardSkeleton";
 
 interface Plan {
   id: string;
@@ -17,6 +28,8 @@ interface Plan {
   category: string | null;
   paystack_plan_code: string;
   org_id: string;
+  currency: string;
+  features?: string[] | null;
 }
 
 interface Organization {
@@ -25,8 +38,18 @@ interface Organization {
   email: string;
 }
 
+const INTERVAL_MAP: Record<string, string> = {
+  daily: "day",
+  weekly: "week",
+  monthly: "month",
+  quarterly: "quarter",
+  biannually: "6 months",
+  annually: "year",
+};
+
 const Subscribe = () => {
   const { planId } = useParams();
+  const navigate = useNavigate();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +67,7 @@ const Subscribe = () => {
     try {
       const { data, error } = await supabase
         .from("subscription_plans")
-        .select("*")
+        .select("id, name, description, price, interval, category, paystack_plan_code, org_id, currency, features")
         .eq("id", planId)
         .eq("is_active", true)
         .single();
@@ -56,7 +79,6 @@ const Subscribe = () => {
 
       setPlan(data);
 
-      // Fetch organization details
       const { data: orgData } = await supabase
         .from("organizations")
         .select("org_name, logo_url, email")
@@ -110,374 +132,227 @@ const Subscribe = () => {
     }
   };
 
-  const getIntervalText = (interval: string) => {
-    const map: Record<string, string> = {
-      daily: "day",
-      weekly: "week",
-      monthly: "month",
-      quarterly: "quarter",
-      biannually: "6 months",
-      annually: "year",
-    };
-    return map[interval] || interval;
-  };
+  const formatCurrency = (val: number, currency: string) =>
+    `${currency === "NGN" ? "₦" : currency}${val.toLocaleString()}`;
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
-        {/* Premium background decorations */}
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute -left-60 -top-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-primary/20 to-accent/10 blur-3xl animate-pulse" />
-          <div className="absolute -bottom-60 -right-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-accent/20 to-primary/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.1)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.1)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        </div>
-
-        {/* Header skeleton */}
-        <header className="sticky top-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-xl">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 animate-pulse" />
-              <div className="h-5 w-24 rounded-lg bg-muted/50 animate-pulse" />
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3.5 w-3.5 rounded-full bg-muted/50 animate-pulse" />
-              <div className="h-3 w-24 rounded bg-muted/50 animate-pulse" />
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto min-h-0 w-full">
-          <div className="container mx-auto px-4 py-6 sm:py-10 lg:py-16 pb-20">
-            <div className="max-w-2xl mx-auto">
-            {/* Premium skeleton card */}
-            <div className="rounded-3xl border border-border/50 bg-background/80 backdrop-blur-xl shadow-2xl overflow-hidden">
-              {/* Organization header skeleton */}
-              <div className="relative p-6 sm:p-8 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent border-b border-border/30">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="relative flex items-center gap-4">
-                  <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 animate-shimmer ring-4 ring-background/50" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-32 rounded-full bg-muted/50 animate-pulse" />
-                    <div className="h-6 w-48 rounded-lg bg-muted/60 animate-shimmer" />
-                    <div className="h-3 w-40 rounded-full bg-muted/40 animate-pulse" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Content skeleton */}
-              <div className="p-6 sm:p-8 space-y-6">
-                {/* Plan name skeleton */}
-                <div className="space-y-3">
-                  <div className="h-6 w-20 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 animate-pulse" />
-                  <div className="h-8 w-3/4 rounded-lg bg-muted/60 animate-shimmer" />
-                  <div className="h-4 w-full rounded-lg bg-muted/40 animate-pulse" />
-                </div>
-
-                {/* Price skeleton */}
-                <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 p-5 sm:p-6 border border-primary/20 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-                  <div className="relative space-y-2">
-                    <div className="flex items-baseline gap-2">
-                      <div className="h-10 w-32 rounded-lg bg-muted/60 animate-shimmer" />
-                      <div className="h-5 w-16 rounded-lg bg-muted/40 animate-pulse" />
-                    </div>
-                    <div className="h-4 w-40 rounded-full bg-muted/40 animate-pulse" />
-                  </div>
-                </div>
-
-                {/* Features skeleton */}
-                <div className="flex flex-wrap gap-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-8 w-28 rounded-full bg-muted/30 border border-border/50 animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
-                  ))}
-                </div>
-
-                <div className="border-t border-border/50" />
-
-                {/* Form skeleton */}
-                <div className="space-y-4">
-                  <div className="h-5 w-48 rounded-lg bg-muted/50 animate-pulse" />
-                  
-                  <div className="space-y-2">
-                    <div className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
-                    <div className="h-12 w-full rounded-xl bg-muted/30 border border-border/50 animate-shimmer" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="h-3 w-28 rounded bg-muted/40 animate-pulse" />
-                    <div className="h-12 w-full rounded-xl bg-muted/30 border border-border/50 animate-shimmer" />
-                  </div>
-
-                  <div className="h-14 w-full rounded-xl bg-gradient-to-r from-primary/40 to-primary/30 animate-pulse-glow shadow-lg" />
-                </div>
-
-                {/* Trust indicators skeleton */}
-                <div className="space-y-3 pt-2">
-                  <div className="h-12 w-full rounded-xl bg-muted/30 border border-border/30 animate-pulse" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="h-16 rounded-xl border border-border/50 bg-muted/20 animate-pulse" />
-                    <div className="h-16 rounded-xl border border-border/50 bg-muted/20 animate-pulse" style={{ animationDelay: '0.15s' }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer skeleton */}
-            <div className="mt-8 flex justify-center">
-              <div className="h-4 w-64 rounded-full bg-muted/30 animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </main>
-      </div>
-    );
-  }
+  if (loading) return <PageLoadingSkeleton />;
 
   if (!plan) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-destructive/5 p-4">
-        <div className="glass-card max-w-md rounded-3xl border border-border/50 p-10 text-center backdrop-blur-xl shadow-2xl">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-            <Shield className="h-10 w-10 text-destructive" />
+      <div className="min-h-[100dvh] bg-slate-100 flex items-center justify-center p-4 font-sans">
+        <div className="text-center bg-white p-8 sm:p-10 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-200 max-w-sm w-full">
+          <div className="mx-auto mb-6 h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center">
+            <Building2 className="h-7 w-7 text-slate-400" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Plan Not Found</h1>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
+          <h2 className="text-lg font-medium text-slate-900 mb-2">Plan Not Found</h2>
+          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
             This subscription plan is no longer available or has been deactivated.
           </p>
-          <Link to="/">
-            <Button variant="outline" className="mt-6 gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Go Back Home
-            </Button>
-          </Link>
+          <Button onClick={() => navigate("/")} className="w-full h-11 rounded-xl text-sm font-medium">
+            Return Home
+          </Button>
         </div>
       </div>
     );
   }
 
+  const intervalText = INTERVAL_MAP[plan.interval] || plan.interval;
+
   return (
-    <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
-      {/* Premium background decorations */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -left-60 -top-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-primary/20 to-accent/10 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-60 -right-60 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-accent/20 to-primary/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute left-1/2 top-1/3 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.1)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.1)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+    <div className="min-h-[100dvh] bg-slate-50/80 flex items-center justify-center p-4 sm:p-6 md:p-8 font-sans relative overflow-hidden">
+      {/* Subtle ambient backdrop */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[50%] h-[50%] rounded-full bg-accent/5 blur-[100px]" />
+        <div className="absolute bottom-0 right-1/4 w-[40%] h-[40%] rounded-full bg-blue-400/5 blur-[80px]" />
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-xl">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <img src={logoImage} alt="Recurra" className="h-10 w-10 rounded-xl object-cover shadow-lg group-hover:scale-105 transition-transform" />
-            <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Recurra</span>
-          </Link>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Lock className="h-3.5 w-3.5" />
-            <span>Secure Checkout</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-y-auto min-h-0 w-full">
-        <div className="container mx-auto px-4 py-6 sm:py-10 lg:py-16 pb-20">
-          <div className="max-w-2xl mx-auto">
-          {/* Single Premium Card */}
-          <div className="glass-card rounded-3xl border border-border/50 backdrop-blur-xl shadow-2xl overflow-hidden">
-            {/* Organization Header with Profile */}
-            {organization && (
-              <div className="relative p-6 sm:p-8 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent border-b border-border/30">
-                {/* Decorative glow */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
-                
-                <div className="relative flex items-center gap-4">
-                  {/* Organization Logo */}
-                  {organization.logo_url ? (
-                    <img
-                      src={organization.logo_url}
-                      alt={organization.org_name}
-                      className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover ring-4 ring-background/50 shadow-xl flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white text-2xl sm:text-3xl font-bold shadow-xl ring-4 ring-background/50 flex-shrink-0">
-                      {organization.org_name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">You're subscribing to</p>
-                    <h2 className="text-lg sm:text-2xl font-bold text-foreground truncate">{organization.org_name}</h2>
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">{organization.email}</p>
-                  </div>
-                </div>
+      {/* Modal Container */}
+      <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl shadow-slate-200/60 border border-slate-200/80 overflow-hidden relative z-10 flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
+        {/* Header */}
+        <header className="px-6 py-4 border-b border-slate-100 bg-white/90 backdrop-blur-md sticky top-0 z-20 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-3">
+            {organization?.logo_url ? (
+              <img
+                src={organization.logo_url}
+                alt={organization.org_name}
+                className="h-8 w-8 rounded-lg object-cover ring-1 ring-slate-100"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                <span className="text-sm font-medium text-white">
+                  {organization?.org_name.charAt(0).toUpperCase() || "?"}
+                </span>
               </div>
             )}
+            <h1 className="text-sm font-medium text-slate-900 truncate max-w-[160px] sm:max-w-none">
+              {organization?.org_name || "Subscribe"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <Lock className="h-3 w-3" />
+            <span className="hidden sm:inline">Secure Checkout</span>
+          </div>
+        </header>
 
-            {/* Plan Details */}
-            <div className="p-6 sm:p-8 space-y-6">
-              {/* Plan name and category */}
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  {plan.category && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 px-3 py-1 text-xs font-semibold text-primary border border-primary/20">
-                      <Star className="h-3 w-3" />
-                      {plan.category}
-                    </span>
-                  )}
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-                  {plan.name}
-                </h1>
-                {plan.description && (
-                  <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    {plan.description}
-                  </p>
-                )}
-              </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto premium-scrollbar p-6 sm:p-8">
+          {/* Back link */}
+          <button
+            onClick={() => navigate(`/plans-hub/${plan.org_id}`)}
+            className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors mb-6"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to plans
+          </button>
 
-              {/* Price display */}
-              <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 p-5 sm:p-6 border border-primary/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-                <div className="relative flex flex-wrap items-baseline gap-2">
-                  <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                    ₦{plan.price.toLocaleString()}
-                  </span>
-                  <span className="text-base sm:text-lg text-muted-foreground font-medium">
-                    / {getIntervalText(plan.interval)}
-                  </span>
-                </div>
-                <p className="mt-2 text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
-                  <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  Billed {plan.interval} • Cancel anytime
-                </p>
-              </div>
-
-              {/* Features list - compact */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Priority support",
-                  "Auto-renewal",
-                  "Secure payments",
-                  "Email alerts",
-                ].map((feature, index) => (
-                  <span 
-                    key={index} 
-                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border/50"
-                  >
-                    <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0" />
-                    {feature}
-                  </span>
-                ))}
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-border/50" />
-
-              {/* Subscription Form */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4">
-                  Complete your subscription
-                </h3>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium">
-                      Full Name
-                    </Label>
-                    <Input
-                      id="name"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                      disabled={submitting}
-                      className="h-12 rounded-xl border-border/50 bg-background/50 px-4 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email Address
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email address"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      required
-                      disabled={submitting}
-                      className="h-12 rounded-xl border-border/50 bg-background/50 px-4 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="h-14 w-full rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground font-bold text-base shadow-xl shadow-primary/25 transition-all hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
-                    size="lg"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="mr-2 h-5 w-5" />
-                        Subscribe Now
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </div>
-
-              {/* Trust indicators */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground p-3 rounded-xl bg-muted/30 border border-border/30">
-                  <Lock className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span>256-bit SSL encrypted • Your data is secure</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 bg-background/50">
-                    <Shield className="h-5 w-5 text-primary" />
-                    <span className="text-xs text-muted-foreground text-center">Secure Payment</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/50 bg-background/50">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                    <span className="text-xs text-muted-foreground text-center">Instant Activation</span>
-                  </div>
-                </div>
-
-                <p className="text-center text-xs text-muted-foreground">
-                  You will be redirected to Paystack to complete payment
-                  <span className="mt-1.5 flex items-center justify-center gap-1.5 text-primary/80 font-medium">
-                    <Shield className="h-3.5 w-3.5" />
-                    Powered by Paystack
-                  </span>
-                </p>
-              </div>
-            </div>
+          {/* Heading */}
+          <div className="text-center mb-8">
+            <Badge className="mb-3 px-3 py-1 bg-accent/10 hover:bg-accent/10 text-accent font-medium uppercase tracking-widest text-[10px] border-none shadow-none rounded-full">
+              Subscription
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-medium text-slate-900 tracking-tight mb-2 leading-tight">
+              {plan.name}
+            </h2>
+            {plan.description && (
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">{plan.description}</p>
+            )}
           </div>
 
-          {/* Footer */}
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">
-              By subscribing, you agree to our{" "}
-              <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
-              {" "}and{" "}
-              <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+          {/* Price */}
+          <div className="rounded-3xl bg-slate-50/50 border border-slate-200 p-5 sm:p-6 mb-6 text-center">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-3xl sm:text-4xl font-medium tracking-tight text-slate-900 tabular-nums">
+                {formatCurrency(plan.price, plan.currency || "NGN")}
+              </span>
+              <span className="text-sm font-medium text-slate-400">/{intervalText}</span>
+            </div>
+            {plan.category && (
+              <span className="inline-block mt-3 text-[10px] font-medium uppercase tracking-widest px-2 py-0.5 rounded-md bg-accent/10 text-accent">
+                {plan.category}
+              </span>
+            )}
+          </div>
+
+          {/* Features */}
+          <ul className="space-y-3 mb-8">
+            {plan.features?.map((feat, i) => (
+              <li key={`custom-${i}`} className="flex items-center gap-3">
+                <span className="flex-none flex items-center justify-center h-5 w-5 rounded-full bg-accent/10 text-accent">
+                  <CheckCircle2 className="h-4 w-4" />
+                </span>
+                <span className="text-sm font-medium text-slate-900">{feat}</span>
+              </li>
+            ))}
+            {[
+              `Billed ${intervalText}ly`,
+              "Cancel anytime",
+              "Instant activation",
+            ].map((feat, i) => (
+              <li key={`static-${i}`} className="flex items-center gap-3">
+                <span className="flex-none flex items-center justify-center h-5 w-5 rounded-full bg-slate-200/50 text-slate-400">
+                  <Check className="h-3 w-3 stroke-[3]" />
+                </span>
+                <span className="text-sm font-medium text-slate-700">{feat}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Divider */}
+          <div className="border-t border-slate-100 mb-8" />
+
+          {/* Form */}
+          <div>
+            <h3 className="text-sm font-medium text-slate-900 mb-4 tracking-tight">
+              Complete your subscription
+            </h3>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="name" className="text-xs font-medium text-slate-500 uppercase tracking-widest">
+                  Full Name
+                </Label>
+                <Input
+                  id="name"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  disabled={submitting}
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:ring-0 focus-visible:ring-0 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-medium text-slate-500 uppercase tracking-widest">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  disabled={submitting}
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:ring-0 focus-visible:ring-0 transition-all"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full h-12 rounded-xl text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-all mt-2"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Subscribe Now
+                    <ChevronRight className="h-4 w-4 ml-1 opacity-70" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <p className="text-center text-[11px] text-slate-400 font-medium mt-4 leading-relaxed">
+              You will be redirected to Paystack to complete payment securely.
             </p>
           </div>
+
+          {/* Terms */}
+          <p className="text-center text-[11px] text-slate-400 font-medium mt-6 leading-relaxed">
+            By subscribing, you agree to our{" "}
+            <Link to="/terms" className="text-slate-600 hover:text-slate-900 transition-colors">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" className="text-slate-600 hover:text-slate-900 transition-colors">
+              Privacy Policy
+            </Link>
+          </p>
         </div>
+
+        {/* Footer */}
+        <footer className="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-slate-400" />
+              <span>Bank-grade Security</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5">
+              <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+              <span>Powered by Paystack</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-widest opacity-70">Powered by</span>
+            <span className="text-sm font-medium text-slate-900 tracking-tight">Recurra</span>
+          </div>
+        </footer>
       </div>
-    </main>
     </div>
   );
 };
