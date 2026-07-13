@@ -15,6 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,8 @@ interface Organization {
   org_name: string;
   email: string;
   logo_url?: string | null;
+  recurra_handling_request?: boolean | null;
+  recurra_keys_managed?: boolean | null;
 }
 
 const intervalShort: Record<string, string> = {
@@ -67,6 +70,7 @@ const Plans = () => {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isPendingKeysModalOpen, setIsPendingKeysModalOpen] = useState(false);
 
   useEffect(() => { fetchPlans(); }, []);
 
@@ -79,7 +83,7 @@ const Plans = () => {
 
       let orgId = null, orgData = null;
       const { data: ownedOrg } = await supabase
-        .from("organizations").select("id, org_name, email, logo_url")
+        .from("organizations").select("id, org_name, email, logo_url, recurra_handling_request, recurra_keys_managed")
         .eq("user_id", user.id).maybeSingle();
       if (ownedOrg) { orgId = ownedOrg.id; orgData = ownedOrg; }
       else {
@@ -88,7 +92,7 @@ const Plans = () => {
         if (membership) {
           orgId = membership.org_id;
           const { data: memberOrg } = await supabase
-            .from("organizations").select("id, org_name, email, logo_url")
+            .from("organizations").select("id, org_name, email, logo_url, recurra_handling_request, recurra_keys_managed")
             .eq("id", membership.org_id).maybeSingle();
           orgData = memberOrg;
         }
@@ -111,6 +115,14 @@ const Plans = () => {
       setPlans((plansData || []).map(p => ({ ...p, subscriber_count: subscriberCountByPlan[p.name] || 0 })));
     } catch { toast.error("Failed to load plans"); }
     finally { setLoading(false); setRefreshing(false); }
+  };
+
+  const handleCreatePlan = () => {
+    if (organization?.recurra_handling_request && !organization?.recurra_keys_managed) {
+      setIsPendingKeysModalOpen(true);
+      return;
+    }
+    navigate("/plans/create");
   };
 
   const copySubscriptionLink = async (planId: string) => {
@@ -306,7 +318,7 @@ const Plans = () => {
             {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
           </button>
           {canCreatePlans && (
-            <button onClick={() => navigate("/plans/create")} className={pillBtn}>
+            <button onClick={handleCreatePlan} className={pillBtn}>
               <Plus className="w-3.5 h-3.5 mr-1" /> New Plan
             </button>
           )}
@@ -325,7 +337,7 @@ const Plans = () => {
                 Create your first subscription plan to start accepting recurring payments.
               </p>
               {canCreatePlans && (
-                <button onClick={() => navigate("/plans/create")} className={pillBtn + " mx-auto"}>
+                <button onClick={handleCreatePlan} className={pillBtn + " mx-auto"}>
                   <Plus className="h-3.5 w-3.5 mr-1" /> Create Plan
                 </button>
               )}
@@ -432,6 +444,31 @@ const Plans = () => {
           onFeaturesUpdated={() => fetchPlans(true)}
         />
       )}
+
+      <Dialog open={isPendingKeysModalOpen} onOpenChange={setIsPendingKeysModalOpen}>
+        <DialogContent className="sm:max-w-[440px] border-amber-500/20 bg-background/95 backdrop-blur-xl">
+          <div className="flex flex-col items-center text-center py-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 mb-5">
+              <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+            </div>
+            <DialogTitle className="text-lg font-bold mb-2">Secure Keys Being Assigned</DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm leading-relaxed max-w-xs">
+              Plans cannot be created until the system is done assigning secure keys.
+            </DialogDescription>
+            <p className="text-xs text-muted-foreground/70 mt-3">
+              This usually takes a short while. You'll be notified once your account is ready.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPendingKeysModalOpen(false)}
+              className="mt-6 rounded-lg px-6"
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </SidebarInset>
   );
 };

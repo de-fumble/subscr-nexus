@@ -17,6 +17,7 @@ interface Organization {
   paystack_secret_key?: string | null;
   paystack_public_key?: string | null;
   recurra_handling_request?: boolean | null;
+  recurra_keys_managed?: boolean | null;
 }
 
 const DashboardSetup = () => {
@@ -80,7 +81,7 @@ const DashboardSetup = () => {
 
   if (loading) return <PremiumLoader message="Loading setup..." />;
 
-  const setupComplete = (!!organization?.paystack_secret_key || organization?.recurra_handling_request) && hasPlans;
+  const setupComplete = (!!organization?.paystack_secret_key || !!organization?.recurra_keys_managed) && hasPlans;
 
   return (
     <SidebarInset className="flex-1 flex flex-col">
@@ -108,10 +109,12 @@ const DashboardSetup = () => {
           </div>
 
           <SetupProgressCard
-            hasPaymentProvider={!!organization?.paystack_secret_key || organization?.recurra_handling_request || false}
+            hasPaymentProvider={!!organization?.paystack_secret_key || !!organization?.recurra_keys_managed}
             hasPlans={hasPlans}
             orgId={organization?.id}
             orgName={organization?.org_name}
+            isRecurraPending={!!organization?.recurra_handling_request && !organization?.recurra_keys_managed}
+            isRecurraManaged={!!organization?.recurra_keys_managed}
           />
 
           <div className="flex justify-center pt-2">

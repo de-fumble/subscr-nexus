@@ -558,6 +558,7 @@ export type Database = {
           paystack_public_key: string | null
           paystack_secret_key: string | null
           recurra_handling_request: boolean | null
+          recurra_keys_managed: boolean | null
           registration_document_url: string | null
           staff_count: string | null
           suspended_at: string | null
@@ -589,6 +590,7 @@ export type Database = {
           paystack_public_key?: string | null
           paystack_secret_key?: string | null
           recurra_handling_request?: boolean | null
+          recurra_keys_managed?: boolean | null
           registration_document_url?: string | null
           staff_count?: string | null
           suspended_at?: string | null
@@ -620,6 +622,7 @@ export type Database = {
           paystack_public_key?: string | null
           paystack_secret_key?: string | null
           recurra_handling_request?: boolean | null
+          recurra_keys_managed?: boolean | null
           registration_document_url?: string | null
           staff_count?: string | null
           suspended_at?: string | null

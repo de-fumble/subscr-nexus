@@ -40,6 +40,7 @@ interface Organization {
   paystack_secret_key?: string | null;
   paystack_public_key?: string | null;
   recurra_handling_request?: boolean | null;
+  recurra_keys_managed?: boolean | null;
 }
 interface SubscriptionPlan {
   id: string;
@@ -358,7 +359,7 @@ const Dashboard = () => {
         return;
       }
 
-      const hasPaymentProvider = !!orgData.paystack_secret_key || orgData.recurra_handling_request;
+      const hasPaymentProvider = !!orgData.paystack_secret_key || !!orgData.recurra_keys_managed;
       let hasPlans = false;
 
       const { count: planCount } = await supabase

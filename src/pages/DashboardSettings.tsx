@@ -38,6 +38,8 @@ export default function DashboardSettings() {
     account_number?: string | null;
     account_name?: string | null;
     bank_name?: string | null;
+    recurra_handling_request?: boolean | null;
+    recurra_keys_managed?: boolean | null;
   } | null>(null);
   const [currentLicense, setCurrentLicense] = useState<any>(null);
   const [publicKey, setPublicKey] = useState("");
@@ -65,7 +67,7 @@ export default function DashboardSettings() {
 
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name")
+        .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name, recurra_handling_request, recurra_keys_managed")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -82,7 +84,7 @@ export default function DashboardSettings() {
         if (membership) {
           const { data: memberOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name")
+            .select("id, org_name, email, paystack_public_key, paystack_secret_key, logo_url, kyc_verified, kyc_submitted_at, account_number, account_name, bank_name, recurra_handling_request, recurra_keys_managed")
             .eq("id", membership.org_id)
             .maybeSingle();
 
@@ -96,7 +98,7 @@ export default function DashboardSettings() {
       }
 
       setOrganization(orgData);
-      setHasExistingKeys(!!(orgData.paystack_public_key && orgData.paystack_secret_key));
+      setHasExistingKeys(!!(orgData.paystack_public_key && orgData.paystack_secret_key) || !!orgData.recurra_keys_managed);
 
       // Fetch current license
       if (orgData) {
@@ -259,13 +261,20 @@ export default function DashboardSettings() {
                         {hasExistingKeys && <Shield className="h-4 w-4 text-emerald-500" />}
                       </h2>
                       <p className="text-[12px] text-black/40 dark:text-white/40 mt-1 font-normal">
-                        {hasExistingKeys
-                          ? "Your Paystack account is actively connected and processing."
-                          : "Connect your Paystack API keys to unlock unlimited plans."}
+                        {organization?.recurra_keys_managed 
+                          ? "Your payment processing is managed by Recurra."
+                          : hasExistingKeys
+                            ? "Your Paystack account is actively connected and processing."
+                            : "Connect your Paystack API keys to unlock unlimited plans."}
                       </p>
                     </div>
                     <div className="shrink-0 mt-4 sm:mt-0" onClick={(e) => e.stopPropagation()}>
-                      {hasExistingKeys ? (
+                      {organization?.recurra_keys_managed ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                          Managed by Recurra
+                        </span>
+                      ) : hasExistingKeys ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                           Connected
@@ -279,7 +288,7 @@ export default function DashboardSettings() {
                     </div>
                   </div>
                 </AccordionTrigger>
-                {!hasExistingKeys && (
+                {!hasExistingKeys && !organization?.recurra_keys_managed && (
                   <AccordionContent className="px-6 pb-6 pt-2 relative z-10 border-t border-black/5 dark:border-white/5">
                     <div className="mt-4 p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[12px] text-black/60 dark:text-white/60">
                       <p className="font-semibold text-black dark:text-white mb-2 flex items-center gap-1.5">
@@ -297,8 +306,9 @@ export default function DashboardSettings() {
             </AccordionItem>
 
             {/* Paystack Integration Form */}
-            <AccordionItem value="paystack-integration" className="border-none">
-              <div className={`${card} overflow-hidden`}>
+            {!organization?.recurra_keys_managed && (
+              <AccordionItem value="paystack-integration" className="border-none">
+                <div className={`${card} overflow-hidden`}>
                 <AccordionTrigger className="w-full px-6 py-6 hover:no-underline relative z-10 [&[data-state=open]>div>div>svg]:rotate-180">
                   <div className="flex items-center gap-4 text-left w-full">
                     <div className="h-10 w-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0">
@@ -406,9 +416,10 @@ export default function DashboardSettings() {
                 </AccordionContent>
               </div>
             </AccordionItem>
+            )}
 
             {/* Webhook Configuration Card */}
-            {isVerified && hasExistingKeys && (
+            {isVerified && hasExistingKeys && !organization?.recurra_keys_managed && (
               <AccordionItem value="webhook-config" className="border-none">
                 <div className={`${card} overflow-hidden`}>
                   <AccordionTrigger className="w-full px-6 py-6 hover:no-underline relative z-10 [&[data-state=open]>div>div>svg]:rotate-180">

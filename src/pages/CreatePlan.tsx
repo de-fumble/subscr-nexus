@@ -38,6 +38,8 @@ interface Organization {
   logo_url?: string | null;
   paystack_secret_key?: string | null;
   paystack_public_key?: string | null;
+  recurra_handling_request?: boolean | null;
+  recurra_keys_managed?: boolean | null;
 }
 
 const MAX_PLANS_WITHOUT_PAYSTACK = 3;
@@ -50,6 +52,7 @@ const CreatePlan = () => {
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [planCount, setPlanCount] = useState(0);
   const [paystackConnected, setPaystackConnected] = useState(false);
+  const [isPendingKeys, setIsPendingKeys] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -79,7 +82,7 @@ const CreatePlan = () => {
       let orgId = null;
       const { data: ownedOrg } = await supabase
         .from("organizations")
-        .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key")
+        .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key, recurra_handling_request, recurra_keys_managed")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -96,7 +99,7 @@ const CreatePlan = () => {
         if (membership) {
           const { data: memberOrg } = await supabase
             .from("organizations")
-            .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key")
+            .select("id, org_name, email, logo_url, paystack_secret_key, paystack_public_key, recurra_handling_request, recurra_keys_managed")
             .eq("id", membership.org_id)
             .maybeSingle();
 
@@ -107,6 +110,7 @@ const CreatePlan = () => {
 
       setOrganization(orgData);
       setPaystackConnected(!!(orgData?.paystack_secret_key && orgData?.paystack_public_key));
+      setIsPendingKeys(!!(orgData?.recurra_handling_request && !orgData?.recurra_keys_managed));
 
       // Get plan count
       if (orgId) {
@@ -228,9 +232,7 @@ const CreatePlan = () => {
           <div className="mb-6">
             <p className="text-muted-foreground">Set up a new recurring payment plan for your subscribers</p>
           </div>
-
-          {/* Plan limit warning for orgs without Paystack */}
-          {!paystackConnected && planCount >= MAX_PLANS_WITHOUT_PAYSTACK && (
+          {!paystackConnected && planCount >= MAX_PLANS_WITHOUT_PAYSTACK && !isPendingKeys && (
             <Alert variant="destructive" className="mb-6">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Plan limit reached</AlertTitle>
@@ -242,7 +244,7 @@ const CreatePlan = () => {
             </Alert>
           )}
 
-          {!paystackConnected && planCount < MAX_PLANS_WITHOUT_PAYSTACK && planCount >= MAX_PLANS_WITHOUT_PAYSTACK - 1 && (
+          {!paystackConnected && planCount < MAX_PLANS_WITHOUT_PAYSTACK && planCount >= MAX_PLANS_WITHOUT_PAYSTACK - 1 && !isPendingKeys && (
             <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
               <AlertTitle className="text-amber-600">Limited plans remaining</AlertTitle>
@@ -254,189 +256,205 @@ const CreatePlan = () => {
             </Alert>
           )}
 
-          <Card className="mx-auto max-w-2xl p-8 bg-card border border-border shadow-sm">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Plan Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Premium Subscription"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
-                  disabled={loading}
-                  maxLength={100}
-                />
+          {isPendingKeys ? (
+            <Card className="mx-auto max-w-2xl p-8 text-center border-amber-500/20 bg-amber-500/5">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 mx-auto mb-5">
+                <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
               </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
+              <h2 className="text-xl font-bold mb-2">Secure Keys Being Assigned</h2>
+              <p className="text-muted-foreground mb-6">
+                Plans cannot be created until the system is done assigning secure keys. This usually takes a short while.
+              </p>
+              <Button onClick={() => navigate("/plans")}>
+                Return to Plans
+              </Button>
+            </Card>
+          ) : (
+            <Card className="mx-auto max-w-2xl p-8 bg-card border border-border shadow-sm">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (₦) *</Label>
+                  <Label htmlFor="name">Plan Name *</Label>
                   <Input
-                    id="price"
-                    type="number"
-                    placeholder="5000"
-                    value={formData.price}
+                    id="name"
+                    placeholder="e.g., Premium Subscription"
+                    value={formData.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, price: e.target.value })
+                      setFormData({ ...formData, name: e.target.value })
                     }
                     required
                     disabled={loading}
-                    min="1"
-                    step="1"
+                    maxLength={100}
                   />
                 </div>
 
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price (₦) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      placeholder="5000"
+                      value={formData.price}
+                      onChange={(e) =>
+                        setFormData({ ...formData, price: e.target.value })
+                      }
+                      required
+                      disabled={loading}
+                      min="1"
+                      step="1"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="interval">Billing Interval *</Label>
+                    <Select
+                      value={formData.interval}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, interval: value })
+                      }
+                      disabled={loading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="annually">Annually</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="interval">Billing Interval *</Label>
-                  <Select
-                    value={formData.interval}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, interval: value })
+                  <Label htmlFor="category">Category (Optional)</Label>
+                  <Input
+                    id="category"
+                    placeholder="e.g., Software"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
                     }
                     disabled={loading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="annually">Annually</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    maxLength={50}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Helps organize your plans in the Plans Hub
+                  </p>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Category (Optional)</Label>
-                <Input
-                  id="category"
-                  placeholder="e.g., Education, SaaS, Membership"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  disabled={loading}
-                  maxLength={50}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what subscribers get on this plan..."
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    disabled={loading}
+                    className="resize-none"
+                    rows={3}
+                    maxLength={500}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe what this plan includes..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  disabled={loading}
-                  maxLength={500}
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formData.description.length}/500 characters
-                </p>
-              </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Custom Features (Optional)</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleAddFeature}
+                      className="h-8 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Feature
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {features.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          placeholder="e.g., Priority Support"
+                          value={feature}
+                          onChange={(e) => handleFeatureChange(index, e.target.value)}
+                          disabled={loading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemoveFeature(index)}
+                          disabled={loading || features.length === 1 && features[0] === ""}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    These features will be displayed on the public Plans Hub card.
+                  </p>
+                </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Custom Features (Optional)</Label>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleAddFeature}
-                    className="h-8 text-xs"
+                <div className="rounded-lg bg-muted/30 p-4 border border-border">
+                  <h3 className="mb-2 font-medium text-sm text-foreground">
+                    Plan Preview
+                  </h3>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-muted-foreground">
+                      Subscribers will be charged{" "}
+                      <span className="font-semibold text-foreground">
+                        ₦{formData.price || "0"}
+                      </span>{" "}
+                      {formData.interval}
+                    </p>
+                    {formData.category && (
+                      <p className="text-muted-foreground">
+                        Category: {formData.category}
+                      </p>
+                    )}
+                    {features.filter(f => f.trim()).length > 0 && (
+                      <p className="text-muted-foreground">
+                        {features.filter(f => f.trim()).length} custom features included
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/plans")}
+                    disabled={loading}
+                    className="flex-1"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Feature
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={loading || (!paystackConnected && planCount >= MAX_PLANS_WITHOUT_PAYSTACK)}
+                    className="flex-1 bg-accent hover:bg-accent/90"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Plan"
+                    )}
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  {features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        placeholder="e.g., Priority Support"
-                        value={feature}
-                        onChange={(e) => handleFeatureChange(index, e.target.value)}
-                        disabled={loading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveFeature(index)}
-                        disabled={loading || features.length === 1 && features[0] === ""}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  These features will be displayed on the public Plans Hub card.
-                </p>
-              </div>
-
-              <div className="rounded-lg bg-muted/30 p-4 border border-border">
-                <h3 className="mb-2 font-medium text-sm text-foreground">
-                  Plan Preview
-                </h3>
-                <div className="space-y-1 text-sm">
-                  <p className="text-muted-foreground">
-                    Subscribers will be charged{" "}
-                    <span className="font-semibold text-foreground">
-                      ₦{formData.price || "0"}
-                    </span>{" "}
-                    {formData.interval}
-                  </p>
-                  {formData.category && (
-                    <p className="text-muted-foreground">
-                      Category: {formData.category}
-                    </p>
-                  )}
-                  {features.filter(f => f.trim()).length > 0 && (
-                    <p className="text-muted-foreground">
-                      {features.filter(f => f.trim()).length} custom features included
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/plans")}
-                  disabled={loading}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={loading || (!paystackConnected && planCount >= MAX_PLANS_WITHOUT_PAYSTACK)}
-                  className="flex-1 bg-accent hover:bg-accent/90"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create Plan"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Card>
+              </form>
+            </Card>
+          )}
         </div>
       </main>
     </SidebarInset>

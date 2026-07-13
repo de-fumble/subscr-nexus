@@ -1481,11 +1481,21 @@ async function sendEmail(supabase: any, actorId: string, params: any) {
 }
 
 async function updateApiKeys(supabase: any, actorId: string, orgId: string, publicKey: string, secretKey: string) {
+  // Check if this org has requested Recurra handling — if so, mark keys as admin-managed
+  const { data: orgData } = await supabase
+    .from('organizations')
+    .select('recurra_handling_request')
+    .eq('id', orgId)
+    .single();
+
+  const isRecurraManaged = !!(orgData?.recurra_handling_request);
+
   const { error } = await supabase
     .from('organizations')
     .update({
       paystack_public_key: publicKey,
       paystack_secret_key: secretKey,
+      recurra_keys_managed: isRecurraManaged,
     })
     .eq('id', orgId);
 
@@ -1496,7 +1506,7 @@ async function updateApiKeys(supabase: any, actorId: string, orgId: string, publ
     action: 'update_api_keys',
     entity_type: 'organization',
     entity_id: orgId,
-    details: { update_type: 'paystack_keys' },
+    details: { update_type: 'paystack_keys', recurra_managed: isRecurraManaged },
   });
 
   return { success: true };

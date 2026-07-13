@@ -53,7 +53,7 @@ serve(async (req) => {
 
     const { data: ownedOrg } = await supabase
       .from('organizations')
-      .select('id, paystack_secret_key, paystack_public_key')
+      .select('id, paystack_secret_key, paystack_public_key, recurra_handling_request, recurra_keys_managed')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -70,7 +70,7 @@ serve(async (req) => {
       if (membership) {
         const { data: memberOrg } = await supabase
           .from('organizations')
-          .select('id, paystack_secret_key, paystack_public_key')
+          .select('id, paystack_secret_key, paystack_public_key, recurra_handling_request, recurra_keys_managed')
           .eq('id', membership.org_id)
           .maybeSingle()
         
@@ -83,6 +83,17 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Organization not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Block plan creation if Recurra handling is requested but admin hasn't configured keys yet
+    if (org.recurra_handling_request && !org.recurra_keys_managed) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Plans cannot be created until the system is done assigning secure keys.',
+          recurra_pending: true
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
