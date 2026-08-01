@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,31 @@ const Auth = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const getDestination = () => {
+    const paramRedirect = searchParams.get("redirect") || searchParams.get("redirectTo");
+    if (paramRedirect) {
+      localStorage.setItem("auth_redirect", paramRedirect);
+      return paramRedirect;
+    }
+    const savedRedirect = localStorage.getItem("auth_redirect");
+    if (savedRedirect) {
+      return savedRedirect;
+    }
+    return "/dashboard";
+  };
+
+  const clearRedirect = () => {
+    localStorage.removeItem("auth_redirect");
+  };
+
   useEffect(() => {
+    const paramRedirect = searchParams.get("redirect") || searchParams.get("redirectTo");
+    if (paramRedirect) {
+      localStorage.setItem("auth_redirect", paramRedirect);
+    }
+
     const checkUser = async () => {
       const {
         data: {
@@ -46,7 +70,9 @@ const Auth = () => {
         if (userType === "user") {
           navigate("/user-dashboard");
         } else {
-          navigate("/dashboard");
+          const dest = getDestination();
+          clearRedirect();
+          navigate(dest);
         }
       }
     };
@@ -61,12 +87,14 @@ const Auth = () => {
         if (userType === "user") {
           navigate("/user-dashboard");
         } else {
-          navigate("/dashboard");
+          const dest = getDestination();
+          clearRedirect();
+          navigate(dest);
         }
       }
     });
     return () => subscription.unsubscribe();
-  }, [navigate, isSigningUp]);
+  }, [navigate, isSigningUp, searchParams]);
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -133,9 +161,12 @@ const Auth = () => {
             await logAuditEvent("login", "organization", org.id, "auth", { email: authData.user.email }, "Owner");
           }
 
+          const dest = getDestination();
+          clearRedirect();
           toast.success("Welcome back!");
-          navigate("/dashboard");
+          navigate(dest);
         }
+
       } else {
         // Signup flow
         if (accountType === "institution") {

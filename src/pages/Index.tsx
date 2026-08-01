@@ -418,7 +418,7 @@ const Index = () => {
                   </li>
                 ))}
               </ul>
-              <Link to="/auth" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:gap-2.5 transition-all duration-200">
+              <Link to="/auth?redirect=/invoicing" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:gap-2.5 transition-all duration-200">
                 Start invoicing
                 <ArrowRight className="w-4 h-4" />
               </Link>

@@ -31,6 +31,7 @@ import DashboardVerify from "./pages/DashboardVerify";
 import DashboardFailedPayments from "./pages/DashboardFailedPayments";
 import DashboardRetryQueue from "./pages/DashboardRetryQueue";
 import DashboardInvoices from "./pages/DashboardInvoices";
+import { InvoicingTool } from "@/invoicing";
 import DashboardBillingProfiles from "./pages/DashboardBillingProfiles";
 import BillingProfileDetail from "./pages/BillingProfileDetail";
 import DashboardAllTransactions from "./pages/DashboardAllTransactions";
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/pay/:paymentId" element={<Pay />} />
               <Route path="/payment/callback" element={<PaymentCallback />} />
               <Route path="/plans-hub/:orgId" element={<PlansHub />} />
+              <Route path="/invoicing" element={<ProtectedRoute><InvoicingTool /></ProtectedRoute>} />
               {/* Dashboard routes — shared persistent sidebar */}
               <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />

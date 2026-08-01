@@ -247,7 +247,7 @@ export function AppSidebar() {
         {
           title: "Create Invoice",
           icon: Receipt,
-          url: "/dashboard/invoices",
+          url: "/invoicing",
           badge: "Generate and send branded invoices",
         },
         {
