@@ -96,7 +96,7 @@ export function TrackTransactionsModal({
             <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center mb-4 ring-1 ring-accent/20">
               <Search className="w-6 h-6 text-accent" />
             </div>
-            <DialogTitle className="text-2xl font-bold font-mono tracking-tight">
+            <DialogTitle className="text-2xl font-bold tracking-tight">
               Track Transactions
             </DialogTitle>
             <DialogDescription className="text-sm mt-1 text-muted-foreground">
@@ -110,7 +110,7 @@ export function TrackTransactionsModal({
                 <MailCheck className="w-8 h-8 text-emerald-500" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-foreground font-mono">Statement Dispatched</h3>
+                <h3 className="text-lg font-bold text-foreground">Statement Dispatched</h3>
                 <p className="text-sm text-muted-foreground mt-1 max-w-[260px] mx-auto">
                   Your full transaction history has been forwarded securely to your registered inbox.
                 </p>
@@ -123,7 +123,7 @@ export function TrackTransactionsModal({
                 <button
                   type="button"
                   onClick={() => handleModeSwitch("profile")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-mono font-medium transition-all duration-200 ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                     mode === "profile"
                       ? "bg-background shadow-sm text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -135,7 +135,7 @@ export function TrackTransactionsModal({
                 <button
                   type="button"
                   onClick={() => handleModeSwitch("email")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-mono font-medium transition-all duration-200 ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                     mode === "email"
                       ? "bg-background shadow-sm text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -156,7 +156,7 @@ export function TrackTransactionsModal({
                       placeholder="e.g. 1A2B"
                       value={value}
                       onChange={(e) => setValue(e.target.value.toUpperCase().slice(0, 4))}
-                      className="h-14 text-lg pl-6 pr-12 font-mono tracking-widest uppercase bg-muted/40 border-border/50 focus:border-accent transition-colors text-center"
+                      className="h-14 text-lg pl-6 pr-12 tracking-widest uppercase bg-muted/40 border-border/50 focus:border-accent transition-colors text-center"
                       maxLength={4}
                       autoComplete="off"
                       autoFocus
@@ -173,7 +173,7 @@ export function TrackTransactionsModal({
                       placeholder="your@email.com"
                       value={value}
                       onChange={(e) => setValue(e.target.value)}
-                      className="h-14 text-base pl-6 pr-12 font-mono bg-muted/40 border-border/50 focus:border-accent transition-colors"
+                      className="h-14 text-base pl-6 pr-12 bg-muted/40 border-border/50 focus:border-accent transition-colors"
                       autoComplete="email"
                       autoFocus
                     />

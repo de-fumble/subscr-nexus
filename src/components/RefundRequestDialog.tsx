@@ -317,7 +317,7 @@ export function RefundRequestDialog({
                             {formatDate(txn.paid_at)}
                           </span>
                           <span className="text-black/15 dark:text-white/15">·</span>
-                          <span className="text-[10px] font-mono text-black/25 dark:text-white/25">
+                          <span className="text-[10px] text-black/25 dark:text-white/25">
                             {txn.reference.substring(0, 12)}…
                           </span>
                         </div>
@@ -338,7 +338,7 @@ export function RefundRequestDialog({
                   <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-black/35 dark:text-white/35">
                     Transaction
                   </span>
-                  <span className="text-[11px] font-mono text-black/30 dark:text-white/30">
+                  <span className="text-[11px] text-black/30 dark:text-white/30">
                     {selected.reference}
                   </span>
                 </div>
@@ -502,7 +502,7 @@ export function RefundRequestDialog({
                   {refundResult.refund.transaction_reference && (
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] text-black/40 dark:text-white/40">Ref</span>
-                      <span className="text-[11px] font-mono text-black/50 dark:text-white/50">
+                      <span className="text-[11px] text-black/50 dark:text-white/50">
                         {refundResult.refund.transaction_reference}
                       </span>
                     </div>

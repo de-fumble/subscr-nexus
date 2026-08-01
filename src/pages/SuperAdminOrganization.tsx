@@ -656,7 +656,7 @@ export default function SuperAdminOrganization() {
                           <Badge variant="secondary" className="bg-muted/50 text-muted-foreground shadow-none">Inactive</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground pr-6">{plan.paystack_plan_code}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground pr-6">{plan.paystack_plan_code}</TableCell>
                     </TableRow>
                   ))}
                   {details.plans.length === 0 && (

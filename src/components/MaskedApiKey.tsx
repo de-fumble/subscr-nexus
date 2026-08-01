@@ -83,7 +83,7 @@ export function MaskedApiKey({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 px-3 py-2 bg-muted/50 rounded-lg font-mono text-sm text-muted-foreground">
+      <div className="flex-1 px-3 py-2 bg-muted/50 rounded-lg text-sm text-muted-foreground">
         {showFull ? value : getMaskedValue(value)}
       </div>
       <div className="flex gap-1">

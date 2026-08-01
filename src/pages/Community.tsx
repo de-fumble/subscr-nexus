@@ -12,11 +12,11 @@ const Community = () => {
         <div className="container mx-auto px-6">
           {/* Hero */}
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Community</span>
-            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground font-mono">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Community</span>
+            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground">
               Join the Recurra Community
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground font-mono">
+            <p className="mt-6 text-lg text-muted-foreground">
               Connect with other businesses, share insights, and learn from fellow subscription managers.
             </p>
           </div>
@@ -27,8 +27,8 @@ const Community = () => {
               <div className="inline-flex rounded-xl bg-accent/10 p-4 mb-4">
                 <Users className="h-8 w-8 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground font-mono">Network</h3>
-              <p className="text-muted-foreground mt-2 font-mono text-sm">
+              <h3 className="text-xl font-semibold text-foreground">Network</h3>
+              <p className="text-muted-foreground mt-2 text-sm">
                 Connect with business owners and finance professionals using Recurra.
               </p>
             </Card>
@@ -37,8 +37,8 @@ const Community = () => {
               <div className="inline-flex rounded-xl bg-accent/10 p-4 mb-4">
                 <MessageSquare className="h-8 w-8 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground font-mono">Discuss</h3>
-              <p className="text-muted-foreground mt-2 font-mono text-sm">
+              <h3 className="text-xl font-semibold text-foreground">Discuss</h3>
+              <p className="text-muted-foreground mt-2 text-sm">
                 Share tips, ask questions, and get advice from the community.
               </p>
             </Card>
@@ -47,8 +47,8 @@ const Community = () => {
               <div className="inline-flex rounded-xl bg-accent/10 p-4 mb-4">
                 <Star className="h-8 w-8 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground font-mono">Learn</h3>
-              <p className="text-muted-foreground mt-2 font-mono text-sm">
+              <h3 className="text-xl font-semibold text-foreground">Learn</h3>
+              <p className="text-muted-foreground mt-2 text-sm">
                 Access exclusive resources, webinars, and best practices.
               </p>
             </Card>
@@ -56,11 +56,11 @@ const Community = () => {
 
           {/* CTA */}
           <Card className="p-8 mt-16 text-center max-w-2xl mx-auto bg-gradient-to-br from-accent/10 to-transparent border-accent/20">
-            <h2 className="text-2xl font-bold text-foreground font-mono">Coming Soon</h2>
-            <p className="text-muted-foreground font-mono mt-2 mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Coming Soon</h2>
+            <p className="text-muted-foreground mt-2 mb-6">
               Our community platform is under development. Sign up to be notified when it launches!
             </p>
-            <Button className="bg-accent hover:bg-accent/90 font-mono">
+            <Button className="bg-accent hover:bg-accent/90">
               Get Notified
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

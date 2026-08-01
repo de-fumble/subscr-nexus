@@ -1195,7 +1195,7 @@ const Dashboard = () => {
                     <tbody className="divide-y divide-black/4 dark:divide-white/4">
                       {recentTransactions.length > 0 ? recentTransactions.map(txn => (
                         <tr key={txn.id} className="hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3 px-4 text-[12px] font-mono text-black/40 dark:text-white/40">{txn.reference}</td>
+                          <td className="py-3 px-4 text-[12px] text-black/40 dark:text-white/40">{txn.reference}</td>
                           <td className="py-3 px-4 text-[13px] text-black dark:text-white">{txn.payer_name}</td>
                           <td className="py-3 px-4 text-[12px] text-black/50 dark:text-white/50 max-w-[160px] truncate">{txn.plan_name}</td>
                           <td className="py-3 px-4 text-[13px] font-semibold text-black dark:text-white tabular-nums">₦{txn.amount.toLocaleString()}</td>

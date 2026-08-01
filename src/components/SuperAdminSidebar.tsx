@@ -90,7 +90,7 @@ export function SuperAdminSidebar() {
                   <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
                 </div>
                 <div className="flex flex-col min-w-0 justify-center">
-                  <span className="font-mono font-bold text-lg tracking-wider text-white">
+                  <span className="font-bold text-lg tracking-wider text-white">
                     Core Panel
                   </span>
                 </div>

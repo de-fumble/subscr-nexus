@@ -509,7 +509,7 @@ interface BillingProfile {
                  </Button>
                  <div>
                    <h1 className="text-sm font-semibold text-slate-900 leading-none">Billing Profile</h1>
-                   <p className="text-[11px] text-slate-500 mt-1 font-mono uppercase tracking-wider">
+                   <p className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider">
                      {profile.profile_number || profile.id.slice(0, 8)}
                    </p>
                  </div>
@@ -554,7 +554,7 @@ interface BillingProfile {
                      <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
                        {profile.full_name || "Unknown Customer"}
                      </h2>
-                     <Badge className="bg-slate-900 text-white border-0 hover:bg-slate-800 font-mono text-[10px] px-2 py-0.5">
+                     <Badge className="bg-slate-900 text-white border-0 hover:bg-slate-800 text-[10px] px-2 py-0.5">
                        CUSTOMER
                      </Badge>
                    </div>
@@ -694,7 +694,7 @@ interface BillingProfile {
                             </div>
                             <div className="group cursor-default pt-2 border-t border-slate-100">
                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Profile Reference</p>
-                               <code className="text-[11px] font-mono bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
+                               <code className="text-[11px] bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
                                  {profile.id}
                                </code>
                             </div>
@@ -967,7 +967,7 @@ interface BillingProfile {
                                        </TableCell>
                                        <TableCell className="py-4">
                                          <div className="flex items-center gap-2">
-                                           <code className="text-[10px] font-mono bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
+                                           <code className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-100">
                                              {tx.paystack_reference?.slice(0, 12)}...
                                            </code>
                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-300 hover:text-slate-500">

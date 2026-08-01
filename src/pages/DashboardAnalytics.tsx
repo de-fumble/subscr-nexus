@@ -41,7 +41,7 @@ function ExplainPopover({ title, description, formula }: { title: string; descri
         {formula && (
           <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
             <p className="text-[9px] font-semibold uppercase tracking-wider text-black/40 dark:text-white/40 mb-1">Formula</p>
-            <code className="block text-[10px] bg-black/5 dark:bg-white/5 rounded-lg px-2.5 py-1.5 font-mono text-black dark:text-white">{formula}</code>
+            <code className="block text-[10px] bg-black/5 dark:bg-white/5 rounded-lg px-2.5 py-1.5 text-black dark:text-white">{formula}</code>
           </div>
         )}
       </PopoverContent>

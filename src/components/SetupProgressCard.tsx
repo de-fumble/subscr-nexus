@@ -266,7 +266,7 @@ export function SetupProgressCard({ hasPaymentProvider, hasPlans, orgId, orgName
                   Your Public Hub
                 </p>
                 <div className="flex items-center justify-center sm:justify-start gap-2 overflow-hidden">
-                  <code className="text-[10px] sm:text-xs bg-muted/70 px-2 py-1 rounded border border-border/50 truncate font-mono">
+                  <code className="text-[10px] sm:text-xs bg-muted/70 px-2 py-1 rounded border border-border/50 truncate">
                     {window.location.origin}/plans-hub/{orgId}
                   </code>
                 </div>

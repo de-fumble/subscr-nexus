@@ -112,12 +112,12 @@ const UserVerifyTransaction = () => {
         <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
             <ShieldCheck className="w-4 h-4 text-accent" />
-            <span className="text-xs font-semibold text-accent uppercase tracking-wider font-mono">Secure Verification</span>
+            <span className="text-xs font-semibold text-accent uppercase tracking-wider">Secure Verification</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 font-mono tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">
             Verify Transaction
           </h1>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto font-mono">
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             Securely confirm payment status and retrieve official receipts for any Recurra transaction.
           </p>
         </div>
@@ -133,7 +133,7 @@ const UserVerifyTransaction = () => {
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && verifyTransaction()}
-                  className="h-14 pl-12 pr-4 bg-transparent border-none text-lg font-mono placeholder:text-muted-foreground/30 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-14 pl-12 pr-4 bg-transparent border-none text-lg placeholder:text-muted-foreground/30 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
               <Button 
@@ -153,7 +153,7 @@ const UserVerifyTransaction = () => {
               </Button>
             </div>
           </Card>
-          <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground font-mono">
+          <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> PCI-DSS Compliant</span>
             <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Real-time status</span>
             <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> Securely via Paystack</span>
@@ -184,26 +184,26 @@ const UserVerifyTransaction = () => {
                 <div className="space-y-10">
                   {/* Payment Details */}
                   <section>
-                    <div className="flex items-center gap-2 mb-4 text-muted-foreground font-mono uppercase text-[10px] tracking-widest font-bold border-b border-border/40 pb-2">
+                    <div className="flex items-center gap-2 mb-4 text-muted-foreground uppercase text-[10px] tracking-widest font-bold border-b border-border/40 pb-2">
                       <TrendingUp className="w-3.5 h-3.5" />
                       Payment Summary
                     </div>
                     <div className="grid grid-cols-2 gap-y-6">
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground font-mono">Amount Paid</p>
+                        <p className="text-xs text-muted-foreground">Amount Paid</p>
                         <p className="text-2xl font-bold tracking-tight">
                           <span className="text-sm font-normal text-muted-foreground mr-1">{result.currency}</span>
                           {result.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="space-y-1 text-right">
-                        <p className="text-xs text-muted-foreground font-mono">Method</p>
+                        <p className="text-xs text-muted-foreground">Method</p>
                         <p className="text-sm font-medium">{result.payment_type}</p>
                       </div>
                       <div className="space-y-1 col-span-2">
-                        <p className="text-xs text-muted-foreground font-mono">Reference</p>
+                        <p className="text-xs text-muted-foreground">Reference</p>
                         <div className="flex items-center gap-2 group cursor-pointer" onClick={() => copyToClipboard(result.reference)}>
-                          <p className="text-sm font-mono break-all group-hover:text-accent transition-colors">{result.reference}</p>
+                          <p className="text-sm break-all group-hover:text-accent transition-colors">{result.reference}</p>
                           <Copy className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all" />
                         </div>
                       </div>
@@ -212,7 +212,7 @@ const UserVerifyTransaction = () => {
 
                   {/* Customer Information */}
                   <section>
-                    <div className="flex items-center gap-2 mb-4 text-muted-foreground font-mono uppercase text-[10px] tracking-widest font-bold border-b border-border/40 pb-2">
+                    <div className="flex items-center gap-2 mb-4 text-muted-foreground uppercase text-[10px] tracking-widest font-bold border-b border-border/40 pb-2">
                       <User className="w-3.5 h-3.5" />
                       Payer Information
                     </div>
@@ -222,7 +222,7 @@ const UserVerifyTransaction = () => {
                           <User className="w-4 h-4 text-muted-foreground" />
                         </div>
                         <div className="space-y-1 min-w-0">
-                          <p className="text-xs text-muted-foreground font-mono">Full Name</p>
+                          <p className="text-xs text-muted-foreground">Full Name</p>
                           <p className="text-sm font-semibold truncate">{result.customer_name}</p>
                         </div>
                       </div>
@@ -231,7 +231,7 @@ const UserVerifyTransaction = () => {
                           <Mail className="w-4 h-4 text-muted-foreground" />
                         </div>
                         <div className="space-y-1 min-w-0">
-                          <p className="text-xs text-muted-foreground font-mono">Email Address</p>
+                          <p className="text-xs text-muted-foreground">Email Address</p>
                           <p className="text-sm font-semibold truncate">{result.customer_email}</p>
                         </div>
                       </div>
@@ -240,20 +240,20 @@ const UserVerifyTransaction = () => {
 
                   {/* Merchant & Timeline */}
                   <section>
-                    <div className="flex items-center gap-2 mb-4 text-muted-foreground font-mono uppercase text-[10px] tracking-widest font-bold border-b border-border/40 pb-2">
+                    <div className="flex items-center gap-2 mb-4 text-muted-foreground uppercase text-[10px] tracking-widest font-bold border-b border-border/40 pb-2">
                       <ExternalLink className="w-3.5 h-3.5" />
                       Metadata
                     </div>
                     <div className="grid grid-cols-2 gap-y-6">
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground font-mono">Institution</p>
+                        <p className="text-xs text-muted-foreground">Institution</p>
                         <p className="text-sm font-semibold flex items-center gap-1.5 tracking-tight">
                           <Building2 className="w-3.5 h-3.5 text-accent" />
                           {result.organization_name}
                         </p>
                       </div>
                       <div className="space-y-1 text-right">
-                        <p className="text-xs text-muted-foreground font-mono">Date & Time</p>
+                        <p className="text-xs text-muted-foreground">Date & Time</p>
                         {result.paid_at && (
                           <p className="text-sm font-semibold flex items-center justify-end gap-1.5 tracking-tight">
                             <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
@@ -262,7 +262,7 @@ const UserVerifyTransaction = () => {
                         )}
                       </div>
                       <div className="space-y-1 col-span-2">
-                        <p className="text-xs text-muted-foreground font-mono">Plan / Product</p>
+                        <p className="text-xs text-muted-foreground">Plan / Product</p>
                         <p className="text-sm font-semibold">{result.plan_name}</p>
                       </div>
                     </div>
@@ -297,7 +297,7 @@ const UserVerifyTransaction = () => {
                       )}
                     </PDFDownloadLink>
                   )}
-                  <p className="text-center text-[10px] text-muted-foreground font-mono tracking-tighter opacity-50 uppercase">
+                  <p className="text-center text-[10px] text-muted-foreground tracking-tighter opacity-50 uppercase">
                     Verification Secured by paystack pci-dss certification • {new Date().getFullYear()} recurra i/o
                   </p>
                 </div>
@@ -309,7 +309,7 @@ const UserVerifyTransaction = () => {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <TrendingUp className="w-8 h-8 text-muted-foreground/40" />
             </div>
-            <p className="font-mono text-sm">Enter a reference above to view payment details</p>
+            <p className="text-sm">Enter a reference above to view payment details</p>
           </div>
         )}
       </main>

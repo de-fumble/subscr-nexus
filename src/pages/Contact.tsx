@@ -36,11 +36,11 @@ const Contact = () => {
         <div className="container mx-auto px-6">
           {/* Hero */}
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Contact</span>
-            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground font-mono">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Contact</span>
+            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground">
               Get in Touch
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground font-mono">
+            <p className="mt-6 text-lg text-muted-foreground">
               Have a question or need help? We'd love to hear from you.
             </p>
           </div>
@@ -54,8 +54,8 @@ const Contact = () => {
                     <Mail className="h-6 w-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground font-mono">Email Us</h3>
-                    <a href="mailto:Recurrra@outlook.com" className="text-muted-foreground hover:text-accent font-mono">
+                    <h3 className="font-semibold text-foreground">Email Us</h3>
+                    <a href="mailto:Recurrra@outlook.com" className="text-muted-foreground hover:text-accent">
                       Recurrra@outlook.com
                     </a>
                   </div>
@@ -68,8 +68,8 @@ const Contact = () => {
                     <Phone className="h-6 w-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground font-mono">Call Us</h3>
-                    <a href="tel:+2348101751349" className="text-muted-foreground hover:text-accent font-mono">
+                    <h3 className="font-semibold text-foreground">Call Us</h3>
+                    <a href="tel:+2348101751349" className="text-muted-foreground hover:text-accent">
                       +234 810-175-1349
                     </a>
                   </div>
@@ -82,8 +82,8 @@ const Contact = () => {
                     <MapPin className="h-6 w-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground font-mono">Location</h3>
-                    <p className="text-muted-foreground font-mono">Lagos, Nigeria</p>
+                    <h3 className="font-semibold text-foreground">Location</h3>
+                    <p className="text-muted-foreground">Lagos, Nigeria</p>
                   </div>
                 </div>
               </Card>
@@ -91,21 +91,21 @@ const Contact = () => {
 
             {/* Contact Form */}
             <Card className="p-8">
-              <h2 className="text-xl font-bold text-foreground mb-6 font-mono">Send a Message</h2>
+              <h2 className="text-xl font-bold text-foreground mb-6">Send a Message</h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="font-mono">Name</Label>
+                  <Label htmlFor="name" className="">Name</Label>
                   <Input
                     id="name"
                     placeholder="Your name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
-                    className="font-mono"
+                    className=""
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="font-mono">Email</Label>
+                  <Label htmlFor="email" className="">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -113,32 +113,32 @@ const Contact = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
-                    className="font-mono"
+                    className=""
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="subject" className="font-mono">Subject</Label>
+                  <Label htmlFor="subject" className="">Subject</Label>
                   <Input
                     id="subject"
                     placeholder="How can we help?"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     required
-                    className="font-mono"
+                    className=""
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="message" className="font-mono">Message</Label>
+                  <Label htmlFor="message" className="">Message</Label>
                   <Textarea
                     id="message"
                     placeholder="Your message..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     required
-                    className="min-h-[120px] font-mono resize-none"
+                    className="min-h-[120px] resize-none"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-accent hover:bg-accent/90 font-mono">
+                <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
                   <Send className="mr-2 h-4 w-4" />
                   Send Message
                 </Button>

@@ -172,7 +172,7 @@ export function SubscriberManagementDialog({
                         {subscriber.status}
                       </span>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="text-xs">
                       {subscriber.paystack_subscription_code}
                     </TableCell>
                     <TableCell>

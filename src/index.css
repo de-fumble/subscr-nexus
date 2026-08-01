@@ -93,6 +93,10 @@ All colors MUST be HSL.
   html,
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; /* Inter optical features for SF Pro-like rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     max-width: 100%;
     width: 100%;

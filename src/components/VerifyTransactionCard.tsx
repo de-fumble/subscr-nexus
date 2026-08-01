@@ -27,7 +27,7 @@ interface VerifyTransactionCardProps {
 }
 
 const inputCls =
-  "w-full h-10 px-3.5 rounded-[10px] border border-black/[0.08] dark:border-white/[0.10] bg-white dark:bg-white/[0.04] text-[13px] text-black dark:text-white placeholder:text-black/25 dark:placeholder:text-white/25 outline-none transition-all focus:border-black/20 dark:focus:border-white/20 focus:ring-2 focus:ring-black/[0.04] dark:focus:ring-white/[0.06] font-mono";
+  "w-full h-10 px-3.5 rounded-[10px] border border-black/[0.08] dark:border-white/[0.10] bg-white dark:bg-white/[0.04] text-[13px] text-black dark:text-white placeholder:text-black/25 dark:placeholder:text-white/25 outline-none transition-all focus:border-black/20 dark:focus:border-white/20 focus:ring-2 focus:ring-black/[0.04] dark:focus:ring-white/[0.06]";
 
 export function VerifyTransactionCard({ organization }: VerifyTransactionCardProps) {
   const [reference, setReference] = useState("");

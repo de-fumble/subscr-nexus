@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, ArrowDown, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2, Dumbbell } from "lucide-react";
+import { BarChart3, Users, Shield, Zap, RefreshCw, CheckCircle, Star, ArrowRight, ArrowDown, Check, Building2, Globe, Lock, Mail, Phone, GraduationCap, Landmark, CalendarCheck, CreditCard, TrendingUp, Bell, HelpCircle, UserPlus, Settings, Share2, Dumbbell, FileText, ScanSearch } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.svg";
 import dashboardPreview from "@/assets/dashboard-preview.png";
@@ -154,74 +154,79 @@ const Index = () => {
   const features = [{
     icon: BarChart3,
     title: "Analytics Dashboard",
-    description: "Track MRR, churn rate, and subscriber growth with beautiful, real-time analytics.",
-    shortDesc: "Real-time MRR & growth metrics"
+    description: "See exactly where your revenue is coming from -MRR, churn, and subscriber trends updated as payments come in.",
+    shortDesc: "Live MRR & churn tracking"
   }, {
     icon: RefreshCw,
     title: "Automated Billing",
-    description: "Set up recurring payments once and let Paystack handle the rest automatically.",
-    shortDesc: "Auto-recurring payments"
+    description: "Configure once. Recurra charges your subscribers on schedule via Paystack - no manual follow-up needed.",
+    shortDesc: "Hands-off recurring billing"
   }, {
     icon: Users,
     title: "Subscriber Management",
-    description: "Manage all your subscribers, view payment history, and handle cancellations with ease.",
-    shortDesc: "Easy subscriber control"
+    description: "Full subscriber history at a glance. Pause, cancel, or move a subscriber between plans in a few clicks.",
+    shortDesc: "Full subscriber control"
   }, {
     icon: Shield,
     title: "Secure Payments",
-    description: "Built on Paystack's secure infrastructure with industry-standard encryption.",
-    shortDesc: "Bank-grade encryption"
+    description: "Payments run through Paystack's PCI-DSS compliant infrastructure. Card details are tokenized—we never see them.",
+    shortDesc: "PCI-DSS compliant"
   }, {
     icon: Zap,
-    title: "Quick Integration",
-    description: "Get started in minutes with our simple setup process and shareable subscription links.",
-    shortDesc: "Setup in minutes"
+    title: "Quick Setup",
+    description: "Create a plan, copy your subscription link, share it. Most businesses are collecting payments within 10 minutes.",
+    shortDesc: "Live in under 10 minutes"
   }, {
     icon: CheckCircle,
-    title: "Plan Flexibility",
-    description: "Create unlimited plans with custom pricing, intervals, and features.",
-    shortDesc: "Unlimited custom plans"
+    title: "Flexible Plans",
+    description: "Weekly, monthly, per-term -set any billing interval with custom pricing. Mix and match plans for different tiers.",
+    shortDesc: "Any interval, any price"
   }];
   const stats = [{
     value: "99.9%",
-    label: "Uptime Guarantee"
+    label: "Uptime"
   }, {
     value: "50+",
     label: "Active Businesses"
   }, {
-    value: "100+",
-    label: "Transactions Processed"
+    value: "₦10M+",
+    label: "Payments Processed"
   }, {
-    value: "24/7",
-    label: "Customer Support"
+    value: "< 10min",
+    label: "Avg. Setup Time"
   }];
   const howItWorks = [{
     step: "1",
-    title: "Create Your Account",
-    description: "Sign up in seconds and access your dashboard immediately."
+    title: "Create your account",
+    description: "Sign up free. Your dashboard is ready immediately - no waiting, no approval queue."
   }, {
     step: "2",
-    title: "Set Up Plans",
-    description: "Create subscription plans with custom pricing and intervals."
+    title: "Build your plans",
+    description: "Set a name, price, and billing interval. Add a description so subscribers know what they're paying for."
   }, {
     step: "3",
-    title: "Share & Collect",
-    description: "Share subscription links and start collecting payments automatically."
+    title: "Share & get paid",
+    description: "Copy the subscription link and share it - WhatsApp, email, your website. Payments start flowing in automatically."
   }];
   const testimonials = [{
-    quote: "Recurra transformed how we manage subscriptions. The analytics alone are worth it.",
-    author: "Adewale Adeyemi",
-    role: "CEO, TechStart",
+    quote: "We used to chase parents every term for school fees. Now the money just comes in. I check the dashboard to confirm, that's it.",
+    author: "Mrs. Folake Adesanya",
+    role: "Bursar, Greenfield Academy",
     rating: 5
   }, {
-    quote: "Best subscription management platform we've used. Simple, powerful, and reliable.",
-    author: "Wanjiku Mwangi",
-    role: "Finance Director, EduCorp",
+    quote: "Our cooperative had a real defaulter problem. Recurra's retry system quietly recovered payments we thought were gone. We didn't have to call anyone.",
+    author: "Emmanuel Okonkwo",
+    role: "Treasurer, Unity Cooperative Society",
     rating: 5
   }, {
-    quote: "The automated billing saved us countless hours. Highly recommend for any business.",
-    author: "Kwame Mensah",
-    role: "Operations Manager, MediaFlow",
+    quote: "Set it up on a Friday afternoon. By Monday morning we had 12 new gym memberships all paying automatically. Honestly didn't expect it to be that fast.",
+    author: "Chidi Nwosu",
+    role: "Owner, FitZone Lagos",
+    rating: 5
+  }, {
+    quote: "The failed payment recovery alone has saved us more than the cost of running the platform. It just works.",
+    author: "Adeola Balogun",
+    role: "Finance Lead, SaaS startup",
     rating: 5
   }];
   const pricingFeatures = ["Unlimited subscription plans", "Real-time analytics dashboard", "Automated billing & invoicing", "Subscriber management tools", "Payment gateway integration", "24/7 customer support", "Advanced reporting", "Custom branding options"];
@@ -290,29 +295,24 @@ const Index = () => {
         <div className="grid lg:grid-cols-2 gap-8 md:gap-10 lg:gap-16 items-center">
           {/* Left Content - Centered on mobile */}
           <div className="order-2 lg:order-1 text-left">
-            <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5 md:mb-6 animate-fade-in">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-sm font-medium text-accent">Trusted by leading institutions</span>
-            </div>
-
-            <h1 className="text-[2rem] leading-[1.15] font-bold text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in font-mono">
+            <h1 className="text-[2rem] leading-[1.15] font-bold text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in">
               The Billing Automation{" "}
-              <span className="block mt-2 bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="block mt-2 font-mono bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 {heroWord}
               </span>
             </h1>
 
-            <p className="mt-5 md:mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl animate-fade-in font-mono">
-              Hundreds of businesses trust Recurra to automate billing, reduce churn, and scale revenue operations.
+            <p className="mt-5 md:mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl animate-fade-in">
+              Businesses trust Recurra to automate billing and scale revenue operations.
             </p>
 
             {/* CTA Buttons - Side by side like Paystack */}
             <div className="mt-8 md:mt-10 flex flex-row items-center gap-4 justify-start animate-fade-in">
-              <Button size="lg" onClick={() => setShowDemoDialog(true)} className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 sm:h-14 md:h-16 px-6 sm:px-8 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/25 rounded-full font-mono">
+              <Button size="lg" onClick={() => setShowDemoDialog(true)} className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 sm:h-14 md:h-16 px-6 sm:px-8 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-accent/25 rounded-full">
                 Get a Demo
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <Link to="/auth" className="text-accent hover:text-accent/80 font-semibold text-sm sm:text-base font-mono transition-colors">
+              <Link to="/auth" className="text-accent hover:text-accent/80 font-semibold text-sm sm:text-base transition-colors">
                 or Start Free Trial
               </Link>
             </div>
@@ -322,14 +322,14 @@ const Index = () => {
               <div className="flex flex-wrap items-center justify-start gap-4 md:gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-foreground text-lg md:text-xl">50+</span>
-                  <span className="font-mono">businesses globally</span>
+                  <span className="">businesses globally</span>
                 </div>
                 <div className="hidden sm:block w-px h-5 bg-border" />
                 <div className="flex items-center gap-1.5">
                   <div className="flex text-accent">
                     {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-accent" />)}
                   </div>
-                  <span className="font-mono">5.0 rating</span>
+                  <span className="">5.0 rating</span>
                 </div>
               </div>
             </div>
@@ -362,7 +362,7 @@ const Index = () => {
     {/* Trust Logos Section - Horizontal Scroll on Mobile */}
     <section className="py-6 md:py-10 border-y border-border/30 bg-muted/20">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
-        <p className="text-center text-sm text-muted-foreground mb-5 font-mono">Powering subscriptions for</p>
+        <p className="text-center text-sm text-muted-foreground mb-5">Powering subscriptions for</p>
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-12">
           <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
             <Building2 className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
@@ -384,16 +384,73 @@ const Index = () => {
       </div>
     </section>
 
-    {/* Stats Section - Compact Cards */}
+    {/* Business Tools Highlight Section */}
     <section className="py-10 md:py-16 relative">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6">
-          {stats.map((stat, index) => <div key={index} className="group relative p-4 md:p-6 rounded-xl md:rounded-2xl bg-card border border-border/50 text-center transition-all duration-300 hover:border-accent/30 hover:shadow-lg">
-            <div className="text-xl md:text-3xl lg:text-4xl font-bold text-foreground mb-0.5 font-mono">
-              {stat.value}
+        <div className="text-center mb-8 md:mb-12">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold mb-3">More than billing</p>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+            Experience ease in business operations
+          </h2>
+          <p className="mt-3 text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            Recurra gives you the full picture - from collecting payments to generating invoices and keeping a clean audit trail.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
+          {/* Invoicing Card */}
+          <div className="group relative rounded-2xl border border-border/50 bg-card overflow-hidden hover:border-accent/30 hover:shadow-xl transition-all duration-300 p-6 md:p-8">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-accent/10 transition-colors duration-300" />
+            <img src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1785557078/new_l0om0o.png" alt="New" className="absolute top-3 right-3 z-10 w-12 h-12 object-contain" />
+            <div className="relative">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-5 group-hover:bg-accent/20 transition-colors duration-300">
+                <FileText className="w-6 h-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Recurra Invoicing</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                Generate professional invoices automatically with every charge. Send them to subscribers in one click, attach receipts, and keep your books clean - without touching a spreadsheet.
+              </p>
+              <ul className="space-y-2 mb-6">
+                {["Auto-generated on every payment", "PDF receipts for subscribers", "Custom branding on invoices", "Bulk export for accounting"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                    <Check className="w-4 h-4 text-accent flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:gap-2.5 transition-all duration-200">
+                Start invoicing
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-            <div className="text-xs md:text-sm text-muted-foreground font-mono">{stat.label}</div>
-          </div>)}
+          </div>
+
+          {/* Audit Tools Card */}
+          <div className="group relative rounded-2xl border border-border/50 bg-card overflow-hidden hover:border-accent/30 hover:shadow-xl transition-all duration-300 p-6 md:p-8">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-accent/10 transition-colors duration-300" />
+            <img src="https://res.cloudinary.com/dmhy8rk7q/image/upload/v1785557078/new_l0om0o.png" alt="New" className="absolute top-3 right-3 z-10 w-12 h-12 object-contain" />
+            <div className="relative">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-5 group-hover:bg-accent/20 transition-colors duration-300">
+                <ScanSearch className="w-6 h-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Recurra Audit Tools</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                Every charge, retry, cancellation, and staff action is logged. Search, filter, and export your full payment history for any period - no digging through emails or Paystack dashboards.
+              </p>
+              <ul className="space-y-2 mb-6">
+                {["Complete payment event log", "Staff activity tracking", "Searchable by date, subscriber, or plan", "Export for compliance or finance"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                    <Check className="w-4 h-4 text-accent flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:gap-2.5 transition-all duration-200">
+                Explore audit tools
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -402,11 +459,11 @@ const Index = () => {
     <section id="features" className="py-10 md:py-20 relative">
       <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-8 md:mb-16 text-center">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Features</span>
-          <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider">Features</span>
+          <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
             All the Power You Need
           </h2>
-          <p className="mt-3 text-base md:text-lg text-muted-foreground font-mono">
+          <p className="mt-3 text-base md:text-lg text-muted-foreground">
             Powerful features designed for institutions and businesses
           </p>
         </div>
@@ -457,7 +514,7 @@ const Index = () => {
     <section className="py-12 md:py-20 lg:py-28 bg-muted/20">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-3xl mx-auto mb-10 md:mb-16 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground font-mono">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
             Grow recurring revenue at every stage
           </h2>
         </div>
@@ -478,11 +535,11 @@ const Index = () => {
     <section className="py-10 md:py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-3xl mx-auto mb-8 md:mb-16 text-center">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Process</span>
-          <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider">Process</span>
+          <h2 className="mt-3 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
             How Recurra connects to your business
           </h2>
-          <p className="mt-3 text-sm md:text-base text-muted-foreground font-mono max-w-lg mx-auto">
+          <p className="mt-3 text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
             Pre-built tools and simple integrations to get you collecting payments in minutes
           </p>
         </div>
@@ -491,7 +548,7 @@ const Index = () => {
           {/* Pre-built Integrations Card */}
           <div className="w-full md:flex-1">
             <div className="bg-zinc-900 rounded-2xl p-5 sm:p-6 md:p-8 h-full">
-              <p className="text-center text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-4 md:hidden">Your tools</p>
+              <p className="text-center text-[10px] text-zinc-500 uppercase tracking-widest mb-4 md:hidden">Your tools</p>
               <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {/* Row 1 */}
                 <div className="bg-zinc-800/80 rounded-xl p-3 sm:p-3 md:p-4 flex items-center justify-center aspect-square hover:bg-zinc-700/80 transition-colors">
@@ -539,7 +596,7 @@ const Index = () => {
                 <ArrowDown className="w-4 h-4 text-accent animate-bounce" style={{ animationDuration: '2s' }} />
               </div>
               <div className="w-px h-3 bg-gradient-to-b from-accent/40 to-zinc-700" />
-              <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">connects to</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">connects to</span>
               <div className="w-px h-2 bg-zinc-700/50" />
             </div>
           </div>
@@ -548,7 +605,7 @@ const Index = () => {
           <div className="w-full md:flex-1">
             <div className="bg-zinc-900 rounded-2xl p-4 sm:p-4 md:p-6 flex flex-col md:flex-row gap-4 overflow-hidden h-full">
               {/* Code Preview */}
-              <div className="flex-1 bg-zinc-950 rounded-xl p-3 sm:p-3 md:p-4 font-mono text-xs overflow-hidden border border-zinc-800/50">
+              <div className="flex-1 bg-zinc-950 rounded-xl p-3 sm:p-3 md:p-4 text-xs overflow-hidden border border-zinc-800/50">
                 <div className="flex gap-1.5 mb-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
@@ -596,18 +653,17 @@ const Index = () => {
 
     {/* Use Cases Section */}
     <section id="use-cases" className="py-10 md:py-16 lg:py-24 relative overflow-hidden">
-      {/* Background Elements - Hidden on mobile */}
       <div className="hidden md:block absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
 
       <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
         {/* Use Cases Header */}
         <div className="text-center mb-8 md:mb-16">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Use Cases</span>
-          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
-            Built for Every Business
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider">Who uses Recurra</span>
+          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+            Built around how you actually collect money
           </h2>
-          <p className="mt-3 text-sm md:text-lg text-muted-foreground font-mono max-w-2xl mx-auto">
-            See how Recurra powers subscription management across industries
+          <p className="mt-3 text-sm md:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            Whether you run a school, a cooperative, or a gym - if you collect recurring payments, Recurra handles the billing so you can handle the work.
           </p>
         </div>
 
@@ -617,26 +673,26 @@ const Index = () => {
             {
               icon: GraduationCap,
               label: "Schools",
-              title: "Automate School Fees",
-              desc: "Eliminate manual fee collection with automated billing, reminders, and real-time tracking.",
-              features: ["Term billing automation", "Payment reminders"],
-              cta: "Get Started",
+              title: "Stop chasing school fees",
+              desc: "Set up term billing once. Parents get charged automatically—you see who's paid and who hasn't, in real time.",
+              features: ["Per-term billing", "Payment tracking"],
+              cta: "Start collecting",
             },
             {
               icon: Landmark,
               label: "Cooperatives",
-              title: "Smart Loan Recovery",
-              desc: "Automate repayments and reduce defaulters with intelligent retry mechanisms.",
-              features: ["Auto loan deductions", "Defaulter management"],
-              cta: "Get Started",
+              title: "Loan repayments on autopilot",
+              desc: "Members authorize their repayments once. Recurra deducts on schedule and retries if a payment fails.",
+              features: ["Auto deductions", "Retry on failure"],
+              cta: "Start collecting",
             },
             {
               icon: Dumbbell,
               label: "Gyms & Fitness",
-              title: "Manage Memberships",
-              desc: "Automate gym membership billing, track renewals, and reduce churn effortlessly.",
-              features: ["Recurring memberships", "Auto renewal alerts"],
-              cta: "Get Started",
+              title: "Memberships that renew themselves",
+              desc: "No more manual renewals. Members pay once and stay active month after month without any back-and-forth.",
+              features: ["Monthly billing", "Renewal alerts"],
+              cta: "Start collecting",
             },
           ].map((useCase, index) => (
             <div key={index} className="relative group">
@@ -647,12 +703,12 @@ const Index = () => {
                     <useCase.icon className="w-5 h-5 text-accent" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-accent font-mono uppercase tracking-widest">{useCase.label}</span>
-                    <h3 className="text-base font-bold text-foreground font-mono mt-0.5">{useCase.title}</h3>
+                    <span className="text-[10px] text-accent uppercase tracking-widest">{useCase.label}</span>
+                    <h3 className="text-base font-bold text-foreground mt-0.5">{useCase.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{useCase.desc}</p>
                     <div className="flex flex-wrap gap-2 mt-3">
                       {useCase.features.map((f, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 text-[10px] font-mono text-accent bg-accent/5 px-2 py-1 rounded-full">
+                        <span key={i} className="inline-flex items-center gap-1 text-[10px] text-accent bg-accent/5 px-2 py-1 rounded-full">
                           <Check className="w-3 h-3" />
                           {f}
                         </span>
@@ -660,7 +716,7 @@ const Index = () => {
                     </div>
                   </div>
                 </div>
-                <Link to="/auth" className="mt-4 flex items-center gap-1 text-sm font-semibold text-accent font-mono hover:gap-2 transition-all">
+                <Link to="/auth" className="mt-4 flex items-center gap-1 text-sm font-semibold text-accent hover:gap-2 transition-all">
                   {useCase.cta}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -670,44 +726,48 @@ const Index = () => {
         </div>
 
         {/* Desktop: Full detailed grids */}
-        <div className="hidden md:block space-y-16 lg:space-y-24">
+        <div className="hidden md:block space-y-16 lg:space-y-28">
+
           {/* Schools */}
           <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-center">
             <div className="relative">
               <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
-                <img src={usecaseSchool} alt="School Fee Management Dashboard" className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover" />
+                <img src={usecaseSchool} alt="School fee collection dashboard in Recurra" className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover" />
               </div>
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5">
                 <GraduationCap className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-accent">For Schools</span>
+                <span className="text-sm font-medium text-accent">Schools</span>
               </div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
-                Streamline School Fees with <span className="text-accent">Automated Billing</span>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4 leading-tight">
+                Stop chasing parents for school fees
               </h2>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Eliminate manual fee collection. Recurra automates tuition payments and provides real-time tracking.
+              <p className="text-base text-muted-foreground mb-8 leading-relaxed">
+                Set up your term billing once. Parents authorize the charge when they register, and Recurra handles everything from there - deductions, reminders, and follow - up on failed payments. You just watch the dashboard.
               </p>
-              <div className="grid gap-4 mb-8">
+              <div className="space-y-3 mb-8">
                 {[
-                  { icon: CalendarCheck, title: "Automated Term Billing" },
-                  { icon: Bell, title: "Smart Payment Reminders" },
-                  { icon: TrendingUp, title: "Real-time Fee Tracking" },
-                  { icon: RefreshCw, title: "Failed Payment Recovery" },
+                  { icon: CalendarCheck, title: "Per-term or monthly billing", detail: "Flexible cycles to match your school calendar" },
+                  { icon: Bell, title: "Automatic payment reminders", detail: "Sent before and after due dates" },
+                  { icon: TrendingUp, title: "Real-time fee tracking", detail: "See who's paid, who's pending, instantly" },
+                  { icon: RefreshCw, title: "Failed payment recovery", detail: "Retries happen automatically—no awkward calls" },
                 ].map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mt-0.5">
                       <feature.icon className="w-4 h-4 text-accent" />
                     </div>
-                    <span className="text-sm font-medium text-foreground">{feature.title}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{feature.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{feature.detail}</p>
+                    </div>
                   </div>
                 ))}
               </div>
               <Link to="/auth">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-14 px-6 text-base font-semibold rounded-full">
-                  Get Started for Schools
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-12 px-6 text-sm font-semibold rounded-full">
+                  Get started - it's free
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -715,89 +775,123 @@ const Index = () => {
 
           {/* Cooperatives */}
           <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
+            <div className="order-2 md:order-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5">
                 <Landmark className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-accent">For Cooperatives</span>
+                <span className="text-sm font-medium text-accent">Cooperatives</span>
               </div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
-                Simplify Loan Repayments with <span className="text-accent">Smart Recovery</span>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4 leading-tight">
+                Loan repayments that don't require you to ask twice
               </h2>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Transform your cooperative's loan management. Automate repayments and reduce defaulters with intelligent retry mechanisms.
+              <p className="text-base text-muted-foreground mb-8 leading-relaxed">
+                Your members authorize their repayment once. After that, Recurra charges them on schedule - and when a payment fails, it retries automatically. Fewer defaulters, less awkward follow - up.
               </p>
-              <div className="grid gap-4 mb-8">
+              <div className="space-y-3 mb-8">
                 {[
-                  { icon: CreditCard, title: "Automated Loan Deductions" },
-                  { icon: RefreshCw, title: "Intelligent Retry System" },
-                  { icon: Users, title: "Member Portal Access" },
-                  { icon: Shield, title: "Defaulter Management" },
+                  { icon: CreditCard, title: "Scheduled loan deductions", detail: "Weekly, biweekly, or monthly—you choose" },
+                  { icon: RefreshCw, title: "Smart retry on failure", detail: "Up to 3 retries before marking as defaulted" },
+                  { icon: Users, title: "Member self-service portal", detail: "Members can view their repayment history" },
+                  { icon: Shield, title: "Defaulter reports", detail: "Clearly flagged with payment history attached" },
                 ].map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-card/50">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mt-0.5">
                       <feature.icon className="w-4 h-4 text-accent" />
                     </div>
-                    <span className="text-sm font-medium text-foreground">{feature.title}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{feature.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{feature.detail}</p>
+                    </div>
                   </div>
                 ))}
               </div>
               <Link to="/auth">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-14 px-6 text-base font-semibold rounded-full">
-                  Get Started for Cooperatives
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-12 px-6 text-sm font-semibold rounded-full">
+                  Get started - it's free
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
-            <div className="relative">
+            <div className="relative order-1 md:order-2">
               <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
-                <img src={usecaseCooperative} alt="Cooperative Loan Management System" className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover" />
+                <img src={usecaseCooperative} alt="Cooperative loan management in Recurra" className="w-full h-auto rounded-lg md:max-h-[350px] md:object-cover" />
               </div>
             </div>
           </div>
 
           {/* Gyms */}
           <div className="grid md:grid-cols-2 gap-10 lg:gap-20 items-center">
+            {/* Visual */}
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card p-2 shadow-lg">
-                <div className="w-full h-[350px] rounded-lg bg-gradient-to-br from-accent/10 via-accent/5 to-transparent flex items-center justify-center">
-                  <Dumbbell className="w-24 h-24 text-accent/30" />
+              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-gradient-to-br from-zinc-900 to-zinc-950 p-8 shadow-lg min-h-[320px] flex flex-col justify-between">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
+                    <Dumbbell className="w-4 h-4 text-accent" />
+                  </div>
+                  <span className="text-white font-semibold text-sm">FitZone Memberships</span>
+                  <span className="ml-auto text-xs text-zinc-500">Live</span>
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { name: "Basic — ₦8,000/mo", count: "142 active", pct: 72 },
+                    { name: "Premium — ₦15,000/mo", count: "67 active", pct: 34 },
+                    { name: "VIP — ₦30,000/mo", count: "18 active", pct: 9 },
+                  ].map((plan, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-zinc-300">{plan.name}</span>
+                        <span className="text-zinc-500">{plan.count}</span>
+                      </div>
+                      <div className="h-1.5 bg-zinc-800 rounded-full">
+                        <div className="h-full bg-accent rounded-full" style={{ width: `${plan.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                  <span className="text-zinc-500 text-xs">Monthly revenue</span>
+                  <span className="text-white font-bold text-lg">₦2.29M</span>
                 </div>
               </div>
             </div>
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-5">
                 <Dumbbell className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-accent">For Gyms & Fitness</span>
+                <span className="text-sm font-medium text-accent">Gyms & Fitness</span>
               </div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6 font-mono">
-                Manage Memberships with <span className="text-accent">Zero Hassle</span>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4 leading-tight">
+                Memberships that renew without a reminder
               </h2>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Automate gym membership billing, track renewals, and reduce churn so you can focus on your members.
+              <p className="text-base text-muted-foreground mb-8 leading-relaxed">
+                Your members pay once and stay active. Recurra handles the monthly charge, notifies members before renewal, and flags anyone who lapses - so you can focus on the floor, not the billing.
               </p>
-              <div className="grid gap-4 mb-8">
+              <div className="space-y-3 mb-8">
                 {[
-                  { icon: RefreshCw, title: "Recurring Membership Billing" },
-                  { icon: Bell, title: "Auto Renewal Alerts" },
-                  { icon: Users, title: "Member Management" },
-                  { icon: TrendingUp, title: "Revenue Analytics" },
+                  { icon: RefreshCw, title: "Automatic monthly renewal", detail: "No manual invoices, no WhatsApp reminders" },
+                  { icon: Bell, title: "Pre-renewal member alerts", detail: "3 days before each billing date" },
+                  { icon: Users, title: "Per-plan member tracking", detail: "See active, lapsed, and paused members" },
+                  { icon: TrendingUp, title: "Revenue breakdown by plan", detail: "Know which plans are driving growth" },
                 ].map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mt-0.5">
                       <feature.icon className="w-4 h-4 text-accent" />
                     </div>
-                    <span className="text-sm font-medium text-foreground">{feature.title}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{feature.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{feature.detail}</p>
+                    </div>
                   </div>
                 ))}
               </div>
               <Link to="/auth">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-14 px-6 text-base font-semibold rounded-full">
-                  Get Started for Gyms
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground h-12 px-6 text-sm font-semibold rounded-full">
+                  Get started - it's free
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
           </div>
+
         </div>
       </div>
     </section>
@@ -806,12 +900,12 @@ const Index = () => {
     <section className="py-10 md:py-16 lg:py-20 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Testimonials</span>
-          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
-            Trusted by Businesses Worldwide
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider">From the people using it</span>
+          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+            What they said after the first month
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono">
-            See what our customers have to say
+          <p className="mt-3 md:mt-4 text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            Real words from school bursars, cooperative treasurers, and gym owners who switched to automated billing.
           </p>
         </div>
 
@@ -848,11 +942,11 @@ const Index = () => {
     <section id="pricing" className="py-10 md:py-16 lg:py-20">
       <div className="container mx-auto px-4 sm:px-5 md:px-6">
         <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Pricing</span>
-          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+          <span className="text-accent font-semibold text-sm uppercase tracking-wider">Pricing</span>
+          <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
             Simple, Transparent Pricing
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono">
+          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground">
             Everything you need to grow your subscription business
           </p>
         </div>
@@ -903,40 +997,42 @@ const Index = () => {
       />
 
       <div className="container relative mx-auto px-4 sm:px-5 md:px-6">
-        {/* Stats Section */}
-        <div className="text-center mb-16 md:mb-24">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white font-mono mb-8 sm:mb-12 md:mb-16">
-            Built for enterprise scale
+        {/* Header */}
+        <div className="text-center mb-12 md:mb-20">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Built to handle real volume
           </h2>
+          <p className="text-zinc-400 max-w-lg mx-auto text-sm md:text-base leading-relaxed">
+            Whether you have 10 subscribers or 10,000, the platform doesn't slow down or ask you to upgrade.
+          </p>
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 md:gap-12 max-w-4xl mx-auto">
-            <div className="text-center">
-              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Supports high-volume payments</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-4xl mx-auto mb-16 md:mb-24">
+          {[
+            { value: "99.9%", label: "Uptime", sub: "tracked month-over-month" },
+            { value: "₦10M+", label: "Processed", sub: "and growing" },
+            { value: "< 3s", label: "Avg. charge time", sub: "per subscriber" },
+            { value: "3×", label: "Retry attempts", sub: "before marking failed" },
+          ].map((stat, i) => (
+            <div key={i} className="text-center">
+              <p className="text-3xl md:text-4xl font-bold text-accent mb-1">{stat.value}</p>
+              <p className="text-white text-sm font-semibold">{stat.label}</p>
+              <p className="text-zinc-500 text-xs mt-0.5">{stat.sub}</p>
             </div>
-            <div className="text-center">
-              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Handles thousands of renewals</p>
-            </div>
-            <div className="text-center">
-              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Multi-currency support</p>
-            </div>
-            <div className="text-center">
-              <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-accent mb-1 sm:mb-2">Built to scale with your subscribers</p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Recurra IQ Section */}
-        <div className="text-center mt-8 md:mt-12">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">RECURRA IQ</span>
-          <h3 className="mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white font-mono">
-            AI that works for you
+        <div className="text-center border-t border-zinc-800 pt-12 md:pt-20">
+          <span className="text-accent font-semibold text-xs uppercase tracking-widest">Recurra IQ</span>
+          <h3 className="mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+            Your billing data, working harder
           </h3>
-          <p className="mt-4 text-base md:text-lg text-zinc-400 max-w-2xl mx-auto">
-            Recurra IQ combines intelligent automation with your subscriber data
-            to optimize retention, reduce churn, and maximize revenue.
+          <p className="mt-4 text-zinc-400 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
+            Recurra IQ surfaces insights you'd otherwise miss - churn signals, revenue forecasts, and at risks before they become problems.
           </p>
           <Button
-            className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 font-semibold"
+            className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 font-semibold text-sm"
             onClick={() => window.open('https://iq.recurrra.com', '_blank')}
           >
             Learn more about Recurra IQ
@@ -953,7 +1049,7 @@ const Index = () => {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
             <Settings className="w-10 h-10 text-accent animate-spin" style={{ animationDuration: '3s' }} />
           </div>
-          <h3 className="text-xl md:text-2xl font-bold text-foreground font-mono mb-4">
+          <h3 className="text-xl md:text-2xl font-bold text-foreground mb-4">
             Coming Soon!
           </h3>
           <p className="text-muted-foreground mb-8">
@@ -976,13 +1072,13 @@ const Index = () => {
         <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-accent/10 border border-accent/20 mb-4 md:mb-6">
             <HelpCircle className="w-4 h-4 text-accent" />
-            <span className="text-sm font-medium text-accent font-mono">FAQ</span>
+            <span className="text-sm font-medium text-accent">Common questions</span>
           </div>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
-            Frequently Asked Questions
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+            Things people ask before signing up
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono">
-            Everything you need to know about Recurra
+          <p className="mt-3 md:mt-4 text-sm md:text-base text-muted-foreground leading-relaxed">
+
           </p>
         </div>
 
@@ -990,92 +1086,74 @@ const Index = () => {
           <Card className="p-4 md:p-6 lg:p-8 border-border/50 bg-card/50 backdrop-blur-sm">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  What is Recurra and how does it work?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  What exactly does Recurra do?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  Recurra is a subscription management platform that automates billing for businesses and institutions.
-                  You create subscription plans, share payment links with your customers, and we handle the rest—including
-                  automatic charging, failed payment retries, and real-time analytics. All payments are processed securely
-                  through Paystack.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Recurra lets you create subscription plans and collect recurring payments automatically via Paystack. You share a link with your subscribers, they authorize payment once, and the charges happen on whatever schedule you set - weekly, monthly, per term, whatever works for your business. Failed payments get retried automatically. You watch it all on a live dashboard.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-2" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  Is Recurra free to use?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  What does it cost?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  Yes! Recurra is completely free to get started. There are no setup fees or monthly charges.
-                  You only pay the standard Paystack transaction fees when you successfully collect payments
-                  from your subscribers.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Free to start. No monthly fee, no per-plan charge. You only pay the standard Paystack transaction fees when a payment goes through. If a payment fails and never recovers, you pay nothing.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-3" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  How does the automatic retry system work?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  What happens when a payment fails?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  When a payment fails (due to insufficient funds, expired card, etc.), Recurra automatically
-                  attempts to charge the subscriber up to 3 times within the billing cycle. This intelligent
-                  retry system has a 98.5% recovery rate, significantly reducing payment failures and lost revenue.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Recurra retries the charge automatically. Up to 3 times within the billing cycle. Most failures are due to temporary issues like insufficient funds, so the retry often succeeds without you doing anything. If all retries fail, the subscriber gets flagged in your dashboard and you can decide what to do from there.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  Can I use Recurra for school fee collection?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  We collect school fees per term, not monthly. Can Recurra handle that?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  Absolutely! Recurra is perfect for educational institutions. You can set up recurring fee
-                  collection per term or semester, send automated payment reminders to parents, track outstanding
-                  fees in real-time, and generate detailed financial reports. Over 15 schools already trust Recurra
-                  for their fee management.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Yes. You set the billing interval when you create the plan - daily, weekly, monthly, quarterly, or custom. Schools typically set up quarterly or per-term billing. Parents pay once at the start of the year and the system charges each term automatically.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-5" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  How do my subscribers/members make payments?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  How do my subscribers actually pay?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  Each subscription plan gets a unique, shareable link. Your subscribers simply click the link,
-                  enter their card details, and authorize the recurring payment. They can pay using debit cards,
-                  bank transfers, or USSD—all powered by Paystack's secure payment infrastructure.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Each plan has a unique shareable link. Your subscribers open it, enter their card details, and authorize the recurring charge. It takes about 2 minutes. After that, everything is automatic. They can use debit cards, bank transfer, or USSD through Paystack.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-6" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  Is my data secure with Recurra?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  Are card details stored on your servers?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  Yes, security is our top priority. Recurra is built on Paystack's PCI-DSS compliant infrastructure,
-                  meaning all payment data is encrypted and handled according to the highest security standards.
-                  We never store raw card details—all sensitive information is tokenized and secured by Paystack.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  No. Card data never touches our servers. Everything goes directly through Paystack's PCI-DSS compliant infrastructure. What we store is a payment token and not the card number itself. Even if someone breached our database, there's no card data to find.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-7" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  Can I cancel or modify a subscriber's subscription?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  Can I pause or cancel a specific subscriber without affecting others?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  Yes, you have full control over all subscriptions from your dashboard. You can pause,
-                  cancel, or modify any subscription at any time. Subscribers also have the option to
-                  manage their own subscriptions through their member portal.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Yes. Each subscriber is managed individually. You can pause, cancel, switch plans, or skip a billing cycle for one person without touching anyone else. Changes take effect from the next billing date unless you apply them immediately.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-8" className="border-border/50">
-                <AccordionTrigger className="text-left font-mono font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
-                  What kind of support does Recurra offer?
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-accent hover:no-underline py-4 md:py-6 text-sm md:text-base">
+                  What if I need help getting set up?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-mono leading-relaxed text-sm md:text-base">
-                  We offer 24/7 customer support via email and phone. Our dedicated team is always ready
-                  to help you with setup, troubleshooting, or any questions you might have. Enterprise
-                  customers also get access to a dedicated account manager for personalized assistance.
+                <AccordionContent className="text-muted-foreground leading-relaxed text-sm md:text-base pb-4">
+                  Email us at Recurrra@outlook.com - Most setups take under 10 minutes, but if you get stuck we'll walk you through it.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -1090,22 +1168,21 @@ const Index = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/30 via-transparent to-transparent" />
 
       <div className="container relative mx-auto px-4 sm:px-5 md:px-6 text-center">
-        <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto font-mono">
-          Ready to Transform Your Subscription Business?
+        <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-primary-foreground max-w-3xl mx-auto">
+          Your subscribers should be paying themselves
         </h2>
-        <p className="mt-4 md:mt-6 text-base md:text-lg text-primary-foreground/90 max-w-2xl mx-auto font-mono">
-          Join hundreds of businesses already managing their subscriptions with Recurra.
-          Start your free trial today, no credit card required.
+        <p className="mt-4 md:mt-6 text-base md:text-base text-primary-foreground/80 max-w-xl mx-auto leading-relaxed">
+          Set up a plan, share a link, and watch payments come in. Free to start - no card needed.
         </p>
         <div className="mt-6 md:mt-10 flex flex-row items-center justify-center gap-3 md:gap-4">
           <Link to="/auth">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl font-mono">
-              Start Free Trial
+            <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl">
+              Get started free
               <ArrowRight className="ml-1.5 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </Link>
-          <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="border-white/30 text-white px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 bg-accent font-mono">
-            Contact Sales
+          <Button size="lg" variant="outline" onClick={() => setShowContactSalesDialog(true)} className="border-white/30 text-white px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 text-sm sm:text-base md:text-lg font-semibold transition-all duration-300 bg-accent">
+            Talk to us first
           </Button>
         </div>
       </div>
@@ -1123,9 +1200,9 @@ const Index = () => {
           <div className="col-span-2">
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
               <img src={logoImage} alt="Recurra Logo" className="h-8 w-8 md:h-10 md:w-10 object-cover rounded-xl" />
-              <span className="text-lg md:text-xl font-bold text-foreground font-mono">Recurra</span>
+              <span className="text-lg md:text-xl font-bold text-foreground">Recurra</span>
             </div>
-            <p className="text-muted-foreground text-xs md:text-sm leading-relaxed mb-4 md:mb-6 max-w-xs font-mono">
+            <p className="text-muted-foreground text-xs md:text-sm leading-relaxed mb-4 md:mb-6 max-w-xs">
               The most powerful subscription management platform for modern businesses and institutions.
             </p>
             <div className="flex items-center gap-4">
@@ -1143,9 +1220,9 @@ const Index = () => {
 
           {/* Product Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base font-mono">Product</h4>
+            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base">Product</h4>
             <ul className="space-y-2 md:space-y-3">
-              {footerLinks.product.map((link, index) => <li key={index} className="font-mono">
+              {footerLinks.product.map((link, index) => <li key={index} className="">
                 <a href={link.href} className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {link.name}
                 </a>
@@ -1155,9 +1232,9 @@ const Index = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base font-mono">Company</h4>
+            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base">Company</h4>
             <ul className="space-y-2 md:space-y-3">
-              {footerLinks.company.map((link, index) => <li key={index} className="font-mono">
+              {footerLinks.company.map((link, index) => <li key={index} className="">
                 <a href={link.href} className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {link.name}
                 </a>
@@ -1167,9 +1244,9 @@ const Index = () => {
 
           {/* Resources Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base font-mono">Resources</h4>
+            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base">Resources</h4>
             <ul className="space-y-2 md:space-y-3">
-              {footerLinks.resources.map((link, index) => <li key={index} className="font-mono">
+              {footerLinks.resources.map((link, index) => <li key={index} className="">
                 <a href={link.href} className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {link.name}
                 </a>
@@ -1179,9 +1256,9 @@ const Index = () => {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base font-mono">Legal</h4>
+            <h4 className="font-semibold text-foreground mb-3 md:mb-4 text-sm md:text-base">Legal</h4>
             <ul className="space-y-2 md:space-y-3">
-              {footerLinks.legal.map((link, index) => <li key={index} className="font-mono">
+              {footerLinks.legal.map((link, index) => <li key={index} className="">
                 <a href={link.href} className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {link.name}
                 </a>
@@ -1195,15 +1272,15 @@ const Index = () => {
       <div className="border-t border-border">
         <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
-            <p className="text-xs md:text-sm text-muted-foreground font-mono text-center md:text-left">
+            <p className="text-xs md:text-sm text-muted-foreground text-center md:text-left">
               © {new Date().getFullYear()} Recurra. All rights reserved.
             </p>
 
             {/* Powered by Paystack */}
             <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
               <Lock className="h-4 w-4" />
-              <span className="font-mono">Secured & Powered by</span>
-              <span className="font-semibold text-foreground font-mono">Paystack</span>
+              <span className="">Secured & Powered by</span>
+              <span className="font-semibold text-foreground">Paystack</span>
             </div>
           </div>
         </div>

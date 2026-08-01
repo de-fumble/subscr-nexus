@@ -36,11 +36,11 @@ const Blog = () => {
         <div className="container mx-auto px-6">
           {/* Hero */}
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Blog</span>
-            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground font-mono">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Blog</span>
+            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground">
               Insights & Resources
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground font-mono">
+            <p className="mt-6 text-lg text-muted-foreground">
               Tips, guides, and best practices for managing your subscription business.
             </p>
           </div>
@@ -49,12 +49,12 @@ const Blog = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {posts.map((post, index) => (
               <Card key={index} className="p-6 hover:border-accent/30 transition-all hover:-translate-y-1">
-                <span className="text-xs font-semibold text-accent uppercase tracking-wider font-mono">
+                <span className="text-xs font-semibold text-accent uppercase tracking-wider">
                   {post.category}
                 </span>
-                <h3 className="text-lg font-semibold text-foreground mt-2 font-mono">{post.title}</h3>
-                <p className="text-muted-foreground text-sm mt-2 font-mono">{post.excerpt}</p>
-                <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground font-mono">
+                <h3 className="text-lg font-semibold text-foreground mt-2">{post.title}</h3>
+                <p className="text-muted-foreground text-sm mt-2">{post.excerpt}</p>
+                <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <User className="h-3 w-3" />
                     {post.author}
@@ -64,7 +64,7 @@ const Blog = () => {
                     {post.date}
                   </span>
                 </div>
-                <Button variant="ghost" className="mt-4 p-0 h-auto text-accent font-mono">
+                <Button variant="ghost" className="mt-4 p-0 h-auto text-accent">
                   Read More <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </Card>

@@ -74,7 +74,7 @@ function InfoPopover({ title, description, formula }: {
           {formula && (
             <div className="pt-2 border-t border-black/6 dark:border-white/6">
               <div className="bg-black/4 dark:bg-white/6 rounded-lg p-2">
-                <code className="text-[11px] font-mono text-black/60 dark:text-white/60">{formula}</code>
+                <code className="text-[11px] text-black/60 dark:text-white/60">{formula}</code>
               </div>
             </div>
           )}

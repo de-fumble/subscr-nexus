@@ -33,19 +33,19 @@ const Careers = () => {
         <div className="container mx-auto px-6">
           {/* Hero */}
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Careers</span>
-            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground font-mono">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Careers</span>
+            <h1 className="mt-4 text-4xl md:text-5xl font-bold text-foreground">
               Join Our Team
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground font-mono">
+            <p className="mt-6 text-lg text-muted-foreground">
               Help us build the future of subscription management. We're always looking for talented individuals who share our passion for great products.
             </p>
           </div>
 
           {/* Why Join */}
           <Card className="p-8 md:p-12 mb-16">
-            <h2 className="text-2xl font-bold text-foreground mb-4 font-mono">Why Join Recurra?</h2>
-            <div className="grid md:grid-cols-3 gap-6 text-muted-foreground font-mono">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Why Join Recurra?</h2>
+            <div className="grid md:grid-cols-3 gap-6 text-muted-foreground">
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Remote-First Culture</h3>
                 <p className="text-sm">Work from anywhere in the world with flexible hours that suit your lifestyle.</p>
@@ -63,13 +63,13 @@ const Careers = () => {
 
           {/* Open Positions */}
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-8 font-mono">Open Positions</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-8">Open Positions</h2>
             <div className="space-y-4">
               {openPositions.map((position, index) => (
                 <Card key={index} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-accent/30 transition-colors">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground font-mono">{position.title}</h3>
-                    <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground font-mono">
+                    <h3 className="text-lg font-semibold text-foreground">{position.title}</h3>
+                    <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Briefcase className="h-4 w-4" />
                         {position.department}
@@ -84,7 +84,7 @@ const Careers = () => {
                       </span>
                     </div>
                   </div>
-                  <Button variant="outline" className="font-mono">
+                  <Button variant="outline" className="">
                     Apply Now
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

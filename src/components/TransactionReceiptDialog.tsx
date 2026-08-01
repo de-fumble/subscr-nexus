@@ -129,7 +129,7 @@ export function TransactionReceiptDialog({
             <div className="space-y-2">
               <div className="row flex justify-between text-sm">
                 <span className="label text-muted-foreground">Reference</span>
-                <span className="value font-mono text-xs">{transaction.reference}</span>
+                <span className="value text-xs">{transaction.reference}</span>
               </div>
               <div className="row flex justify-between text-sm">
                 <span className="label text-muted-foreground">Date</span>

@@ -231,7 +231,7 @@ export function CompanyAccountSection({ organization, onUpdate }: CompanyAccount
                         setIsVerified(false);
                       }}
                       maxLength={10}
-                      className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] font-mono transition-all shadow-sm"
+                      className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] transition-all shadow-sm"
                     />
                     <Button 
                       type="button"

@@ -485,7 +485,7 @@ export function TransactionFilterDialog({
                       key={txn.id}
                       className="border-b border-border/50 hover:bg-muted/30"
                     >
-                      <td className="py-3 px-3 text-xs font-mono">
+                      <td className="py-3 px-3 text-xs">
                         {txn.reference.length > 12
                           ? `${txn.reference.substring(0, 12)}...`
                           : txn.reference}

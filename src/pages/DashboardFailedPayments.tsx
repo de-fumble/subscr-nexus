@@ -588,7 +588,7 @@ const DashboardFailedPayments = () => {
                               </div>
                             </td>
                             <td className={tdCell}>
-                              <span className="font-mono text-[11px] text-black/40 dark:text-white/40">{payment.reference}</span>
+                              <span className="text-[11px] text-black/40 dark:text-white/40">{payment.reference}</span>
                             </td>
                             <td className={`${tdCell} text-[12px] text-black/50 dark:text-white/50`}>{payment.plan_name}</td>
                             <td className={`${tdCell} text-right text-[13px] font-semibold text-black dark:text-white`}>₦{payment.amount.toLocaleString()}</td>
@@ -800,7 +800,7 @@ const DashboardFailedPayments = () => {
                             </td>
                             <td className={tdCell}>
                               <div className="flex flex-col min-w-0">
-                                <span className="font-mono text-[10px] text-black/40 dark:text-white/40 truncate max-w-[180px]">
+                                <span className="text-[10px] text-black/40 dark:text-white/40 truncate max-w-[180px]">
                                   {sub.reference || "No reference"}
                                 </span>
                                 <span className="text-[10px] text-black/30 dark:text-white/30">

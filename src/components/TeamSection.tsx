@@ -38,11 +38,11 @@ export const TeamSection = () => {
         <section className="py-10 md:py-16 lg:py-20 bg-muted/20">
             <div className="container mx-auto px-4 sm:px-5 md:px-6">
                 <div className="max-w-2xl mx-auto mb-10 md:mb-16 text-center">
-                    <span className="text-accent font-semibold text-sm uppercase tracking-wider font-mono">Our Team</span>
-                    <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground font-mono">
+                    <span className="text-accent font-semibold text-sm uppercase tracking-wider">Our Team</span>
+                    <h2 className="mt-3 md:mt-4 text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
                         Meet Our Team
                     </h2>
-                    <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground font-mono">
+                    <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground">
                         The minds behind Recurra
                     </p>
                 </div>
@@ -64,8 +64,8 @@ export const TeamSection = () => {
                                     className={`w-full h-full object-cover ${member.imagePosition} relative z-10`}
                                 />
                             </div>
-                            <h3 className="font-bold text-xs text-foreground font-mono leading-tight">{member.name}</h3>
-                            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono leading-tight">{member.title}</p>
+                            <h3 className="font-bold text-xs text-foreground leading-tight">{member.name}</h3>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{member.title}</p>
                         </div>
                     ))}
                 </div>
@@ -87,8 +87,8 @@ export const TeamSection = () => {
                                 />
                             </div>
                             <div className="text-center">
-                                <h3 className="font-bold text-lg text-foreground font-mono">{member.name}</h3>
-                                <p className="text-sm text-muted-foreground mt-1 font-mono">{member.title}</p>
+                                <h3 className="font-bold text-lg text-foreground">{member.name}</h3>
+                                <p className="text-sm text-muted-foreground mt-1">{member.title}</p>
                                 <div className="w-10 h-0.5 bg-accent/50 mx-auto mt-3 rounded-full transition-all duration-300 group-hover:w-16" />
                             </div>
                         </Card>

@@ -401,7 +401,7 @@ export default function DashboardAllTransactions() {
                                 ₦{tx.amount.toLocaleString()}
                               </span>
                             </td>
-                            <td className={`${tdCell} font-mono text-[11px] text-black/35 dark:text-white/35`}>{tx.reference}</td>
+                            <td className={`${tdCell} text-[11px] text-black/35 dark:text-white/35`}>{tx.reference}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -426,7 +426,7 @@ export default function DashboardAllTransactions() {
                         <TypeBadge type={tx.type} />
                         <span className="text-[10px] text-black/30 dark:text-white/30">{new Date(tx.date).toLocaleString()}</span>
                       </div>
-                      <p className="font-mono text-[10px] text-black/35 dark:text-white/35 truncate">{tx.reference}</p>
+                      <p className="text-[10px] text-black/35 dark:text-white/35 truncate">{tx.reference}</p>
                     </div>
                   ))}
                 </div>

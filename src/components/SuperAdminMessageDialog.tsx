@@ -286,7 +286,7 @@ export function SuperAdminMessageDialog({ organization, trigger }: SuperAdminMes
                     disabled={sending}
                     className="min-h-[200px] bg-muted/30 border-muted-foreground/10 focus:border-primary/50 focus-visible:ring-primary/20 text-base leading-relaxed p-6 rounded-2xl resize-none shadow-inner"
                   />
-                  <div className="absolute bottom-4 right-4 text-[10px] text-muted-foreground font-mono">
+                  <div className="absolute bottom-4 right-4 text-[10px] text-muted-foreground">
                     {message.length} characters
                   </div>
                 </div>

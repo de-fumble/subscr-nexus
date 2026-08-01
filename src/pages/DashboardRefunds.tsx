@@ -503,7 +503,7 @@ export default function DashboardRefunds() {
                             </div>
                           </td>
                           <td className={tdCell}>
-                            <span className="font-mono text-[11px] text-black/40 dark:text-white/40">
+                            <span className="text-[11px] text-black/40 dark:text-white/40">
                               {r.reference}
                             </span>
                           </td>
@@ -570,7 +570,7 @@ export default function DashboardRefunds() {
                           {new Date(r.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-[11px] font-mono text-black/30 dark:text-white/30 truncate">
+                      <p className="text-[11px] text-black/30 dark:text-white/30 truncate">
                         {r.reference}
                       </p>
                     </div>

@@ -175,7 +175,7 @@ export default function SuperAdminPayouts() {
                           {payout.organizations?.bank_name ? (
                             <div className="text-sm">
                               <p className="font-medium text-foreground">{payout.organizations?.bank_name}</p>
-                              <p className="text-muted-foreground text-xs mt-0.5 font-mono">{payout.organizations?.account_number}</p>
+                              <p className="text-muted-foreground text-xs mt-0.5">{payout.organizations?.account_number}</p>
                               <p className="text-xs text-muted-foreground mt-0.5">{payout.organizations?.account_name}</p>
                             </div>
                           ) : (

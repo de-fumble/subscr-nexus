@@ -369,7 +369,7 @@ export default function DashboardSettings() {
                               value={publicKey}
                               onChange={(e) => setPublicKey(e.target.value)}
                               placeholder="pk_test_..."
-                              className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] font-mono transition-all shadow-sm"
+                              className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] transition-all shadow-sm"
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -380,7 +380,7 @@ export default function DashboardSettings() {
                               value={secretKey}
                               onChange={(e) => setSecretKey(e.target.value)}
                               placeholder="sk_test_..."
-                              className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] font-mono transition-all shadow-sm"
+                              className="h-9 px-3 bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 focus-visible:ring-black/10 focus-visible:border-black rounded-lg text-[13px] transition-all shadow-sm"
                             />
                           </div>
                         </div>
@@ -447,7 +447,7 @@ export default function DashboardSettings() {
                           </p>
                         </div>
                         <div className="flex flex-col sm:flex-row items-stretch gap-3">
-                          <code className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-[#1c1c1e] text-[12px] font-mono break-all border border-black/10 dark:border-white/10 text-black dark:text-white flex items-center">
+                          <code className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-[#1c1c1e] text-[12px] break-all border border-black/10 dark:border-white/10 text-black dark:text-white flex items-center">
                             https://hhldoattlleyetxylfav.supabase.co/functions/v1/paystack-webhook
                           </code>
                           <Button variant="default" onClick={copyWebhookUrl} className={pillBtn}>

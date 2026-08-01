@@ -459,7 +459,7 @@ export default function SuperAdminEmailHistory() {
                         key={item}
                         variant={page === item ? "default" : "ghost"}
                         size="icon"
-                        className="h-8 w-8 text-xs font-mono"
+                        className="h-8 w-8 text-xs"
                         onClick={() => setPage(item as number)}
                         disabled={refreshing}
                       >

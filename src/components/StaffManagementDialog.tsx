@@ -149,7 +149,7 @@ function StaffMemberCard({ member, onUpdateRole, onRemove, onToggleSuspend, isOw
                   <Hash className="h-3 w-3" />
                   Member ID
                 </div>
-                <p className="text-sm font-mono text-muted-foreground">{member.id.slice(0, 8)}...</p>
+                <p className="text-sm text-muted-foreground">{member.id.slice(0, 8)}...</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

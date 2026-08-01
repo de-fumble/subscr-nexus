@@ -54,7 +54,7 @@ const SubscriptionCallback = () => {
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Transaction Reference</span>
-              <span className="font-mono text-xs">{reference || "N/A"}</span>
+              <span className="text-xs">{reference || "N/A"}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Status</span>

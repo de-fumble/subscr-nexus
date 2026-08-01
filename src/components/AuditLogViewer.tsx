@@ -290,7 +290,7 @@ export function AuditLogViewer({
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Log Retention Cycle
               </p>
-              <p className={`text-lg font-mono font-bold tabular-nums ${
+              <p className={`text-lg font-bold tabular-nums ${
                 paused ? "text-muted-foreground" : isUrgent ? "text-rose-500" : "text-foreground"
               }`}>
                 {paused ? "PAUSED" : formatCountdown(msLeft)}
@@ -473,7 +473,7 @@ export function AuditLogViewer({
                           {log.details ? JSON.stringify(log.details) : "-"}
                         </TableCell>
                         {isSuperadmin && (
-                          <TableCell className="font-mono text-xs">
+                          <TableCell className="text-xs">
                             {log.actor_id.slice(0, 8)}...
                           </TableCell>
                         )}

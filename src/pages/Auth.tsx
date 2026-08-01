@@ -316,23 +316,26 @@ const Auth = () => {
     description: "Powered by Paystack's infrastructure"
   }];
   if (authMode === "forgot-password" && resetEmailSent) {
-    return <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <Card className="p-8 max-w-md w-full text-center">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
-          <Mail className="h-8 w-8 text-accent" />
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Check Your Email</h2>
-        <p className="text-muted-foreground mb-6">
-          We've sent a password reset link to <strong>{email}</strong>
-        </p>
-        <Button variant="outline" onClick={() => {
-          setAuthMode("login");
-          setResetEmailSent(false);
-        }} className="w-full">
-          Back to Login
-        </Button>
-      </Card>
-    </div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+        {/* Mobile: ambient top glow */}
+        <div className="lg:hidden fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-accent/8 to-transparent pointer-events-none" />
+        <Card className="p-8 max-w-md w-full text-center shadow-xl rounded-2xl border-border/50">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
+            <Mail className="h-8 w-8 text-accent" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Check your email</h2>
+          <p className="text-muted-foreground mb-1 text-sm">We've sent a reset link to</p>
+          <p className="font-semibold text-foreground mb-6 text-sm">{email}</p>
+          <Button variant="outline" onClick={() => {
+            setAuthMode("login");
+            setResetEmailSent(false);
+          }} className="w-full rounded-full h-11">
+            Back to Login
+          </Button>
+        </Card>
+      </div>
+    );
   }
   return <div className="min-h-screen flex">
     {/* Left Panel - Branding */}
@@ -385,32 +388,48 @@ const Auth = () => {
     </div>
 
     {/* Right Panel - Form */}
-    <div className="w-full lg:w-1/2 flex items-center justify-center p-5 sm:p-6 lg:p-12 bg-background relative">
-      {/* Mobile: subtle gradient accent at top */}
-      <div className="lg:hidden absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-accent/5 to-transparent pointer-events-none" />
+    <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center min-h-screen lg:min-h-0 p-0 sm:p-6 lg:p-12 bg-background relative">
 
-      <div className="w-full max-w-md relative">
-        {/* Mobile Logo & Branding */}
-        <div className="lg:hidden mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-xs font-mono mb-6">
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to home
-          </Link>
-          <div className="flex items-center justify-center gap-2.5 mb-3">
-            <img src={logoImage} alt="Recurra Logo" className="h-11 w-11 object-cover rounded-xl shadow-md" />
-            <span className="text-xl font-bold text-foreground font-mono">Recurra</span>
+      {/* Mobile: premium gradient header strip */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-0">
+        <div className="h-52 bg-gradient-to-br from-primary via-primary/90 to-accent/70 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/30 via-transparent to-transparent" />
+          <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+          {/* Nav row */}
+          <div className="flex items-center justify-between px-5 pt-10 pb-0 relative z-10">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
+              <ArrowLeft className="h-4 w-4" />
+              Home
+            </Link>
+            <div className="flex items-center gap-2">
+              <img src={logoImage} alt="Recurra" className="h-8 w-8 object-cover rounded-lg" />
+              <span className="text-white font-semibold text-base">Recurra</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground font-mono">
-            Automated Billing made simple
-          </p>
+          {/* Heading in banner */}
+          <div className="px-5 pt-5 pb-10 relative z-10">
+            <h1 className="text-2xl font-bold text-white leading-snug">
+              {authMode === "forgot-password" ? "Reset your password" : authMode === "login" ? "Welcome back" : "Get started free"}
+            </h1>
+            <p className="text-sm text-white/70 mt-1">
+              {authMode === "forgot-password" ? "We'll send a link to your inbox" : authMode === "login" ? "Sign in to your Recurra account" : "Create your account in seconds"}
+            </p>
+          </div>
         </div>
+      </div>
 
-        <Card className="p-6 sm:p-8 border-border/50 shadow-xl rounded-2xl">
-          <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-foreground font-mono">
+      <div className="w-full max-w-md relative lg:mt-0 mt-44">
+
+        {/* Desktop-only Logo (hidden on mobile — shown in banner above) */}
+        <div className="hidden lg:block mb-0" />
+
+        <Card className="p-5 sm:p-7 mx-4 sm:mx-0 border-border/50 shadow-xl rounded-2xl">
+          <div className="mb-5">
+            {/* Desktop heading (mobile heading is in the banner) */}
+            <h2 className="hidden lg:block text-2xl font-bold text-foreground">
               {authMode === "forgot-password" ? "Reset Password" : authMode === "login" ? "Welcome back" : "Create your account"}
             </h2>
-            <p className="mt-1.5 text-sm text-muted-foreground font-mono">
+            <p className="hidden lg:block mt-1.5 text-sm text-muted-foreground">
               {authMode === "forgot-password" ? "Enter your email to receive a reset link" : authMode === "login" ? "Sign in to continue" : "Get started with your free account"}
             </p>
           </div>
@@ -418,17 +437,17 @@ const Auth = () => {
           {/* Account Type Selector (only for signup) */}
           {/* HIDING FOR NOW AS REQUESTED - WE DO NOT NEED USER ACCOUNTS YET */}
           {false && authMode === "signup" && <div className="mb-6">
-            <Label className="text-sm font-medium mb-3 block font-mono">Account Type</Label>
+            <Label className="text-sm font-medium mb-3 block">Account Type</Label>
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setAccountType("institution")} className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 ${accountType === "institution" ? "border-accent bg-accent/10 shadow-sm shadow-accent/10" : "border-border hover:border-accent/50"}`}>
                 <Building2 className={`h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1.5 ${accountType === "institution" ? "text-accent" : "text-muted-foreground"}`} />
-                <p className="text-sm font-semibold font-mono">Institution</p>
-                <p className="text-[10px] text-muted-foreground font-mono">Manage Revenue</p>
+                <p className="text-sm font-semibold">Institution</p>
+                <p className="text-[10px] text-muted-foreground">Manage Revenue</p>
               </button>
               <button type="button" onClick={() => setAccountType("user")} className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 ${accountType === "user" ? "border-accent bg-accent/10 shadow-sm shadow-accent/10" : "border-border hover:border-accent/50"}`}>
                 <User className={`h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1.5 ${accountType === "user" ? "text-accent" : "text-muted-foreground"}`} />
-                <p className="text-sm font-semibold font-mono">User</p>
-                <p className="text-[10px] text-muted-foreground font-mono">Track Billing</p>
+                <p className="text-sm font-semibold">User</p>
+                <p className="text-[10px] text-muted-foreground">Track Billing</p>
               </button>
             </div>
           </div>}
@@ -446,12 +465,12 @@ const Auth = () => {
                 How did you hear about Recurra?
               </Label>
               <Select value={referralSource} onValueChange={setReferralSource} disabled={isLoading}>
-                <SelectTrigger id="referral-source" className="h-12 font-mono text-sm">
+                <SelectTrigger id="referral-source" className="h-12 text-sm">
                   <SelectValue placeholder="Select an option..." />
                 </SelectTrigger>
                 <SelectContent>
                   {REFERRAL_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value} className="font-mono text-sm">
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -487,7 +506,7 @@ const Auth = () => {
               Forgot your password?
             </button>}
 
-            <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold font-mono rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-accent/20 hover:scale-[1.01]" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-accent/20 hover:scale-[1.01]" disabled={isLoading}>
               {isLoading ? <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {authMode === "forgot-password" ? "Sending..." : authMode === "login" ? "Signing in..." : "Creating account..."}
@@ -498,20 +517,26 @@ const Auth = () => {
           </form>
 
           <div className="mt-6 text-center space-y-2">
-            {authMode === "forgot-password" ? <button type="button" onClick={() => setAuthMode("login")} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono" disabled={isLoading}>
+            {authMode === "forgot-password" ? <button type="button" onClick={() => setAuthMode("login")} className="text-sm text-muted-foreground hover:text-foreground transition-colors" disabled={isLoading}>
               Back to login
-            </button> : <button type="button" onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono" disabled={isLoading}>
+            </button> : <button type="button" onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")} className="text-sm text-muted-foreground hover:text-foreground transition-colors" disabled={isLoading}>
               {authMode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>}
           </div>
         </Card>
 
         {/* Trust signals */}
-        <div className="mt-6">
-          <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground font-mono">
-            <span className="flex items-center gap-1"><Shield className="h-3 w-3" /> Secured by Paystack</span>
+        <div className="mt-5 pb-8 sm:pb-4">
+          <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-accent" />
+              Secured by Paystack
+            </span>
             <span className="w-px h-3 bg-border" />
-            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Instant Setup</span>
+            <span className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-accent" />
+              Free to start
+            </span>
           </div>
         </div>
       </div>

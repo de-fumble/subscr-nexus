@@ -435,7 +435,7 @@ export default function DashboardBillingProfiles() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <code className="text-[10px] font-mono bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
+                          <code className="text-[10px] bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
                           <span className="text-[13px] font-semibold text-black dark:text-white">{formatCurrency(profile.total_paid)}</span>
                         </div>
                       </div>
@@ -470,7 +470,7 @@ export default function DashboardBillingProfiles() {
                           </td>
                           <td className={tdCell}>
                             <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                              <code className="text-[11px] font-mono bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
+                              <code className="text-[11px] bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded">#{profile.profile_number || "—"}</code>
                               <button
                                 onClick={() => copyToClipboard(profile.profile_number || profile.id)}
                                 className="text-black/30 hover:text-black/60 dark:text-white/30 dark:hover:text-white/60 transition-opacity"

@@ -210,8 +210,8 @@ const VerifyOTP = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <ShieldCheck className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground font-mono">Email Verified!</h2>
-          <p className="mt-2 text-muted-foreground font-mono">
+          <h2 className="text-2xl font-bold text-foreground">Email Verified!</h2>
+          <p className="mt-2 text-muted-foreground">
             Your email has been verified successfully. Redirecting to login...
           </p>
         </Card>
@@ -224,12 +224,12 @@ const VerifyOTP = () => {
       <div className="w-full max-w-md">
         <Link to="/auth" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm font-mono">Back to login</span>
+          <span className="text-sm">Back to login</span>
         </Link>
 
         <div className="flex items-center gap-3 mb-8">
           <img src={logoImage} alt="Recurra Logo" className="h-10 w-10 object-cover rounded-xl" />
-          <span className="text-xl font-bold text-foreground font-mono">Recurra</span>
+          <span className="text-xl font-bold text-foreground">Recurra</span>
         </div>
 
         <Card className="p-6 sm:p-8 border-border/50 shadow-xl rounded-2xl">
@@ -237,8 +237,8 @@ const VerifyOTP = () => {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
               <Mail className="h-7 w-7 text-accent" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground font-mono">Verify Your Email</h2>
-            <p className="mt-2 text-sm text-muted-foreground font-mono">
+            <h2 className="text-2xl font-bold text-foreground">Verify Your Email</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               We sent a 4-digit code to <strong>{email}</strong>
             </p>
           </div>
@@ -248,11 +248,11 @@ const VerifyOTP = () => {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                 <Clock className="h-7 w-7 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground font-mono">Too Many Attempts</h3>
-              <p className="text-sm text-muted-foreground font-mono">
+              <h3 className="text-lg font-semibold text-foreground">Too Many Attempts</h3>
+              <p className="text-sm text-muted-foreground">
                 You've used all your OTP requests. Please try again in:
               </p>
-              <div className="text-2xl font-bold text-destructive font-mono">
+              <div className="text-2xl font-bold text-destructive">
                 {formatRateLimitTime()}
               </div>
             </div>
@@ -267,10 +267,10 @@ const VerifyOTP = () => {
                   disabled={isVerifying}
                 >
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} className="h-14 w-14 text-xl font-bold font-mono" />
-                    <InputOTPSlot index={1} className="h-14 w-14 text-xl font-bold font-mono" />
-                    <InputOTPSlot index={2} className="h-14 w-14 text-xl font-bold font-mono" />
-                    <InputOTPSlot index={3} className="h-14 w-14 text-xl font-bold font-mono" />
+                    <InputOTPSlot index={0} className="h-14 w-14 text-xl font-bold" />
+                    <InputOTPSlot index={1} className="h-14 w-14 text-xl font-bold" />
+                    <InputOTPSlot index={2} className="h-14 w-14 text-xl font-bold" />
+                    <InputOTPSlot index={3} className="h-14 w-14 text-xl font-bold" />
                   </InputOTPGroup>
                 </InputOTP>
               </div>
@@ -278,12 +278,12 @@ const VerifyOTP = () => {
               {/* Countdown Timer */}
               <div className="text-center mb-6">
                 {countdown > 0 ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground font-mono">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" />
                     <span>Code expires in <strong className="text-foreground">{formatTime(countdown)}</strong></span>
                   </div>
                 ) : (
-                  <p className="text-sm text-destructive font-mono">OTP has expired</p>
+                  <p className="text-sm text-destructive">OTP has expired</p>
                 )}
               </div>
 
@@ -291,7 +291,7 @@ const VerifyOTP = () => {
               <Button
                 onClick={handleVerify}
                 disabled={otp.length !== 4 || isVerifying || countdown <= 0}
-                className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold font-mono rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-accent/20"
+                className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-accent/20"
               >
                 {isVerifying ? (
                   <>
@@ -310,7 +310,7 @@ const VerifyOTP = () => {
                     variant="ghost"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="text-sm font-mono"
+                    className="text-sm"
                   >
                     {isResending ? (
                       <>
@@ -322,7 +322,7 @@ const VerifyOTP = () => {
                     )}
                   </Button>
                 ) : (
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <p className="text-xs text-muted-foreground">
                     You can request a new code after the timer expires
                   </p>
                 )}
